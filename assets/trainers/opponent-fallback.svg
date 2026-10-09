@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" shape-rendering="crispEdges">
+<!-- Original pixel-art trainer fallback if a remote portrait fails. -->
+<path fill="#392d30" d="M18 12h28v12H18z"/>
+<path fill="#896342" d="M19 8h25v8H19z"/><path fill="#a98252" d="M14 15h36v4H14z"/>
+<path fill="#e2b48c" d="M21 20h22v14H21z"/>
+<path fill="#32343c" d="M21 23h5v3h-5zM37 23h5v3h-5z"/>
+<path fill="#365d75" d="M21 35h22v14H21z"/>
+<path fill="#25465c" d="M17 37h6v12h-6zM42 37h6v12h-6z"/>
+<path fill="#d9b18c" d="M13 46h8v5h-8zM44 46h8v5h-8z"/>
+<path fill="#5b4741" d="M23 48h8v11h-8zM34 48h8v11h-8z"/>
+<path fill="#261f29" d="M19 58h13v4H19zM33 58h15v4H33z"/>
+</svg>
