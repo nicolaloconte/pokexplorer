@@ -1,0 +1,116 @@
+/* V7: minimal scoped overrides. Preserve the approved V6 battlefield artwork. */
+
+/* A single aspect-locked sprite replaces three separately positioned halves. */
+#starter-scene-overlay .pokeball-wrapper .ball-model {
+  position:relative!important;display:block!important;flex:none!important;
+  width:62px!important;height:62px!important;aspect-ratio:1/1!important;
+  margin:0 auto 5px!important;border-radius:50%;
+  background:url('assets/items/pokeball.svg') center/contain no-repeat!important;
+  transform:none!important;
+  filter:drop-shadow(0 4px 2px rgba(34,42,49,.30))!important;
+  transition:transform .22s ease,filter .22s ease!important;
+  pointer-events:none;
+}
+#starter-scene-overlay .ball-model .pokeball-top,
+#starter-scene-overlay .ball-model .pokeball-bottom,
+#starter-scene-overlay .ball-model .pokeball-button{display:none!important}
+#starter-scene-overlay .pokeball-wrapper .ball-pad{left:50%;top:68px;transform:translateX(-50%);pointer-events:none}
+#starter-scene-overlay .pokeball-wrapper.open .ball-model{
+  transform:translateY(-4px) scale(1.05)!important;
+  filter:drop-shadow(0 3px 6px rgba(196,83,48,.50)) brightness(1.06)!important;
+}
+#starter-scene-overlay .pokeball-wrapper:hover .ball-model{filter:drop-shadow(0 3px 7px #c78b54)!important}
+#starter-scene-overlay .pokeball-wrapper > *{pointer-events:none}
+
+/* A very small vertical adjustment anchors the feet to the platforms. */
+#enemy-sprite{top:calc(40% - 104px)!important}
+#player-sprite{bottom:calc(11% + 7px)!important}
+#enemy-trainer-sprite{top:calc(40% - 111px)!important}
+#player-trainer-sprite{bottom:calc(11% + 9px)!important}
+
+/* All battle buttons own their entire painted rectangle, not just their text. */
+#battle-controls{pointer-events:auto!important;isolation:isolate}
+#battle-controls #panel-main-actions,#battle-controls #panel-move-actions{width:100%;height:100%;align-items:stretch!important;justify-items:stretch!important;position:relative;z-index:2}
+#battle-controls #panel-main-actions>.act-btn,
+#battle-controls #panel-move-actions>.act-btn{
+  width:100%!important;height:100%!important;min-height:0!important;
+  display:flex!important;align-items:center;justify-content:center;
+  flex-direction:column;cursor:pointer;position:relative;z-index:1;
+  pointer-events:auto!important;touch-action:manipulation;
+}
+#battle-controls #panel-main-actions>.act-btn::before,
+#battle-controls #panel-move-actions>.act-btn::before,
+#battle-controls #panel-main-actions>.act-btn::after,
+#battle-controls #panel-move-actions>.act-btn::after,
+#battle-controls #panel-move-actions>.act-btn *{pointer-events:none!important}
+#battle-controls #panel-main-actions{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+#battle-controls #panel-move-actions{height:100%!important;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:6px}
+#battle-controls #panel-main-actions.hidden,#battle-controls #panel-move-actions.hidden{display:none!important}
+#battle-controls #btn-move-back{z-index:5!important}
+
+/* Confirmation appears over the existing field, without the darkening scrim. */
+#battle-confirm{
+  background:transparent!important;backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+  pointer-events:none!important;padding:12px!important;
+}
+#battle-confirm .battle-confirm-box{
+  pointer-events:auto!important;width:min(420px,89%)!important;
+  border:3px solid #a66554!important;border-radius:12px!important;
+  box-shadow:0 7px 20px #201d2545, inset 0 3px #fff8ef!important;
+  padding:13px 16px!important;font-size:8px!important;
+}
+#battle-confirm .confirm-row .act-btn{cursor:pointer;min-height:36px;pointer-events:auto}
+#battle-confirm .confirm-row .act-btn:focus-visible{outline:3px solid #38bdf8;outline-offset:3px}
+
+/* Overworld sprites are not generated avatars: first standing frame of FR/LG sheets. */
+.grid-cell .town-npc.official-overworld,.grid-cell .player-avatar.official-overworld{
+  display:block!important;position:absolute!important;
+  left:50%!important;top:50%!important;bottom:auto!important;
+  width:16px!important;height:32px!important;
+  background-repeat:no-repeat!important;
+  background-size:128px 32px,16px 32px!important;
+  background-position:0 0,0 0!important;
+  image-rendering:pixelated!important;
+  transform:translate(-50%,-50%) scale(1.35)!important;
+  filter:drop-shadow(1px 2px 0 #26392c55)!important;
+  animation:none!important;pointer-events:none;z-index:9;
+}
+#npc-portrait-img.npc-portrait-sheet{
+  display:block;width:32px;height:64px;flex:none;
+  background-repeat:no-repeat;
+  background-size:256px 64px,32px 64px;
+  background-position:0 0,0 0;
+  image-rendering:pixelated;
+}
+
+/* Transform-only throwing and capture; the JS keyframe path supplies the arc. */
+#battle-throw-ball.ball-compositor{
+  width:34px!important;height:34px!important;
+  position:absolute!important;z-index:45!important;
+  background:url('assets/items/pokeball.svg') center/contain no-repeat!important;
+  opacity:1;will-change:transform,opacity;pointer-events:none;
+  animation:none!important;
+}
+#capture-ball.compositor-ball{
+  position:absolute!important;display:block!important;
+  width:38px!important;height:38px!important;
+  opacity:1;z-index:51!important;
+  background:url('assets/items/pokeball.svg') center/contain no-repeat!important;
+  will-change:transform,opacity;animation:none!important;
+}
+#capture-ball.compositor-ball:not(.flying-v6):not(.at-contact):not(.landing-v6):not(.grounded-v6){animation:none!important}
+#battle-stage .poke-sprite-gba{backface-visibility:hidden;transform-origin:50% 70%}
+
+/* Preserve accessibility for narrow screens / reduced motion. */
+@media(max-width:760px){
+ #enemy-sprite{top:calc(40% - 62px)!important}
+ #player-sprite{bottom:calc(11% + 7px)!important}
+ #starter-scene-overlay .pokeball-wrapper .ball-model{width:48px!important;height:48px!important}
+ #starter-scene-overlay .pokeball-wrapper .ball-pad{top:55px}
+ #battle-confirm .battle-confirm-box{width:min(92%,360px)!important;padding:10px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ #starter-scene-overlay .pokeball-wrapper .ball-model{transition:none!important}
+ .grid-cell .official-overworld{animation:none!important}
+}

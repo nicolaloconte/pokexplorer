@@ -1,0 +1,67 @@
+/* Pokéxplorer V7.1 — focused fixes; approved V7 art and UI remain intact. */
+
+/* Original FireRed back-view trainer sheet is 64 × 320, with five 64px frames.
+   Only its first standing/throw-ready frame is displayed. */
+#battle-stage #player-trainer-sprite {
+  display:block;
+  position:absolute;
+  width:clamp(128px,30%,170px) !important;
+  height:clamp(128px,30%,170px) !important;
+  background-image:url('assets/trainers/red-back-fallback.svg');
+  background-position:0 0;
+  background-repeat:no-repeat;
+  background-size:100% 100%;
+  image-rendering:pixelated;
+  pointer-events:none;
+  z-index:12;
+  backface-visibility:hidden;
+  will-change:transform,opacity;
+}
+#battle-stage #player-trainer-sprite.red-sheet-ready{background-size:100% 500%}
+#battle-stage #player-trainer-sprite.hidden{display:none!important}
+
+/* Keep the front-sprite grounded, and lower opponent/platform together so
+   transparent padding in PokéAPI sprites no longer makes them float. */
+#battle-stage .enemy-platform-gba {
+  top:46% !important;
+  right:4.5% !important;
+  width:44% !important;
+  max-width:250px !important;
+}
+#battle-stage #enemy-sprite {
+  top:calc(46% - 81px) !important;
+  right:calc(4.5% + 9%) !important;
+}
+#battle-stage #enemy-trainer-sprite {
+  top:calc(46% - 85px) !important;
+  right:calc(4.5% + 9%) !important;
+  object-fit:contain;
+  object-position:center bottom;
+}
+#battle-stage #player-sprite{bottom:calc(11% + 7px)!important}
+#battle-stage #player-trainer-sprite{bottom:calc(11% + 7px)!important;left:10%!important}
+
+/* Avoid underlays shining through transparent areas in FireRed NPC sheets. */
+.grid-cell .official-overworld{background-repeat:no-repeat!important;isolation:isolate}
+.grid-cell .route-trainer.official-overworld {
+  display:block!important;position:absolute!important;left:50%!important;top:50%!important;
+  width:16px!important;height:32px!important;
+  background-position:0 0!important;background-size:128px 32px!important;
+  background-repeat:no-repeat!important;
+  image-rendering:pixelated!important;
+  transform:translate(-50%,-50%) scale(1.35)!important;
+  filter:drop-shadow(1px 2px 0 #26392c55)!important;
+  pointer-events:none;z-index:9;
+}
+
+/* Buildings and map props stay in their original cell. No collision icon flicker. */
+.grid-cell:has(.map-building),.grid-cell:has(.map-decoration){isolation:isolate}
+
+/* Avoid scaling inherited animations on the back-facing Red portrait. */
+@media(max-width:760px){
+  #battle-stage .enemy-platform-gba{top:45%!important}
+  #battle-stage #enemy-sprite{top:calc(45% - 66px)!important}
+  #battle-stage #enemy-trainer-sprite{top:calc(45% - 66px)!important}
+  #battle-stage #player-trainer-sprite{width:112px!important;height:112px!important}
+}
+@media(prefers-reduced-motion:reduce){#battle-stage #player-trainer-sprite{will-change:auto}}
