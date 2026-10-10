@@ -54,6 +54,20 @@ const MOVE_FALLBACK = {
   'hydro-pump':['water',110,5,'special'],surf:['water',90,15,'special'],
   recover:['normal',0,10,'status'],rest:['psychic',0,10,'status']
 };
+const MOVE_STATUS_FALLBACK={
+  growl:{statChange:{stat:'attack',stage:-1,chance:100}},
+  leer:{statChange:{stat:'defense',stage:-1,chance:100}},
+  'tail-whip':{statChange:{stat:'defense',stage:-1,chance:100}},
+  'defense-curl':{statChange:{stat:'defense',stage:1,chance:100}},
+  harden:{statChange:{stat:'defense',stage:1,chance:100}},
+  'thunder-wave':{ailment:'paralysis',ailmentChance:100},
+  'poison-powder':{ailment:'poison',ailmentChance:100},
+  'sleep-powder':{ailment:'sleep',ailmentChance:75},
+  ember:{ailment:'burn',ailmentChance:10},
+  'thunder-shock':{ailment:'paralysis',ailmentChance:10},
+  'poison-sting':{ailment:'poison',ailmentChance:30},
+  'leech-seed':{seed:true}
+};
 const SPECIES_FALLBACK = {
   1:[[1,'tackle'],[3,'growl'],[7,'leech-seed'],[9,'vine-whip'],[13,'poison-powder'],[15,'sleep-powder'],[20,'razor-leaf']],
   4:[[1,'scratch'],[1,'growl'],[7,'ember'],[10,'smokescreen'],[16,'dragon-rage'],[19,'scary-face'],[25,'flamethrower']],
@@ -90,15 +104,17 @@ async function createMove(moveId) {
           statChange:stat ? {stat:stat.stat.name,stage:stat.change, chance:d.effect_chance||100} : null,
           ailment:d.meta?.ailment?.name || null,ailmentChance:d.meta?.ailment_chance || 0,
           healing:d.meta?.healing || 0,drain:d.meta?.drain || 0};
-      } catch(e) {const a=MOVE_FALLBACK[id] || ['normal',40,20,'physical'];return {type:a[0],power:a[1],pp:a[2],category:a[3],accuracy:100};}
+      } catch(e) {const a=MOVE_FALLBACK[id] || ['normal',40,20,'physical'];return {type:a[0],power:a[1],pp:a[2],category:a[3],accuracy:100,...(MOVE_STATUS_FALLBACK[id]||{})};}
     })());
   }
   const d=await moveMetadataCache.get(id);
-  return new Move(MOVE_NAMES_IT[id] || id.replaceAll('-',' ').toUpperCase(),d.type,d.power,d.pp,d.category,d.statChange,{...d,id});
+  const meta={...(MOVE_STATUS_FALLBACK[id]||{}),...d,id};
+  return new Move(MOVE_NAMES_IT[id] || id.replaceAll('-',' ').toUpperCase(),d.type,d.power,d.pp,d.category,d.statChange||meta.statChange,meta);
 }
 class Pokemon {
   constructor(data, level=5) {
     this.id=data.id; this.name=data.name.toUpperCase(); this.level=level;
+    this.baseExperience=data.base_experience||65;
     this.types=(data.types||[]).map(t=>t.type.name); this.type=this.types[0] || 'normal';
     this.spriteFront=data.sprites?.front_default || '';
     this.spriteBack=data.sprites?.back_default || this.spriteFront;
@@ -113,12 +129,13 @@ class Pokemon {
     if(starters) {
       this.moves=starters.filter(([lv])=>lv<=level).slice(-4).map(([lv,id])=>{
         const a=MOVE_FALLBACK[id]||['normal',40,25,'physical'];
-        return new Move(MOVE_NAMES_IT[id]||id.toUpperCase(),...a,null,{id});
+        const meta=MOVE_STATUS_FALLBACK[id]||{};
+        return new Move(MOVE_NAMES_IT[id]||id.toUpperCase(),...a,meta.statChange||null,{id,...meta});
       });
     }
     this.movesLoaded=false;
   }
-  requiredExp(){return Math.round(110 + this.level*22 + this.level*this.level*1.1);}
+  requiredExp(){return Math.round(68 + this.level*11 + this.level*this.level*.95);}
   calcStats() {
     const b=this.baseStats;
     this.maxHp=Math.floor((2*(b.hp||45)*this.level)/100)+this.level+10;
@@ -191,7 +208,7 @@ class Pokemon {
       if(!res.ok) return;
       const data=await res.json();const oldHp=this.maxHp;
       const evolution={from:this.name,to:data.name.toUpperCase(),fromSprite:this.spriteFront,toSprite:data.sprites.front_default};
-      this.id=data.id;this.name=data.name.toUpperCase();
+      this.id=data.id;this.name=data.name.toUpperCase();this.baseExperience=data.base_experience||this.baseExperience;
       this.types=data.types.map(t=>t.type.name);this.type=this.types[0];
       this.spriteFront=data.sprites.front_default;this.spriteBack=data.sprites.back_default||this.spriteFront;
       this.baseStats=Object.fromEntries(data.stats.map(s=>[s.stat.name,s.base_stat]));
@@ -203,7 +220,8 @@ class Pokemon {
   }
   restorePp(){this.moves.forEach(m=>m.currentPp=m.maxPp);}
   clearVolatile(){this.statStages={};this.seeded=false;}
-  healAll(){this.currentHp=this.maxHp;this.restorePp();this.status=null;this.statusTurns=0;this.clearVolatile();}
+  clearBattleConditions(){this.clearVolatile();this.status=null;this.statusTurns=0;}
+  healAll(){this.currentHp=this.maxHp;this.restorePp();this.clearBattleConditions();}
 }
 function statMultiplier(stage){const n=Math.max(-6,Math.min(6,stage||0));return n>=0?(2+n)/2:2/(2-n);}
 function calculateBattleDamage(attacker,defender,move,random=Math.random) {

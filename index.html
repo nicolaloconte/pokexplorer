@@ -11,6 +11,8 @@
   <link rel="stylesheet" href="style-v6.css">
   <link rel="stylesheet" href="style-v7.css">
   <link rel="stylesheet" href="style-v71.css">
+  <link rel="stylesheet" href="style-v72.css">
+  <link rel="stylesheet" href="style-v73.css">
 </head>
 <body>
 
@@ -27,6 +29,7 @@
         <span style="font-size:5px; color:#64748b;">Nessuna Medaglia</span>
       </div>
 
+      <div id="radar-charge-count" role="status" aria-live="polite">SCANSIONI: 3</div>
       <button class="btn-nav" id="btn-scan-radar" style="margin-top:auto;">RADAR SCAN</button>
     </div>
   </div>
@@ -100,6 +103,8 @@
             <div style="font-size:6px; color:#f8fafc; line-height:1.4;">Benvenuto al Negozio! Acquista strumenti utili:</div>
             <button class="btn-nav" id="buy-pokeball-btn" style="background:#ef4444; box-shadow:0 4px 0 #991b1b;">Poké Ball x1 ($200)</button>
             <button class="btn-nav" id="buy-potion-btn" style="background:#4ade80; color:#0f172a; box-shadow:0 4px 0 #16a34a;">Pozione x1 ($150)</button>
+            <button class="btn-nav" id="buy-elixir-btn" style="background:#a78bfa;color:#142031;box-shadow:0 4px 0 #6d28d9;">Elisir x1 ($400)</button>
+            <button class="btn-nav" id="buy-radar-btn" style="background:#38bdf8;color:#142031;box-shadow:0 4px 0 #0284c7;">Radar Scan +1 ($2.000)</button>
             <button class="btn-nav" id="buy-rod-btn" style="background:#f59e0b; color:#0f172a; box-shadow:0 4px 0 #b45309;">Canna da Pesca ($500)</button>
             <button class="btn-nav" id="close-market-btn" style="background:#64748b; box-shadow:0 4px 0 #334155; margin-top:4px;">ESCI DAL NEGOZIO</button>
           </div>
@@ -193,6 +198,7 @@
                 <div class="stat-bar-bg-gba"><div id="enemy-hp-fill" class="stat-bar-hp-gba"></div></div>
               </div>
               <div id="enemy-hp-text" class="hud-hp-num-gba">--/ --</div>
+              <div id="enemy-conditions" class="battle-conditions" aria-label="Effetti in battaglia sull'avversario"></div>
             </div>
 
             <!-- Piattaforma e Sprite Nemico (Corretto allineamento) -->
@@ -224,6 +230,7 @@
                 <div class="stat-bar-bg-gba"><div id="player-hp-fill" class="stat-bar-hp-gba"></div></div>
               </div>
               <div id="player-hp-text" class="hud-hp-num-gba">--/ --</div>
+              <div id="player-conditions" class="battle-conditions" aria-label="Effetti in battaglia sul Pokémon alleato"></div>
               
               <div class="hud-exp-row-gba">
                 <span class="hud-exp-badge">EXP</span>
@@ -249,6 +256,35 @@
           <div id="panel-team-actions" class="battle-panel-hint hidden"></div>
           <div id="panel-bag-actions" class="battle-panel-hint hidden"></div>
         </div>
+        <!-- Finale beta: accessibile soltanto dopo Giovanni e l'uscita dell'ottava città. -->
+        <section id="victory-overlay" class="hidden finale-screen" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+          <div class="finale-stars" aria-hidden="true"></div>
+          <div class="finale-kicker">POKÉXPLORER · FINALE BETA</div>
+          <h2 id="victory-title">CONGRATULAZIONI!<span>HAI VINTO... O QUASI!</span></h2>
+          <div class="finale-medal-preview" id="victory-badge-preview" aria-hidden="true"></div>
+          <p>Il gioco è ancora in fase di beta, attualmente stiamo preparando nuovi aggiornamenti!</p>
+          <div class="finale-actions">
+            <button class="finale-button primary" id="btn-victory-photo" type="button">FOTO RICORDO</button>
+            <button class="finale-button secondary" id="btn-victory-menu" type="button">TORNA AL MENÙ PRINCIPALE</button>
+          </div>
+        </section>
+
+        <!-- Cartolina ricordo pensata per essere catturata come screenshot dal giocatore. -->
+        <section id="memory-photo-overlay" class="hidden finale-screen" role="dialog" aria-modal="true" aria-labelledby="memory-photo-title">
+          <div class="memory-photo-card">
+            <div class="memory-photo-head">
+              <span class="memory-photo-tag">POKÉXPLORER · KANTO</span>
+              <h2 id="memory-photo-title">FOTO RICORDO</h2>
+              <p>LA TUA SQUADRA CAMPIONE</p>
+            </div>
+            <div id="memory-photo-team" class="memory-photo-team" aria-label="La tua squadra Pokémon"></div>
+            <div class="memory-photo-subtitle">LE OTTO MEDAGLIE DI KANTO</div>
+            <div id="memory-photo-badges" class="memory-photo-badges" aria-label="Medaglie conquistate"></div>
+            <div class="memory-photo-footer">INVIA QUESTO SCREEN SU DISCORD A @17nico</div>
+          </div>
+          <button class="finale-button photo-back" type="button" id="btn-photo-back">INDIETRO</button>
+        </section>
+
         <div id="evolution-overlay" class="hidden" role="dialog" aria-label="Evoluzione del Pokémon">
           <h3>EVOLUZIONE!</h3>
           <div class="evolution-sprites"><img id="evolution-from" alt="Prima dell'evoluzione"><img id="evolution-to" class="hidden" alt="Pokémon evoluto"></div>
@@ -287,9 +323,9 @@
 
       <div class="panel-hdr" style="margin-top:auto;">D-PAD CONTROLS</div>
       <div class="dpad-container">
-        <div></div><div class="btn-dpad" id="btn-dpad-up">▲</div><div></div>
-        <div class="btn-dpad" id="btn-dpad-left">◀</div><div class="btn-dpad">•</div><div class="btn-dpad" id="btn-dpad-right">▶</div>
-        <div></div><div class="btn-dpad" id="btn-dpad-down">▼</div><div></div>
+        <div></div><button type="button" class="btn-dpad" id="btn-dpad-up" aria-label="Sposta in alto">▲</button><div></div>
+        <button type="button" class="btn-dpad" id="btn-dpad-left" aria-label="Sposta a sinistra">◀</button><div class="btn-dpad">•</div><button type="button" class="btn-dpad" id="btn-dpad-right" aria-label="Sposta a destra">▶</button>
+        <div></div><button type="button" class="btn-dpad" id="btn-dpad-down" aria-label="Sposta in basso">▼</button><div></div>
       </div>
     </div>
   </div>

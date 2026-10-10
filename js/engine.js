@@ -8,8 +8,16 @@ const TRAINER_PORTRAIT_BASE = 'https://play.pokemonshowdown.com/sprites/trainers
 // Original FireRed five-frame backsprite, first 64x64 frame used for the opening throw.
 const RED_FIRERED_BACK_SHEET = 'https://raw.githubusercontent.com/pret/pokefirered/master/graphics/trainers/back_pics/red_back_pic.png';
 // Balancing knobs in one place: progression is intentionally slower than V7.
-const GAME_BALANCE = Object.freeze({raidChancePerItem: 0.10, expBase: 42, expPerEnemyLevel: 14,
-  gymExpBonus: 36, levelPerFloor: .90, wildEncounterChance: .26});
+const GAME_BALANCE = Object.freeze({raidChancePerItem: 0.10, wildEncounterChance: .20,
+  earlyWildMaxLevel:3, earlyTrainerMaxLevel:5, earlyFloors:5,
+  levelPerFloor:.52, expTrainerMultiplier:1.25, expGymMultiplier:1.45});
+const BAG_LIMITS=Object.freeze({potion:10,elixir:10,pokeball:20,fishingRod:1});
+/** Level-scaled experience inspired by the main-series scaled EXP system. */
+function scaledBattleExperience(baseYield, defeatedLevel, recipientLevel, trainerMultiplier=1){
+  const base=Math.max(20,Number(baseYield)||60), enemy=Math.max(1,defeatedLevel), player=Math.max(1,recipientLevel);
+  const levelRatio=Math.pow((2*enemy+10)/(enemy+player+10),2.5);
+  return Math.max(1,Math.floor((base*enemy/7)*levelRatio*trainerMultiplier));
+}
 
 // Otto capipalestra di Kanto: composizioni dedicate (Misty secondo la richiesta: Squirtle + Starmie).
 const KANTO_GYMS = [
@@ -33,7 +41,9 @@ class GameEngine {
     this.activeMon = null;
     this.enemyMon = null;
     this.items = { pokeball: 5, potion: 3, elixir: 1, fishingRod: false };
+    this.radarCharges=3; this.playerFacing='down';
     this.badges = [];
+    this.adventureCompleted = false;
     this.gridMap = [];
     this.selectedStarterData = null;
     this.isLocked = false;
@@ -92,6 +102,98 @@ class GameEngine {
     this.bindEvents();
   }
 
+  // L'ultimo portale sblocca il finale, non la vittoria su Giovanni da sola.
+  hasCompletedKantoChallenge(){
+    if(this.floor!==80 || !this.completedGymFloors.has(80))return false;
+    const badgeIds=new Set(this.badges.map(b=>typeof b==='object'?b.id:b));
+    return KANTO_GYMS.every((gym,index)=>badgeIds.has(index) && this.completedGymFloors.has((index+1)*10));
+  }
+
+  finishKantoAdventure(){
+    if(this.adventureCompleted || !this.hasCompletedKantoChallenge())return false;
+    this.adventureCompleted=true;
+    this.isLocked=true;
+    this.hideFinaleScreens();
+    this.$id('victory-overlay').classList.remove('hidden');
+    const preview=this.$id('victory-badge-preview');
+    preview.replaceChildren();
+    for(const gym of KANTO_GYMS){
+      const badge=document.createElement('img');
+      badge.src=this.badgeSprites[gym.badgeId];badge.alt='';
+      badge.width=32;badge.height=32;preview.appendChild(badge);
+    }
+    this.logMsg('Hai completato la sfida di Kanto!');
+    return true;
+  }
+
+  hideFinaleScreens(){
+    this.$id('victory-overlay')?.classList.add('hidden');
+    this.$id('memory-photo-overlay')?.classList.add('hidden');
+  }
+
+  showMemoryPhoto(){
+    if(!this.adventureCompleted)return;
+    const teamArea=this.$id('memory-photo-team');teamArea.replaceChildren();
+    // Copia solo dati del party: nessuna immagine viene caricata dall'utente.
+    for(let i=0;i<6;i++){
+      const pokemon=this.team[i];
+      const tile=document.createElement('div');tile.className='memory-mon'+(pokemon?'':' empty');
+      if(pokemon){
+        const sprite=document.createElement('img');sprite.src=pokemon.spriteFront || '';
+        sprite.alt=pokemon.name;sprite.loading='eager';
+        const name=document.createElement('strong');name.textContent=pokemon.name;
+        const level=document.createElement('span');level.textContent=`Lv. ${pokemon.level}`;
+        tile.append(sprite,name,level);
+      }
+      teamArea.appendChild(tile);
+    }
+    const badgeArea=this.$id('memory-photo-badges');badgeArea.replaceChildren();
+    for(const gym of KANTO_GYMS){
+      const badge=document.createElement('div');badge.className='memory-badge';
+      const img=document.createElement('img');img.src=this.badgeSprites[gym.badgeId];
+      img.alt=`Medaglia ${gym.badge}`;img.loading='eager';
+      const title=document.createElement('span');title.textContent=gym.badge;
+      badge.append(img,title);badgeArea.appendChild(badge);
+    }
+    this.$id('victory-overlay').classList.add('hidden');
+    this.$id('memory-photo-overlay').classList.remove('hidden');
+    this.isLocked=true;
+  }
+
+  returnToVictoryScreen(){
+    if(!this.adventureCompleted)return;
+    this.$id('memory-photo-overlay').classList.add('hidden');
+    this.$id('victory-overlay').classList.remove('hidden');
+    this.isLocked=true;
+  }
+
+  returnToMainMenu(){
+    this.acknowledgeDialogue();
+    this.battleToken++;
+    this.hideFinaleScreens();
+    for(const id of ['gameover-overlay','starter-scene-overlay','overlay-battle',
+      'battle-controls','gym-leader-intro','trainer-encounter-overlay',
+      'wild-encounter-overlay','pokemart-overlay','box-pc-overlay',
+      'npc-dialog-overlay','learn-move-overlay','evolution-overlay','battle-confirm']){
+      this.$id(id)?.classList.add('hidden');
+    }
+    this.$id('rotom-body')?.classList.remove('battle-active');
+    this.$id('main-menu-overlay').classList.remove('hidden');
+    this.floor=1;this.money=600;this.playerPos={x:0,y:0};
+    this.team=[];this.activeMon=null;this.enemyMon=null;
+    this.gridMap=[];this.badges=[];this.completedGymFloors.clear();
+    this.selectedStarterData=null;this.adventureCompleted=false;
+    this.gymQueue=[];this.gymLeaderIndex=0;this.currentGym=null;
+    this.battleParticipants.clear();this.battleBusy=false;
+    this.pendingForcedSwitch=false;this.isRaidActive=false;this.raidQueueCount=0;
+    this.battleMode=null;this.isLocked=false;this.battleConfirmAction=null;
+    this.items={pokeball:5,potion:3,elixir:1,fishingRod:false};
+    this.radarCharges=3;this.playerFacing='down';
+    const notice=this.$id('discovery-notice');notice?.classList.remove('visible');
+    this.renderBadges();this.renderSidebar();
+    this.logMsg('Inizia una nuova avventura!');
+  }
+
   preloadBattleTrainers(){
     if(this.battleTrainerPreloaded) return;
     this.battleTrainerPreloaded=true;
@@ -131,7 +233,7 @@ class GameEngine {
     const sprite=this.$id(side==='enemy'?'enemy-sprite':'player-sprite').getBoundingClientRect();
     // Visible sprite center, not a corner of its image box.
     return {x:sprite.left-stage.left+sprite.width*.50,
-      y:sprite.top-stage.top+sprite.height*.53};
+      y:sprite.top-stage.top+sprite.height*.54};
   }
 
   hpColorState(mon) {
@@ -162,22 +264,10 @@ class GameEngine {
       this.startStarterScene();
     });
 
-    safeOnClick('btn-return-main-menu', () => {
-      document.getElementById('gameover-overlay').classList.add('hidden');
-      document.getElementById('main-menu-overlay').classList.remove('hidden');
-      this.floor = 1;
-      this.money = 600;
-      this.team = [];
-      this.activeMon = null;
-      this.battleParticipants.clear();
-      this.items = { pokeball: 5, potion: 3, elixir: 1, fishingRod: false };
-      this.badges = [];
-      this.completedGymFloors.clear();
-      this.gymQueue = [];
-      this.currentGym = null;
-      this.renderBadges();
-      this.renderSidebar();
-    });
+    safeOnClick('btn-return-main-menu', () => this.returnToMainMenu());
+    safeOnClick('btn-victory-photo', () => this.showMemoryPhoto());
+    safeOnClick('btn-victory-menu', () => this.returnToMainMenu());
+    safeOnClick('btn-photo-back', () => this.returnToVictoryScreen());
 
     safeOnClick('btn-confirm-yes', () => this.confirmStarter());
     safeOnClick('btn-confirm-no', () => this.resetStarter());
@@ -222,25 +312,11 @@ class GameEngine {
       }, 600);
     });
 
-    safeOnClick('buy-pokeball-btn', () => {
-      if (this.money >= 200) { this.money -= 200; this.items.pokeball++; this.logMsg("Poké Ball acquistata!"); this.renderSidebar(); }
-      else { this.logMsg("Denaro insufficiente!"); }
-    });
-
-    safeOnClick('buy-potion-btn', () => {
-      if (this.money >= 150) { this.money -= 150; this.items.potion++; this.logMsg("Pozione acquistata!"); this.renderSidebar(); }
-      else { this.logMsg("Denaro insufficiente!"); }
-    });
-
-    safeOnClick('buy-rod-btn', () => {
-      if (this.items.fishingRod) { this.logMsg("Canna già acquistata!"); }
-      else if (this.money >= 500) {
-        this.money -= 500; this.items.fishingRod = true;
-        this.logMsg("Canna da Pesca acquistata!");
-        document.getElementById('buy-rod-btn').textContent = "CANNA ACQUISTATA";
-        this.renderSidebar();
-      } else { this.logMsg("Denaro insufficiente ($500)!"); }
-    });
+    safeOnClick('buy-pokeball-btn', () => this.purchaseItem('pokeball',200));
+    safeOnClick('buy-potion-btn', () => this.purchaseItem('potion',150));
+    safeOnClick('buy-elixir-btn', () => this.purchaseItem('elixir',400));
+    safeOnClick('buy-rod-btn', () => this.purchaseItem('fishingRod',500));
+    safeOnClick('buy-radar-btn', () => this.purchaseRadar());
 
     safeOnClick('close-market-btn', () => {
       document.getElementById('pokemart-overlay').classList.add('hidden');
@@ -280,11 +356,11 @@ class GameEngine {
     safeOnClick('btn-dpad-right', () => this.movePlayer(1, 0));
 
     window.addEventListener('keydown', (e) => {
-      if (this.isLocked || this.battleConfirmAction) return;
-      if (['ArrowUp', 'w', 'W'].includes(e.key)) this.movePlayer(0, -1);
-      if (['ArrowDown', 's', 'S'].includes(e.key)) this.movePlayer(0, 1);
-      if (['ArrowLeft', 'a', 'A'].includes(e.key)) this.movePlayer(-1, 0);
-      if (['ArrowRight', 'd', 'D'].includes(e.key)) this.movePlayer(1, 0);
+      if (this.isLocked || this.battleConfirmAction || e.target?.closest?.('input,textarea,[contenteditable]')) return;
+      const directions={ArrowUp:[0,-1],w:[0,-1],W:[0,-1],ArrowDown:[0,1],s:[0,1],S:[0,1],
+        ArrowLeft:[-1,0],a:[-1,0],A:[-1,0],ArrowRight:[1,0],d:[1,0],D:[1,0]};
+      const step=directions[e.key];if(!step)return;
+      e.preventDefault();this.movePlayer(...step);
     });
   }
 
@@ -528,15 +604,38 @@ generateFloorDungeon() {
   }
 
   scanRadar() {
-    for (let y = 0; y < this.gridSize; y++) {
-      for (let x = 0; x < this.gridSize; x++) { this.gridMap[y][x].revealed = true; }
+    if(this.isLocked || !this.gridMap?.length)return;
+    if(!this.gridMap.some(row=>row.some(cell=>!cell.revealed))){
+      this.logMsg('Mappa già esplorata: nessuna scansione consumata.');return;
     }
-    this.renderDungeon();
-    this.logMsg("Rotom Radar attivato!");
+    if(this.radarCharges<=0){this.logMsg('Radar esaurito: acquista un utilizzo al Pokémarket (2.000 Pokécoins).');return;}
+    this.radarCharges--;
+    for(const row of this.gridMap)for(const cell of row)cell.revealed=true;
+    this.renderDungeon();this.renderSidebar();
+    this.logMsg(`Rotom Radar attivato! Utilizzi rimanenti: ${this.radarCharges}.`);
+  }
+
+  grantItem(id,count=1){
+    const limit=BAG_LIMITS[id]; if(limit===undefined)return false;
+    if(id==='fishingRod'){if(this.items.fishingRod)return false;this.items.fishingRod=true;return true;}
+    const available=Math.max(0,limit-(this.items[id]||0));
+    if(!available)return false;
+    this.items[id]+=Math.min(available,count);return true;
+  }
+  purchaseItem(id,price){
+    if(this.money<price){this.logMsg(`Pokécoins insufficienti: servono ${price}.`);return false;}
+    if(!this.grantItem(id)){this.logMsg('Capacità massima raggiunta!');return false;}
+    this.money-=price;this.renderSidebar();this.logMsg('Acquisto completato!');return true;
+  }
+  purchaseRadar(){
+    if(this.money<2000){this.logMsg('Servono 2.000 Pokécoins per una scansione.');return false;}
+    this.money-=2000;this.radarCharges++;this.renderSidebar();
+    this.logMsg(`Radar +1 · Ora hai ${this.radarCharges} scansioni.`);return true;
   }
 
   movePlayer(dx, dy) {
-    if (this.isLocked) return;
+    if (this.isLocked || this.adventureCompleted || !this.gridMap?.length) return;
+    this.playerFacing=dx<0?'left':dx>0?'right':dy<0?'up':'down';
     const nx = this.playerPos.x + dx;
     const ny = this.playerPos.y + dy;
 
@@ -544,7 +643,7 @@ generateFloorDungeon() {
       const targetCell = this.gridMap[ny][nx];
 
       if (targetCell.type === 'tree') {
-        this.logMsg("Un albero ti sbarra la strada!");
+        this.renderDungeon();this.logMsg("Un albero ti sbarra la strada!");
         return;
       }
 
@@ -644,14 +743,24 @@ generateFloorDungeon() {
           return;
         }
         const randItem = Math.random();
-        if (randItem < 0.4) { this.items.pokeball++; this.logMsg("Hai trovato una Poké Ball!"); this.showDiscoveryNotice("POKÉ BALL RACCOLTA!"); }
-        else if (randItem < 0.8) { this.items.potion++; this.logMsg("Hai trovato una Pozione!"); this.showDiscoveryNotice("POZIONE RACCOLTA!"); }
-        else { this.items.elixir++; this.logMsg("Hai trovato un Elisir!"); this.showDiscoveryNotice("ELISIR RACCOLTO!"); }
+        const kind=randItem<.4?'pokeball':randItem<.8?'potion':'elixir';
+        const label={pokeball:'POKÉ BALL',potion:'POZIONE',elixir:'ELISIR'}[kind];
+        const stored=this.grantItem(kind);
+        this.logMsg(stored?`Hai trovato: ${label}!`:`Zaino pieno (${label}), oggetto lasciato.`);
+        this.showDiscoveryNotice(stored?`${label} RACCOLTO!`:`ZAINO PIENO · ${label}`);
       } else if (targetCell.entity === 'door') {
         // Ogni decimo piano è una città: l'uscita richiede obbligatoriamente la medaglia.
         if (this.floor % 10 === 0 && !this.completedGymFloors.has(this.floor)) {
           this.logMsg('USCITA BLOCCATA! Sconfiggi il Capopalestra della città per proseguire.');
           this.showDiscoveryNotice('SFIDA E VINCI LA PALESTRA PRIMA DI USCIRE', 2900);
+          return;
+        }
+        if(this.floor===80) {
+          if(this.hasCompletedKantoChallenge())this.finishKantoAdventure();
+          else {
+            this.logMsg('Prima del traguardo devi ottenere tutte le otto medaglie di Kanto.');
+            this.showDiscoveryNotice('COLLEZIONA TUTTE LE OTTO MEDAGLIE',3200);
+          }
           return;
         }
         this.floor++;
@@ -727,6 +836,19 @@ generateFloorDungeon() {
     setTimeout(()=>document.addEventListener('pointerdown',listener,true),20);
   }
 
+  createSingleFrameAvatar(url,fallback,description,extraClass=''){
+    // Source images are multi-pose horizontal sprite sheets: crop one 16×32 frame
+    // in a dedicated viewport rather than scaling the entire sheet into the tile.
+    const frame=document.createElement('span');
+    frame.className=`grid-icon official-overworld single-frame sprite-frame ${extraClass}`;
+    frame.setAttribute('role','img');frame.setAttribute('aria-label',description);
+    const image=document.createElement('img');image.className='overworld-frame-img';
+    image.src=url;image.alt='';image.loading='eager';image.decoding='async';
+    image.onerror=()=>{image.onerror=null;image.src=fallback;
+      image.style.width='16px';image.style.height='32px';};
+    frame.appendChild(image);return frame;
+  }
+
   renderDungeon() {
     const board = document.getElementById('dungeon-grid-board');
     if (!board) return;
@@ -745,7 +867,8 @@ generateFloorDungeon() {
           cellDiv.style.backgroundPosition=`${x*100/9}% ${y*100/9}%`;
         } else {
           if (x === this.playerPos.x && y === this.playerPos.y) {
-            cellDiv.innerHTML = `<span class="grid-icon player-avatar official-overworld" role="img" aria-label="Red" style="background-image:url('${redSpriteUrl}')"></span>`;
+            const facingFrame={down:0,up:1,left:2,right:3}[this.playerFacing]||0;
+            cellDiv.innerHTML = `<span class="grid-icon player-avatar official-overworld" role="img" aria-label="Red" style="background-image:url('${redSpriteUrl}');--facing-position:-${facingFrame*16}px"></span>`;
           } else if (cell.type === 'tree') {
             cellDiv.innerHTML = `<img class="terrain-tree" src="assets/tree.svg" alt="" aria-hidden="true">`;
           } else if (cell.type === 'water') {
@@ -759,12 +882,9 @@ generateFloorDungeon() {
           } else if (cell.entity === 'house') {
             cellDiv.innerHTML = `<img class="map-building" src="assets/house.svg" alt="Casa">`;
           } else if (cell.entity === 'npc') {
-            const figure=document.createElement('span');
-            figure.className='grid-icon town-npc official-overworld';
-            figure.setAttribute('role','img');
-            figure.setAttribute('aria-label',`Abitante: ${cell.npcName||'Pokémon Rosso Fuoco'}`);
-            figure.style.backgroundImage=`url('${cell.npcSprite}')`;
-            cellDiv.appendChild(figure);
+            const fallback=this.npcFallbacks[(x+y+this.floor)%this.npcFallbacks.length];
+            cellDiv.appendChild(this.createSingleFrameAvatar(cell.npcSprite||this.npcSprites[0],
+              fallback,`Abitante: ${cell.npcName||'Pokémon Rosso Fuoco'}`,'town-npc'));
           } else if (cell.entity === 'door') {
             if(this.floor%10===0 && !this.completedGymFloors.has(this.floor)) {
               cellDiv.classList.add('locked-exit');
@@ -773,12 +893,10 @@ generateFloorDungeon() {
           } else if (cell.entity === 'raid' || cell.entity === 'item') {
             cellDiv.innerHTML = `<img class="grid-icon" src="assets/items/pokeball.svg" alt="Poké Ball">`;
           } else if (cell.entity === 'trainer') {
-            const figure=document.createElement('span');
-            figure.className='grid-icon route-trainer official-overworld';
-            figure.setAttribute('role','img');
-            figure.setAttribute('aria-label',cell.trainerName||'Allenatore');
-            figure.style.backgroundImage=`url('${cell.trainerOverworldSprite || `${FIRERED_OVERWORLD_BASE}youngster.png`}')`;
-            cellDiv.appendChild(figure);
+            cellDiv.appendChild(this.createSingleFrameAvatar(
+              cell.trainerOverworldSprite||`${FIRERED_OVERWORLD_BASE}youngster.png`,
+              this.npcFallbacks[(x+y+this.floor)%this.npcFallbacks.length],
+              cell.trainerName||'Allenatore','route-trainer'));
           } else if(cell.decoration) {
             cellDiv.innerHTML=`<img class="map-decoration" src="assets/decor/${cell.decoration}.svg" alt="">`;
           }
@@ -867,6 +985,16 @@ generateFloorDungeon() {
     run.disabled=forbidden;run.title=forbidden?'Non puoi fuggire da una sfida con allenatori o dal raid.':'';
     this.renderSidebar();
   }
+  encounterLevel(type,leader=false,rng=Math.random){
+    const isTrainer=type==='trainer'||type==='gym';
+    if(this.floor<=GAME_BALANCE.earlyFloors){
+      if(leader)return 6;
+      return isTrainer?4+Math.floor(rng()*2):2+Math.floor(rng()*2);
+    }
+    const base=3+this.floor*GAME_BALANCE.levelPerFloor;
+    return Math.max(2,Math.min(70,Math.round(base+(leader?4:isTrainer?2:0)+Math.floor(rng()*2))));
+  }
+
   async startBattle(type) {
     this.battleType=type;this.isLocked=true;this.battleBusy=true;
     this.battleParticipants = new Set();
@@ -883,14 +1011,18 @@ generateFloorDungeon() {
     this.hideAllActions();this.openWings();
     const leader=type==='gym' && this.gymQueue[0]==='leader' && this.currentGym;
     const gymPool=[16,19,21,23,27,35,41,43,56,74,81];
-    const pool=type==='gym'?gymPool:[1,4,7,19,25,39,52,133,10,13,16,37,43,63,74,92,104];
+    const wildPool=[1,4,7,19,25,39,52,133,10,13,16,37,43,63,74,92,104];
+    // Gastly cannot be found until the first village (floor 5) has been passed.
+    if(this.floor<=5)wildPool.splice(wildPool.indexOf(92),1);
+    // Beginner routes favor low-threat Kanto species and avoid early bulky/ghost encounters.
+    const beginnerPool=[19,16,10,13,52,39]; // Rattata, Pidgey, Caterpie, Weedle, Meowth, Jigglypuff
+    const pool=type==='gym'?gymPool:(this.floor<=5?beginnerPool:wildPool);
     const enemyId=leader?this.currentGym.pokemon[this.gymLeaderIndex]:pool[Math.floor(Math.random()*pool.length)];
     try {
       const data=await this.getPokemonData(enemyId);
       if(token!==this.battleToken)return;
       // Floor-based progression, with leaders stronger than regular encounters.
-      const bonus=leader?4:(type==='trainer'||type==='gym'?2:0);
-      const level=Math.max(3,Math.min(85,Math.round(3+this.floor*GAME_BALANCE.levelPerFloor+bonus+Math.floor(Math.random()*2))));
+      const level=this.encounterLevel(type,Boolean(leader));
       this.enemyMon=new Pokemon(data,level);
       await Promise.all([this.enemyMon.loadLearnset(),this.activeMon.loadLearnset()]);
     }catch(err) {
@@ -903,12 +1035,14 @@ generateFloorDungeon() {
     this.$id('enemy-sprite').src=this.enemyMon.spriteFront;
     this.$id('enemy-sprite').classList.remove('faint-anim','summon-anim','recall-anim');
     this.$id('enemy-sprite').classList.add('hidden');
-    this.$id('enemy-trainer-sprite').classList.add('hidden');
+    const previousTrainer=this.$id('enemy-trainer-sprite');
+    previousTrainer.className='poke-sprite-gba enemy-trainer-frame hidden';
+    previousTrainer.removeAttribute('style');
     this.$id('player-sprite').classList.add('hidden');
     this.$id('player-trainer-sprite').style.backgroundImage=this.redBackSheetReady ?
       `url('${RED_FIRERED_BACK_SHEET}')` : `url('assets/trainers/red-back-fallback.svg')`;
     this.$id('player-trainer-sprite').classList.toggle('red-sheet-ready',Boolean(this.redBackSheetReady));
-    this.$id('player-trainer-sprite').classList.remove('hidden');
+    this.$id('player-trainer-sprite').classList.add('hidden');
     const hostile=['gym','trainer'].includes(type);
     const stage=this.$id('battle-stage');
     stage.classList.toggle('wild-battle',!hostile);
@@ -923,7 +1057,10 @@ generateFloorDungeon() {
     if(hostile){
       const trainer=this.$id('enemy-trainer-sprite');
       this.setTrainerPortrait(trainer,leader?`https://play.pokemonshowdown.com/sprites/trainers/${this.currentGym.sprite}.png`:this.currentTrainerSprite);
-      trainer.classList.remove('hidden');trainer.classList.add('trainer-enter');
+      trainer.classList.remove('trainer-throw-anim','trainer-enter','summon-anim');
+      trainer.classList.add('enemy-trainer-frame');
+      trainer.classList.remove('hidden');
+      trainer.classList.add('trainer-enter');
       await this.wait(590);
       if(token!==this.battleToken)return;
       await this.battleText(leader?`${this.currentGym.name} sceglie ${this.enemyMon.name}!`:`L'allenatore avversario prepara la Poké Ball!`);
@@ -1021,7 +1158,9 @@ generateFloorDungeon() {
     const width=38;
     const start={x:area.width*.21,y:area.height*.70};
     const hit={x:target.x-width/2,y:target.y-width/2};
-    const ground={x:target.x-width/2,y:Math.min(area.height-59,target.y+63)};
+    const platform=stage.querySelector('.enemy-platform-gba')?.getBoundingClientRect();
+    const landingY=platform ? platform.top-area.top-12 : target.y+35;
+    const ground={x:target.x-width/2,y:Math.max(hit.y+10,Math.min(area.height-48,landingY))};
     ball.className='capture-ball compositor-ball';ball.style.display='block';ball.style.opacity='1';
     ball.style.left='0px';ball.style.top='0px';
     const anim=[0,.18,.42,.66,.85,1].map(t=>({
@@ -1040,6 +1179,11 @@ generateFloorDungeon() {
       {transform:`translate3d(${ground.x}px,${ground.y-7}px,0) rotate(12deg)`,offset:.66},
       {transform:`translate3d(${ground.x}px,${ground.y}px,0) rotate(0deg)`}],330,'ease-out');
     ball.style.transform=`translate3d(${ground.x}px,${ground.y}px,0)`;
+    ball.classList.add('capture-waiting');
+    await this.playMotion(ball,[
+      {transform:`translate3d(${ground.x}px,${ground.y}px,0) scale(1)`,filter:'brightness(1)'},
+      {transform:`translate3d(${ground.x}px,${ground.y}px,0) scale(1.07)`,filter:'brightness(2.2)',offset:.5},
+      {transform:`translate3d(${ground.x}px,${ground.y}px,0) scale(1)`,filter:'brightness(1)'}],450,'ease-in-out');
     for(let i=0;i<shakes;i++){
       await this.playMotion(ball,[
         {transform:`translate3d(${ground.x}px,${ground.y}px,0) rotate(0deg)`},
@@ -1084,7 +1228,22 @@ generateFloorDungeon() {
     this.$id('player-hp-text').textContent=`${a.currentHp}/${a.maxHp}`;
     this.$id('enemy-hp-text').textContent=`${b.currentHp}/${b.maxHp}`;
     this.$id('player-exp-fill').style.width=`${Math.max(0,Math.min(100,100*a.exp/a.expToNext))}%`;
+    this.renderBattleConditions('player',a);
+    this.renderBattleConditions('enemy',b);
     this.renderSidebar();
+  }
+  renderBattleConditions(side,mon){
+    const out=this.$id(`${side}-conditions`);if(!out)return;
+    out.replaceChildren();
+    const statuses={burn:'BRU',poison:'VEL','bad-poison':'VEL+',paralysis:'PAR',sleep:'SON',freeze:'GEL',confusion:'CONF'};
+    if(mon.status){const chip=document.createElement('span');chip.className='condition-chip status-chip';chip.textContent=statuses[mon.status]||mon.status.toUpperCase();out.append(chip);}
+    if(mon.seeded){const chip=document.createElement('span');chip.className='condition-chip status-chip';chip.textContent='SEME';out.append(chip);}
+    const labels={attack:'ATT',defense:'DIF','special-attack':'ATT.SP','special-defense':'DIF.SP',speed:'VEL.',accuracy:'PREC',evasion:'ELUS'};
+    for(const [key,value] of Object.entries(mon.statStages||{})){
+      if(!value)continue;
+      const chip=document.createElement('span');chip.className=`condition-chip ${value>0?'boost':'nerf'}`;
+      chip.textContent=`${labels[key]||key} ${value>0?'+':''}${value}`;out.append(chip);
+    }
   }
   setBattleMsg(text){
     this.$id('battle-msg').textContent=text;
@@ -1317,7 +1476,7 @@ generateFloorDungeon() {
     this.battleBusy=true;this.hideAllActions();
     const enemyMove=this.pickEnemyMove();
     const enemyFirst=(enemyMove.priority>move.priority)||
-      (enemyMove.priority===move.priority && this.enemyMon.speed>this.activeMon.speed);
+      (enemyMove.priority===move.priority && this.battleSpeed(this.enemyMon)>this.battleSpeed(this.activeMon));
     if(enemyFirst){await this.applyMove(this.enemyMon,this.activeMon,enemyMove,'player');
       if(this.activeMon.currentHp<=0){await this.onPlayerFainted();return;}}
     if(this.enemyMon.currentHp>0){await this.applyMove(this.activeMon,this.enemyMon,move,'enemy');}
@@ -1327,6 +1486,9 @@ generateFloorDungeon() {
     if(this.activeMon.currentHp<=0){await this.onPlayerFainted();return;}
     if(this.enemyMon.currentHp<=0){await this.handleBattleVictory();return;}
     this.battleBusy=false;this.showMainActions();
+  }
+  battleSpeed(mon){
+    return mon.speed*statMultiplier(mon.statStages?.speed)*(mon.status==='paralysis'?.5:1);
   }
   pickEnemyMove(){
     const available=this.enemyMon.moves.filter(m=>m.currentPp>0);
@@ -1366,19 +1528,23 @@ generateFloorDungeon() {
       const reaction=result.effectiveness===0?'Non ha effetto…':result.effectiveness>1?'È superefficace!':result.effectiveness<1?'Non è molto efficace…':'';
       this.updateBattleHUD();
       await this.battleText(`${attacker.name} usa ${move.name}! ${result.damage} danni. ${result.critical?'⚡ BRUTTO COLPO! ':''}${reaction}`);
-    } else if(modifier===0 && !['growl','leer','tail-whip'].includes(move.id)) {
+    } else if(modifier===0 && move.power>0) {
       await this.battleText('Non ha effetto…');
     } else if(move.healing>0 || ['recover','rest'].includes(move.id)){
       const amount=Math.max(1,Math.floor(attacker.maxHp*(move.healing||50)/100));
       attacker.currentHp=Math.min(attacker.maxHp,attacker.currentHp+amount);
       await this.battleText(`${attacker.name} recupera ${amount} PS!`);
     } else if(move.id==='leech-seed'){defender.seeded=true;await this.battleText(`${defender.name} è stato parassitato!`);
-    } else if(move.statChange){
-      const stat=move.statChange.stat;
-      const targetP=move.statChange.stage<0?defender:attacker;
-      targetP.statStages[stat]=Math.max(-6,Math.min(6,(targetP.statStages[stat]||0)+move.statChange.stage));
-      await this.battleText(`${targetP.name}: ${stat} ${move.statChange.stage<0?'diminuisce':'aumenta'}!`);
-    } else await this.battleText(`${attacker.name} esegue ${move.name}!`);
+    } else if(!move.statChange && !move.ailment) await this.battleText(`${attacker.name} esegue ${move.name}!`);
+    // Stage effects apply on support moves AND damaging moves with a secondary effect.
+    if(move.statChange && (move.power===0 || defender.currentHp>0) &&
+      (move.power===0 || modifier>0) && Math.random()*100<(move.statChange.chance??100)){
+      const {stat,stage}=move.statChange;
+      const targetP=stage<0?defender:attacker;
+      targetP.statStages[stat]=Math.max(-6,Math.min(6,(targetP.statStages[stat]||0)+stage));
+      this.updateBattleHUD();
+      await this.battleText(`${targetP.name}: ${stat} ${stage<0?'diminuisce':'aumenta'}!`);
+    }
     if(move.ailment && move.ailment!=='none' && !defender.status && defender.currentHp>0 && modifier>0 && Math.random()*100<(move.ailmentChance || (move.power===0?100:0))) {
       defender.status=move.ailment;defender.statusTurns=2+Math.floor(Math.random()*3);await this.battleText(`${defender.name} è affetto da ${move.ailment}!`);
     }
@@ -1446,15 +1612,14 @@ generateFloorDungeon() {
     const defeated=this.enemyMon;
     this.$id('enemy-sprite').classList.add('faint-anim');
     await this.battleText(`${defeated.name} è esausto!`);
-    const exp=Math.round(GAME_BALANCE.expBase+defeated.level*GAME_BALANCE.expPerEnemyLevel+
-      (this.battleType==='gym'?GAME_BALANCE.gymExpBonus:0));
-    const recipient=this.activeMon;
-    await this.awardBattleExperience(recipient,exp);
-    for(const mon of [...this.battleParticipants]){
-      if(mon!==recipient && this.team.includes(mon) && mon.currentHp>0){
-        const share=Math.round(exp*(.3+Math.random()*.2));
-        await this.awardBattleExperience(mon,share);
-      }
+    const expMultiplier=this.battleType==='gym'?GAME_BALANCE.expGymMultiplier:
+      this.battleType==='trainer'?GAME_BALANCE.expTrainerMultiplier:1;
+    const eligible=[...this.battleParticipants].filter(p=>this.team.includes(p)&&p.currentHp>0);
+    // Each participant receives level-scaled EXP, with a smaller share for switched Pokémon.
+    for(const mon of eligible){
+      const earned=scaledBattleExperience(defeated.baseExperience,defeated.level,mon.level,expMultiplier);
+      const reward=mon===this.activeMon?earned:Math.max(1,Math.round(earned*.55));
+      await this.awardBattleExperience(mon,reward);
     }
     if(this.battleType==='gym'&&this.gymQueue.length>0){
       await this.advanceGymAfterVictory();return;
@@ -1493,7 +1658,8 @@ generateFloorDungeon() {
   endBattle(msg){
     this.acknowledgeDialogue();
     this.battleToken++;this.battleBusy=false;this.pendingForcedSwitch=false;this.battleMode=null;
-    this.team.forEach(p=>p.clearVolatile());
+    this.team.forEach(p=>p.clearBattleConditions());
+    this.enemyMon?.clearBattleConditions();
     this.$id('overlay-battle').classList.add('hidden');
     this.$id('battle-controls').classList.add('hidden');
     this.$id('rotom-body').classList.remove('battle-active');
@@ -1556,6 +1722,7 @@ generateFloorDungeon() {
   renderSidebar() {
     this.$id('floor-num').textContent=this.floor;
     this.$id('player-money').textContent=`$${this.money}`;
+    this.$id('radar-charge-count')?.replaceChildren(document.createTextNode(`SCANSIONI: ${this.radarCharges}`));
     const bag=this.$id('bag-list');bag.innerHTML='';
     const categories={
       rimedi:[['potion','Pozione','potion'],['elixir','Elisir','elixir']],

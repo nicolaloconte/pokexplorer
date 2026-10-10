@@ -1,0 +1,146 @@
+/* Pokéxplorer V7.2 — finale beta e sprite cleanup.
+   Questa patch è isolata per preservare le grafiche V7.1 approvate. */
+
+/* Un singolo fotogramma FireRed: nasconde i pixel della posa adiacente del foglio.
+   Il ritaglio resta nel box dell'NPC, e non vengono sovrapposti altri sprite. */
+#dungeon-grid-board .grid-cell .route-trainer.official-overworld.single-frame {
+  box-sizing:content-box!important;
+  width:15px!important;height:32px!important;
+  background-repeat:no-repeat!important;
+  background-position:1px 0!important;
+  background-size:128px 32px!important;
+  overflow:hidden!important;
+  clip-path:inset(0 3px 0 0);
+  transform:translate(-50%,-50%) scale(1.35)!important;
+  animation:none!important;
+  isolation:isolate;
+}
+
+/* Red entra nell'inquadratura sopra il bordo della chat: il margine inferiore
+   viene tagliato dal contenitore della scena, non dal PNG. */
+#battle-stage #player-trainer-sprite {
+  left:5.5%!important;
+  top:auto!important;
+  bottom:-18px!important;
+  width:clamp(144px,34%,185px)!important;
+  height:clamp(144px,34%,185px)!important;
+  z-index:22!important;
+  object-fit:contain;
+  backface-visibility:hidden;
+  transform-origin:50% 90%;
+}
+#battle-stage #player-trainer-sprite.hidden {display:none!important}
+
+/* I ritratti avversari occupano un solo box: nessun background / riflesso
+   fantasma sotto le pose e nessuna classe animazione obsoleta al riavvio. */
+#battle-stage #enemy-trainer-sprite.enemy-trainer-frame {
+  display:block;
+  top:calc(46% - 100px)!important;
+  right:calc(4.5% + 10%)!important;
+  width:135px!important;height:140px!important;
+  max-width:34%!important;
+  object-fit:contain!important;
+  object-position:center bottom!important;
+  image-rendering:pixelated!important;
+  background:none!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 3px 1px rgba(30,50,35,.22))!important;
+  isolation:isolate;
+  backface-visibility:hidden;
+  z-index:14!important;
+}
+#battle-stage #enemy-trainer-sprite.enemy-trainer-frame.hidden{display:none!important}
+
+/* Interfaccia del finale e cartolina ricordo, interna allo schermo Rotomdex. */
+.finale-screen {
+  position:absolute;inset:0;z-index:260;
+  display:flex;flex-direction:column;justify-content:center;align-items:center;
+  gap:15px;padding:22px 25px;text-align:center;
+  background:radial-gradient(ellipse at 48% 27%,#293f74 0%,#142953 37%,#071127 88%);
+  color:#fff0cc;
+  overflow-y:auto;
+  scrollbar-width:thin;
+}
+.finale-screen.hidden{display:none!important}
+#victory-overlay .finale-stars {
+  position:absolute;inset:0;pointer-events:none;opacity:.44;
+  background-image:radial-gradient(#fbe8a7 1px, transparent 2px),radial-gradient(#fff 1px, transparent 2px);
+  background-size:74px 71px,119px 123px;
+  background-position:17px 30px,41px 19px;
+}
+.finale-kicker,.finale-screen h2,.finale-screen p,.finale-actions,.finale-medal-preview {position:relative;z-index:1}
+.finale-kicker {
+  color:#83d9ec;font-size:7px;line-height:1.6;letter-spacing:1px;
+}
+#victory-title{
+  font:12px/1.75 'Press Start 2P',monospace;
+  max-width:96%;color:#ffe29c;
+  text-shadow:0 3px #863c57,0 0 15px rgba(255,227,152,.29);
+}
+#victory-title span{display:block;font-size:10px;color:#fff5df;margin-top:9px}
+#victory-overlay>p{
+  font-size:8px;line-height:2.0;color:#e0eaff;
+  max-width:440px;
+}
+.finale-medal-preview{display:grid;grid-template-columns:repeat(8,1fr);gap:7px;max-width:390px;width:100%;padding:10px 12px;border-radius:10px;background:rgba(255,255,255,.07);border:1px solid #a6b8d462}
+.finale-medal-preview img{width:100%;height:32px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #0007)}
+.finale-actions{display:flex;flex-direction:column;gap:10px;align-items:center;width:100%;margin-top:6px}
+.finale-button{
+  font:7px/1.6 'Press Start 2P',monospace;
+  cursor:pointer;text-align:center;min-height:37px;
+  padding:10px 12px;border:2px solid #fbe5be;
+  border-radius:8px;box-shadow:0 4px #0007;
+  color:#fff8e9;background:#385d8e;
+  transition:filter .18s ease,transform .18s ease;
+}
+.finale-button:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.finale-button:focus-visible{outline:3px solid #55daff;outline-offset:3px}
+.finale-actions .finale-button{width:min(100%,340px)}
+.finale-button.primary{background:linear-gradient(#d96550,#b6333f)}
+.finale-button.secondary{background:linear-gradient(#527398,#274a73)}
+
+/* La Foto Ricordo è costruita con DOM e sprite reali: pronta per uno screenshot. */
+#memory-photo-overlay{padding:10px 15px;gap:8px;background:#081324;justify-content:center}
+.memory-photo-card{
+  flex:0 1 auto;width:100%;max-width:510px;max-height:calc(100% - 52px);
+  display:flex;flex-direction:column;align-items:stretch;gap:9px;
+  overflow-y:auto;scrollbar-width:thin;
+  padding:12px 13px 11px;border-radius:12px;
+  background:linear-gradient(150deg,#fff0cf,#f5dfad 58%,#ead09a);
+  color:#2f3d55;border:5px solid #986749;
+  box-shadow:inset 0 0 0 3px #fff8dc,0 8px 16px #0009;
+}
+.memory-photo-head{display:flex;flex-direction:column;gap:5px;align-items:center}
+.memory-photo-tag{font-size:6px;color:#937150;line-height:1.4}
+#memory-photo-title{font:11px/1.5 'Press Start 2P',monospace;color:#bd4a3b;text-shadow:1px 1px #fff}
+.memory-photo-head p{font:6px/1.6 'Press Start 2P',monospace;color:#5a6481}
+.memory-photo-team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.memory-mon{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:4px 2px;min-width:0;min-height:74px;
+  border:2px solid #c4ac7e;border-radius:7px;
+  background:linear-gradient(#fffaed,#e9ead0);color:#243958;
+}
+.memory-mon.empty{opacity:.34;background:#e3d2ae}
+.memory-mon img{width:44px;height:44px;object-fit:contain;image-rendering:pixelated}
+.memory-mon strong{max-width:100%;overflow-wrap:anywhere;font:6px/1.5 'Press Start 2P',monospace}
+.memory-mon span{font:6px/1.6 'Press Start 2P',monospace;color:#8a6949}
+.memory-photo-subtitle{font:6px/1.5 'Press Start 2P',monospace;color:#966746}
+.memory-photo-badges{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;align-items:start}
+.memory-badge{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.memory-badge img{width:100%;max-width:34px;height:33px;object-fit:contain;image-rendering:pixelated}
+.memory-badge span{font:4px/1.4 'Press Start 2P',monospace;color:#7f5d48;overflow-wrap:anywhere}
+.memory-photo-footer{font:6px/1.7 'Press Start 2P',monospace;color:#9d3e38;border-top:2px solid #c29d70;padding-top:8px}
+.photo-back{min-height:31px;flex:none;width:min(230px,80%);padding:6px 12px}
+
+@media(max-width:760px){
+  #battle-stage #player-trainer-sprite{width:120px!important;height:120px!important;bottom:-13px!important}
+  #battle-stage #enemy-trainer-sprite.enemy-trainer-frame{top:calc(45% - 70px)!important;width:100px!important;height:100px!important}
+  .finale-screen{padding:10px 12px;gap:8px}
+  #victory-title{font-size:10px}#victory-title span{font-size:8px}
+  #victory-overlay>p{font-size:7px}
+  .memory-photo-card{padding:8px 9px;gap:5px}
+  .memory-mon{min-height:60px}.memory-mon img{width:36px;height:36px}
+  .memory-photo-footer{font-size:5px}
+}
+@media(prefers-reduced-motion:reduce){.finale-button{transition:none!important}}

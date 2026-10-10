@@ -1,0 +1,164 @@
+/* V7.3 beta quality pass. These overrides keep V7.2 visuals intact. */
+:root {color-scheme:dark}
+
+/* Balanced, readable side wings and a genuinely live HP bar. */
+.rotom-wing-left,.rotom-wing-right {
+  width: min(290px, 32vw)!important;
+  height: min(620px, 78vh)!important;
+  box-sizing: border-box;
+}
+#rotom-container.wings-open .rotom-wing-left {
+  transform:translate(calc(-50% - 461px), -50%) rotate(-1deg)!important;
+}
+#rotom-container.wings-open .rotom-wing-right {
+  transform:translate(calc(-50% + 461px), -50%) rotate(1deg)!important;
+}
+.rotom-wing-left .team-grid-2x3 {height:292px!important;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:7px;}
+.rotom-wing-left .team-slot{min-height:85px!important;padding:5px!important;justify-content:space-between;gap:2px}
+.rotom-wing-left .team-slot .team-slot-img{height:46px;width:46px;max-height:50%;object-fit:contain;}
+.rotom-wing-left .team-slot .slot-top{font-size:6px;line-height:1.45;gap:5px;}
+.rotom-wing-left .team-slot .slot-top span:first-child{max-width:70%;}
+.rotom-wing-left .team-slot .team-hp-bg{height:9px;width:100%;flex-shrink:0;background:#1c252c;overflow:hidden}
+.rotom-wing-left .team-slot .team-hp-fill {display:block;height:100%;transition:width .28s linear;}
+.rotom-wing-left .team-slot .team-hp-text{font-size:5px;line-height:1.1}
+.rotom-wing-left .team-slot .team-hp-fill.hp-green{background:#47d977!important}
+.rotom-wing-left .team-slot .team-hp-fill.hp-yellow{background:#f0d34a!important}
+.rotom-wing-left .team-slot .team-hp-fill.hp-red{background:#f16b65!important}
+#radar-charge-count{font-size:7px;text-align:center;color:#9ce5f9;padding:6px 0;line-height:1.4}
+#bag-list{min-height:145px;max-height:200px;overflow-y:auto}
+
+/* Crop exactly one FireRed map frame. No adjoining-frame ghosting. */
+#dungeon-grid-board .grid-cell .official-overworld{
+  box-sizing:content-box!important;
+  width:16px!important;height:32px!important;
+  background-repeat:no-repeat!important;
+  background-size:128px 32px!important;
+  clip-path:none!important;overflow:hidden!important;
+  animation:none!important;
+  transform:translate(-50%,-50%) scale(1.26)!important;
+}
+#dungeon-grid-board .grid-cell .player-avatar.official-overworld{
+  background-position:var(--facing-position, 0px) 0!important;
+}
+#dungeon-grid-board .grid-cell .route-trainer.official-overworld.single-frame,
+#dungeon-grid-board .grid-cell .town-npc.official-overworld{
+  background-position:0 0!important;
+}
+/* Inner img is drawn at the sheet's original height; the parent clips all
+   additional poses. On network error a correctly sized local single-frame SVG
+   is used instead. */
+#dungeon-grid-board .grid-cell .sprite-frame {display:block!important;position:absolute!important;
+ left:50%!important;top:50%!important;background:none!important;
+ width:16px!important;height:32px!important;overflow:hidden!important;
+ transform:translate(-50%,-50%) scale(1.26)!important;}
+#dungeon-grid-board .grid-cell .sprite-frame .overworld-frame-img {
+  display:block!important;position:absolute!important;top:0!important;left:0!important;
+  height:32px!important;width:auto;max-width:none!important;max-height:none!important;
+  image-rendering:pixelated!important;object-fit:none!important;
+  filter:none!important;transform:none!important;
+}
+/* Trainers appear anchored to their platform, Red enters from behind the dialogue. */
+#battle-stage #player-trainer-sprite {
+  left:5%!important;bottom:-24px!important;top:auto!important;
+  width:clamp(128px,34%,184px)!important;height:clamp(128px,34%,184px)!important;
+  background-position:left top!important;
+}
+#battle-stage #enemy-trainer-sprite.enemy-trainer-frame{
+  object-fit:contain!important;object-position:center bottom!important;
+  background:none!important;filter:none!important;
+}
+/* Under-HP feedback for buffs, debuffs and ailments. */
+.battle-conditions{display:flex;align-items:center;flex-wrap:wrap;gap:3px;min-height:12px;margin-top:3px;max-height:37px;overflow-y:auto}
+.condition-chip {font:6px/1.25 'Press Start 2P',monospace;padding:3px 4px;border-radius:3px;border:1px solid #9c8b64;color:#283348;background:#dfe1d4;white-space:nowrap;}
+.condition-chip.boost{background:#dbf6cd;border-color:#3c9655;color:#19602d}
+.condition-chip.nerf{background:#ffdfcd;border-color:#df8172;color:#9b322e}
+.condition-chip.status-chip{background:#f6d774;border-color:#ac6320;color:#713215}
+#battle-stage .hud-card-gba {max-width:50%;}
+#capture-ball.compositor-ball.capture-waiting{filter:drop-shadow(0 0 9px #fcf2b5)}
+/* Touch access / responsive arrangement: sidebars are no longer superimposed over the battlefield. */
+@media (max-width:1190px){
+  #rotom-container.wings-open .rotom-wing-left{transform:translate(calc(-50% - 400px),-50%) scale(.85)}
+  #rotom-container.wings-open .rotom-wing-right{transform:translate(calc(-50% + 400px),-50%) scale(.85)}
+}
+@media (max-width:1020px){
+  html{height:auto}
+  body{min-height:100dvh;overflow-y:auto;align-items:flex-start;padding:28px 8px 18px}
+  #rotom-container,#rotom-container.wings-open{
+    width:100%;max-width:800px;height:auto!important;min-height:0!important;
+    margin:28px auto 0;display:flex;flex-flow:row wrap;align-items:stretch;justify-content:center;
+    gap:16px 12px;overflow:visible;
+  }
+  #rotom-body{order:0;width:min(630px,100%)!important;flex:0 0 min(630px,100%);height:min(690px,83dvh)!important;min-height:490px;}
+  .rotom-wing-left,.rotom-wing-right,
+  #rotom-container.wings-open .rotom-wing-left,#rotom-container.wings-open .rotom-wing-right{
+    position:relative!important;left:auto!important;right:auto!important;top:auto!important;
+    flex:1 1 min(350px,45%);width:min(350px,100%)!important;max-width:calc(50% - 6px);
+    height:auto!important;min-height:390px;max-height:none;
+    margin:0;z-index:3;opacity:1!important;pointer-events:auto!important;
+    transform:none!important;transition:none!important;
+  }
+  .rotom-wing-left{order:1}.rotom-wing-right{order:2}
+  .rotom-wing-left .wing-screen,.rotom-wing-right .wing-screen{overflow:visible;min-height:0;}
+  #team-grid{height:280px!important}
+  #dungeon-grid-board{width:min(100%,440px,calc(83dvh - 210px))}
+}
+@media(max-width:620px){
+  body{padding:25px 6px 12px}
+  #rotom-container{gap:12px 0}
+  #rotom-body{height:min(620px,78dvh)!important;min-height:450px;flex-basis:100%;width:100%!important;
+    border-radius:58px 58px 24px 24px;padding:9px!important;border-width:5px!important;}
+  #rotom-body .rotom-face{height:58px;margin-bottom:7px}
+  #rotom-container .rotom-wing-left,#rotom-container .rotom-wing-right,
+  #rotom-container.wings-open .rotom-wing-left,#rotom-container.wings-open .rotom-wing-right{
+    flex:0 0 100%;width:100%!important;max-width:100%;min-height:0;
+    border-radius:20px;}
+  .rotom-wing-left .team-grid-2x3{height:270px;}
+  .rotom-wing-right .wing-screen{min-height:390px}
+  #battle-controls{height:110px!important;padding:8px!important}
+  #battle-controls #panel-main-actions button{height:61px!important;font-size:8px!important}
+  #battle-stage .hud-card-gba {max-width:52%;}
+  #battle-stage #player-trainer-sprite{height:115px!important;width:115px!important;bottom:-13px!important}
+  #battle-stage #enemy-trainer-sprite.enemy-trainer-frame{width:97px!important;height:102px!important}
+  .condition-chip{font-size:5px;padding:2px 3px}
+  #dungeon-grid-board{width:min(100%,420px,calc(78dvh - 175px))}
+}
+@media(prefers-reduced-motion:reduce){.rotom-wing-left .team-slot .team-hp-fill{transition:none}}
+/* Readable vertical party roster: large sprite + name/level + real PS bar. */
+.rotom-wing-left #team-grid.team-grid-2x3{
+  display:grid!important;
+  height:330px!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:repeat(6,minmax(0,1fr))!important;
+  gap:4px!important;
+}
+.rotom-wing-left .team-slot{
+  display:grid!important;grid-template-columns:53px minmax(0,1fr);
+  grid-template-rows:19px 10px 10px;gap:1px 7px;
+  align-content:center;justify-items:stretch;
+  min-height:0!important;height:100%!important;padding:4px 7px!important;
+}
+.rotom-wing-left .team-slot .slot-top{
+  grid-column:2;grid-row:1;display:flex;flex-wrap:wrap;align-items:center;
+  justify-content:space-between;font-size:8px;line-height:1.3;gap:2px;
+}
+.rotom-wing-left .team-slot .slot-top span:first-child{
+  max-width:74%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.rotom-wing-left .team-slot .slot-top span:last-child{font-size:6px;white-space:nowrap}
+.rotom-wing-left .team-slot .team-slot-img{
+  grid-column:1;grid-row:1 / 4;
+  height:49px!important;width:49px!important;max-height:none!important;
+  justify-self:center;align-self:center;object-fit:contain;
+}
+.rotom-wing-left .team-slot .team-hp-bg{grid-column:2;grid-row:2;margin:0!important;height:9px!important;align-self:center}
+.rotom-wing-left .team-slot .team-hp-text{grid-column:2;grid-row:3;text-align:right;align-self:center;font-size:6px}
+.rotom-wing-left .team-slot.empty .team-slot-empty{grid-column:1 / 3;grid-row:1 / 4;height:100%;}
+.rotom-wing-left .team-slot.empty .team-hp-bg,.rotom-wing-left .team-slot.empty .team-hp-text{display:none}
+@media(max-width:1020px){
+  .rotom-wing-left #team-grid.team-grid-2x3{height:330px!important;}
+  .rotom-wing-left .wing-screen{min-height:500px}
+}
+
+.dpad-container .btn-dpad{touch-action:manipulation;min-width:36px;min-height:36px;font:12px/1 system-ui,sans-serif;}
+.dpad-container .btn-dpad:focus-visible{outline:3px solid #59d9ff;outline-offset:2px;}
+@media(max-width:620px){.dpad-container{grid-template-columns:repeat(3,42px);grid-template-rows:repeat(3,42px)}.dpad-container .btn-dpad{min-width:42px;min-height:42px}}
