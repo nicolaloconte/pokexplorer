@@ -3,16 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>RotomDex Route Explorer</title>
+  <title>Pokéxplorer</title>
+  <meta name="theme-color" content="#fc4235">
+  <meta name="description" content="Pokéxplorer — un’avventura Pokémon roguelike in beta.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="style-v6.css">
-  <link rel="stylesheet" href="style-v7.css">
-  <link rel="stylesheet" href="style-v71.css">
-  <link rel="stylesheet" href="style-v72.css">
-  <link rel="stylesheet" href="style-v73.css">
 </head>
 <body>
 
@@ -22,7 +20,16 @@
   <div class="rotom-wing-left">
     <div class="wing-screen">
       <div class="panel-hdr">SQUADRA POKÉMON</div>
+      <p class="party-intro" id="party-intro">Scegli il tuo compagno e parti per Kanto!</p>
       <div id="team-grid" class="team-grid-2x3"></div>
+      <div id="party-action-menu" class="party-action-menu hidden" role="group" aria-label="Azioni squadra">
+        <div id="party-action-title" class="party-action-title">POKÉMON</div>
+        <button type="button" id="party-info-action">INFO POKÉMON</button>
+        <button type="button" id="party-move-action">SPOSTA POKÉMON</button>
+        <button type="button" id="party-send-action" class="hidden">MANDA IN CAMPO</button>
+        <button type="button" id="party-close-action">CHIUDI</button>
+        <div id="party-move-hint" class="hidden">Seleziona un altro Pokémon occupato.</div>
+      </div>
       
       <div class="panel-hdr" style="margin-top:6px;">PORTAMEDAGLIE</div>
       <div id="badges-container" style="display:flex; gap:6px; justify-content:center; min-height:30px; align-items:center;">
@@ -55,18 +62,40 @@
         <!-- MAIN MENU OVERLAY -->
         <div id="main-menu-overlay">
           <div style="margin-top:10px;">
-            <div class="logo-title">POKÉADVENTURE</div>
-            <div style="font-size:7px; color:#5eead4; margin-top:6px;">A NEW ROGUELIKE POKÉMON ADVENTURE</div>
+            <div class="logo-title">POKÉXPLORER</div>
+            <div style="font-size:7px; color:#5eead4; margin-top:6px;">UN’AVVENTURA POKÉMON ROGUELIKE</div>
           </div>
           <div class="menu-card">
             <button class="btn-nav" id="btn-start-game">NUOVA AVVENTURA</button>
           </div>
-          <div style="font-size:6px; color:#94a3b8;">DEVELOPED BY @17NICO</div>
+          <div style="font-size:6px; color:#94a3b8;">SVILUPPATO DA @17nico</div>
         </div>
 
+        <!-- Selettore strumenti: overlay non bloccante, squadra selezionabile a sinistra. -->
+        <div id="item-target-prompt" class="hidden" role="status" aria-live="polite">
+          <div class="item-target-box">
+            <div id="item-target-message">A quale Pokémon vuoi dare lo strumento?</div>
+            <div class="item-target-help">Scegli un Pokémon dalla squadra a sinistra.</div>
+            <div id="item-target-mobile-list" class="item-target-mobile-list" aria-label="Scegli un Pokémon"></div>
+            <button type="button" id="item-target-cancel">ANNULLA</button>
+          </div>
+        </div>
+
+        <!-- Scheda Pokémon: le informazioni non modificano la formazione. -->
+        <section id="pokemon-info-overlay" class="hidden" role="dialog" aria-modal="false" aria-label="Informazioni Pokémon">
+          <div class="pokemon-info-card">
+            <div class="pokemon-info-header"><h2 id="pokemon-info-name"></h2><button id="pokemon-info-close" type="button" aria-label="Chiudi informazioni">✕</button></div>
+            <div class="pokemon-info-hero" id="pokemon-info-hero"><img id="pokemon-info-sprite" alt="Sprite Pokémon"><div><strong id="pokemon-info-level"></strong><span id="pokemon-info-types"></span><span id="pokemon-info-nature"></span><span id="pokemon-info-ability"></span></div></div>
+            <h3>STATISTICHE</h3>
+            <div id="pokemon-info-stats" class="pokemon-info-stats"></div>
+            <h3>MOSSE</h3>
+            <div id="pokemon-info-moves" class="pokemon-info-moves"></div>
+            <div class="pokemon-info-footnote">Le statistiche comprendono livello, natura, IV ed EV. I modificatori temporanei sono visibili solo in battaglia.</div>
+          </div>
+        </section>
         <!-- GAME OVER OVERLAY -->
         <div id="gameover-overlay" class="hidden" style="position:absolute; inset:0; z-index:200; background:#020617; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
-          <div style="font-size:22px; color:#ef4444; margin-bottom:15px; text-shadow:2px 2px #000;">GAME OVER</div>
+          <div style="font-size:22px; color:#ef4444; margin-bottom:15px; text-shadow:2px 2px #000;">FINE DELL’AVVENTURA</div>
           <div style="font-size:7px; color:#94a3b8; margin-bottom:20px; line-height:1.6;">Non hai più Pokémon disponibili. La tua avventura Nuzlocke è terminata.</div>
           <button class="btn-nav" id="btn-return-main-menu" style="background:#ef4444; box-shadow:0 4px 0 #991b1b; width:auto; padding:10px 24px;">TORNA AL MENU</button>
         </div>
@@ -75,13 +104,13 @@
         <div id="starter-scene-overlay" class="hidden">
           <div style="font-size:9px; color:#38bdf8; margin-top:5px;">SCEGLI IL TUO POKÉMON</div>
           <div class="briefcase-container" role="group" aria-label="Valigetta con tre Poké Ball">
-            <div class="briefcase-lid"><span class="briefcase-brand">PROFESSOR OAK · STARTER KIT</span><span class="briefcase-lid-symbol">POKÉMON</span></div>
+            <div class="briefcase-lid"><span class="briefcase-brand">PROFESSOR OAK · POKÉMON INIZIALI</span><span class="briefcase-lid-symbol">POKÉMON</span></div>
             <div class="briefcase-inner" id="briefcase-balls"></div>
             <div class="briefcase-plate">VALIGETTA POKÉMON</div>
           </div>
           <div class="starter-preview-strip">
             <div id="starter-showcase" class="pokemon-showcase-box">
-              <img id="starter-showcase-img" class="pokemon-showcase-img" src="" alt="Starter selezionato">
+              <img id="starter-showcase-img" class="pokemon-showcase-img" src="" alt="Pokémon iniziale selezionato">
             </div>
             <div id="starter-selection-info" aria-live="polite">Tre compagni. Un solo inizio.</div>
           </div>
@@ -156,7 +185,7 @@
         <!-- OVERLAY DIALOGO ALLENATORE / PALESTRA -->
         <div id="trainer-encounter-overlay" class="hidden">
           <div class="trainer-avatar-card">
-            <img id="trainer-portrait-img" src="" alt="Trainer">
+            <img id="trainer-portrait-img" src="" alt="Allenatore">
           </div>
           <div class="trainer-dialog-box">
             <div id="trainer-dialog-speech">"Ehi tu! I nostri sguardi si sono incrociati!"</div>
@@ -177,6 +206,12 @@
         <!-- ROUTE MAP VIEWPORT -->
         <div id="dungeon-viewport">
           <div id="dungeon-grid-board"></div>
+          <!-- Comandi touch: visibili sopra la mappa su smartphone e tablet. -->
+          <nav id="mobile-dpad" aria-label="Comandi di movimento su schermo">
+            <span></span><button type="button" class="mobile-dpad-key" data-move="up" aria-label="Vai in alto">▲</button><span></span>
+            <button type="button" class="mobile-dpad-key" data-move="left" aria-label="Vai a sinistra">◀</button><span class="mobile-dpad-center" aria-hidden="true"></span><button type="button" class="mobile-dpad-key" data-move="right" aria-label="Vai a destra">▶</button>
+            <span></span><button type="button" class="mobile-dpad-key" data-move="down" aria-label="Vai in basso">▼</button><span></span>
+          </nav>
         </div>
 
         <div id="exp-log-bar">
@@ -321,7 +356,7 @@
       </div>
       <div id="bag-list" style="font-size:6px; display:flex; flex-direction:column; gap:3px;"></div>
 
-      <div class="panel-hdr" style="margin-top:auto;">D-PAD CONTROLS</div>
+      <div class="panel-hdr" style="margin-top:auto;">CONTROLLI DI MOVIMENTO</div>
       <div class="dpad-container">
         <div></div><button type="button" class="btn-dpad" id="btn-dpad-up" aria-label="Sposta in alto">▲</button><div></div>
         <button type="button" class="btn-dpad" id="btn-dpad-left" aria-label="Sposta a sinistra">◀</button><div class="btn-dpad">•</div><button type="button" class="btn-dpad" id="btn-dpad-right" aria-label="Sposta a destra">▶</button>
@@ -332,6 +367,22 @@
 
 </div>
 
+<footer class="poke-site-footer" aria-label="Informazioni Pokéxplorer">
+  <span>POKÉXPLORER <small>· BETA</small></span>
+  <a href="https://discord.gg/qNGscTEYHM" target="_blank" rel="noopener noreferrer" aria-label="Discord ufficiale di Pokéxplorer">✦ DISCORD UFFICIALE</a>
+  <span>Developed by <strong>@17nico</strong></span>
+  <div class="music-controls" role="group" aria-label="Volume musica di sottofondo">
+    <label for="music-volume">♫ MUSICA</label>
+    <input id="music-volume" type="range" min="0" max="100" step="1" value="10" aria-label="Volume musica di sottofondo">
+    <output id="music-volume-value" for="music-volume">10%</output>
+    <span id="music-status" class="sr-only" role="status" aria-live="polite"></span>
+  </div>
+</footer>
+
+<!-- Audio locale: nessun servizio esterno, avvio al primo gesto se il browser blocca autoplay. -->
+<audio id="pokexplorer-background-music" src="assets/audio/pokexplorer_bg_music.mp3" preload="metadata" loop aria-label="Musica di sottofondo Pokéxplorer"></audio>
+
+<script src="js/music.js"></script>
 <script src="js/pokemon.js"></script>
 <script src="js/engine.js"></script>
 <script src="js/main.js"></script>

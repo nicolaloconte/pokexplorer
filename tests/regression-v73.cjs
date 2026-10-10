@@ -19,7 +19,7 @@ async function main(){
  let checks=0;const ok=(condition,msg)=>{assert(condition,msg);checks++};
  // Early encounter boundaries: first five floors and new level curve.
  for(let f=1;f<=5;f++){
-  const g=game(f);ok(g.encounterLevel('wild',false,()=>0)===2,`wild min floor ${f}`);
+  const g=game(f);ok(g.encounterLevel('wild',false,()=>0)===(f===1?1:2),`wild min floor ${f}`);
   ok(g.encounterLevel('wild',false,()=>.99)===3,`wild max floor ${f}`);
   ok(g.encounterLevel('trainer',false,()=>0)===4,`trainer min floor ${f}`);
   ok(g.encounterLevel('trainer',false,()=>.99)===5,`trainer max floor ${f}`);
