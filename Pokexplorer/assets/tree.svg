@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80" shape-rendering="crispEdges"><ellipse cx="40" cy="72" rx="28" ry="7" fill="#28582d" opacity=".55"/>
+<rect x="35" y="54" width="11" height="21" fill="#523820"/>
+<path d="M40 5 16 30 H24 L9 49 H21 L5 63 H75 L59 49 H71 L56 30 H64Z" fill="#214f37"/>
+<path d="M40 7 22 30 H29 L14 47 H28 L12 60 H68 L53 47 H66 L51 30 H58Z" fill="#428c53"/>
+<path d="m40 10-10 19h9l-16 20h16L23 57h23L31 45h18L37 29h12Z" fill="#73b96a"/>
+<rect x="33" y="18" width="8" height="5" fill="#9ddc83"/><rect x="24" y="36" width="8" height="4" fill="#9ddc83"/><rect x="42" y="49" width="12" height="4" fill="#2f7546"/></svg>
