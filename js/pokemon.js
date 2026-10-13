@@ -49,7 +49,7 @@ const MOVE_NAMES_IT = {
   'nightmare':'Incubo','mean-look':'Malosguardo','destiny-bond':'Destinobbligato',
   'self-destruct':'Autodistruzione', 'explosion':'Esplosione','seismic-toss':'Mov. Sismico',
   'strength':'Forza',cut:'Taglio',fly:'Volo',dig:'Fossa','metronome':'Metronomo',
-  'protect':'Protezione','sleep-talk':'Sonnolalia','snore':'Russare', 'rest':'Riposo'
+  'magnitude':'Magnitudo','protect':'Protezione','sleep-talk':'Sonnolalia','snore':'Russare', 'rest':'Riposo'
 };
 // Local metadata allow basic play even if the per-move network call fails.
 const MOVE_FALLBACK = {
@@ -73,7 +73,8 @@ const MOVE_FALLBACK = {
   sing:['normal',0,15,'status'],withdraw:['water',0,40,'status'],
   'sand-attack':['ground',0,15,'status'],
   'string-shot':['bug',0,40,'status'],
-  supersonic:['normal',0,20,'status']
+  supersonic:['normal',0,20,'status'],
+  protect:['normal',0,10,'status'],magnitude:['ground',70,30,'physical']
 };
 const MOVE_STATUS_FALLBACK={
   growl:{statChange:{stat:'attack',stage:-1,chance:100}},
@@ -93,7 +94,8 @@ const MOVE_STATUS_FALLBACK={
   withdraw:{statChange:{stat:'defense',stage:1,chance:100}},
   'sand-attack':{statChange:{stat:'accuracy',stage:-1,chance:100}},
   'string-shot':{statChange:{stat:'speed',stage:-2,chance:100}},
-  supersonic:{ailment:'confusion',ailmentChance:100,accuracy:55}
+  supersonic:{ailment:'confusion',ailmentChance:100,accuracy:55},
+  protect:{priority:3,alwaysHits:true}
 };
 const SPECIES_FALLBACK = {
   1:[[1,'tackle'],[3,'growl'],[7,'leech-seed'],[9,'vine-whip'],[13,'poison-powder'],[15,'sleep-powder'],[20,'razor-leaf']],
@@ -136,7 +138,9 @@ async function createMove(moveId) {
     })());
   }
   const d=await moveMetadataCache.get(id);
-  const meta={...(MOVE_STATUS_FALLBACK[id]||{}),...d,id};
+  const meta={...d,...(MOVE_STATUS_FALLBACK[id]||{}),id};
+  // Protezione always acts before normal attacks, even when PokéAPI is offline.
+  if(id==='protect')meta.priority=3;
   if(id==='leech-seed'){meta.ailment=null;meta.ailmentChance=0;}
   if(id==='sing')meta.accuracy=55;
   return new Move(MOVE_NAMES_IT[id] || d.italianName || id.replaceAll('-',' ').toUpperCase(),d.type,d.power,d.pp,d.category,d.statChange||meta.statChange,meta);
@@ -312,12 +316,13 @@ class Pokemon {
     }
     this.movesLoaded=true;
   }
-  async gainExperience(amount) {
+  async gainExperience(amount, levelCap=100) {
     const levels=[];
-    // Level 100 is final: no pending experience can accumulate beyond it.
-    if(this.level>=100){this.exp=0;this.expToNext=0;return levels;}
+    const cap=Math.max(1,Math.min(100,Math.floor(Number(levelCap)||100)));
+    // Experience cannot be stockpiled at a temporary badge cap.
+    if(this.level>=cap){this.exp=0;if(this.level>=100)this.expToNext=0;return levels;}
     this.exp+=Math.max(0,Math.floor(Number(amount)||0));
-    while(this.level<100 && this.exp>=this.expToNext) {
+    while(this.level<cap && this.exp>=this.expToNext) {
       this.exp-=this.expToNext;
       const oldHp=this.maxHp;
       this.level++; this.expToNext=this.requiredExp(); this.calcStats();
@@ -328,7 +333,7 @@ class Pokemon {
       const evolution=await this.tryEvolution();
       if(evolution) levels[levels.length-1].evolution=evolution;
     }
-    if(this.level>=100){this.exp=0;this.expToNext=0;}
+    if(this.level>=cap){this.exp=0;if(this.level>=100)this.expToNext=0;}
     return levels;
   }
   async tryEvolution() {

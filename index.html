@@ -3,16 +3,63 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pokéxplorer</title>
+  <title>Pokéxplorer — V7.7 Rebuild R2.2 DEV</title>
   <meta name="theme-color" content="#fc4235">
   <meta name="description" content="Pokéxplorer — un’avventura Pokémon roguelike in beta.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+  <link id="pokex-stylesheet" rel="stylesheet" href="style.css">
+  <!-- Critical rules deliberately inline: a broken/partial ZIP extraction must never
+       reveal the Game Over overlay or masquerade as a valid Nuzlocke defeat. -->
+  <style>
+    .hidden, [hidden] { display:none !important; }
+    #pokex-extraction-warning:not([hidden]) { display:flex !important; }
+    #pokex-extraction-warning { position:fixed;inset:0;z-index:2147483647;
+      align-items:center;justify-content:center;box-sizing:border-box;padding:22px;
+      background:#071225;color:#e7f4ff;font:16px/1.6 system-ui,Arial,sans-serif; }
+    #pokex-extraction-warning .warning-card { box-sizing:border-box;
+      width:min(660px,100%);padding:28px;border:2px solid #39b6ee;
+      border-radius:16px;background:#101f35;box-shadow:0 16px 48px #0009; }
+    #pokex-extraction-warning h1 { font-size:25px;margin:0 0 14px;color:#ffdd79; }
+    #pokex-extraction-warning p { margin:10px 0; }
+    #pokex-extraction-warning code { color:#9ce8ff;overflow-wrap:anywhere; }
+  </style>
 </head>
 <body>
+<!-- Standalone recovery screen: intentionally has no dependency on external CSS/JS. -->
+<section id="pokex-extraction-warning" hidden role="alertdialog" aria-modal="true"
+         aria-label="File del gioco non caricati">
+  <div class="warning-card">
+    <h1>⚠️ Il gioco non è stato caricato</h1>
+    <p>Non è una sconfitta Nuzlocke. Mancano alcuni file necessari al funzionamento di Pokéxplorer.</p>
+    <p><strong>Come risolvere:</strong> chiudi questa scheda. Sul file ZIP fai clic destro →
+    <strong>Estrai tutto...</strong> (oppure <strong>Estrai qui</strong> con 7-Zip).
+    Entra nella cartella estratta e apri <code>Game/index.html</code>.</p>
+    <p><strong>Non aprire</strong> <code>index.html</code> direttamente dalla finestra dello ZIP:
+    Windows potrebbe estrarre temporaneamente solo quel file, senza stili e script.</p>
+    <p id="pokex-extraction-diagnostic" style="color:#91a9c3;font-size:13px"></p>
+  </div>
+</section>
+
+<!-- DEV MODE is unlocked locally with a 4-digit code; no URL parameter required. -->
+<button id="dev-mode-trigger" type="button" aria-pressed="false" aria-haspopup="dialog" aria-controls="dev-code-overlay">DEV MODE</button>
+<section id="dev-code-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="dev-code-title">
+  <form id="dev-code-form" class="dev-code-card" autocomplete="off">
+    <h2 id="dev-code-title">DEV MODE</h2>
+    <p id="dev-code-description">Inserisci il codice di accesso a 4 cifre.</p>
+    <label for="dev-access-code">CODICE</label>
+    <input id="dev-access-code" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+           autocomplete="off" spellcheck="false" required aria-describedby="dev-code-error">
+    <p id="dev-code-error" class="dev-code-error" role="status" aria-live="polite"></p>
+    <div class="dev-code-actions">
+      <button id="dev-code-cancel" type="button">ANNULLA</button>
+      <button id="dev-code-confirm" type="submit">SBLOCCA</button>
+    </div>
+    <p class="dev-code-note">Sblocco per la sessione corrente. Oggetti DEV nello Zaino → Rimedi.</p>
+  </form>
+</section>
 
 <div id="rotom-container" class="wings-open">
 
@@ -26,6 +73,7 @@
         <div id="party-action-title" class="party-action-title">POKÉMON</div>
         <button type="button" id="party-info-action">INFO POKÉMON</button>
         <button type="button" id="party-move-action">SPOSTA POKÉMON</button>
+        <button type="button" id="party-lead-action">IMPOSTA ATTIVO</button>
         <button type="button" id="party-send-action" class="hidden">MANDA IN CAMPO</button>
         <button type="button" id="party-close-action">CHIUDI</button>
         <div id="party-move-hint" class="hidden">Seleziona un altro Pokémon occupato.</div>
@@ -38,6 +86,12 @@
 
       <div id="radar-charge-count" role="status" aria-live="polite">SCANSIONI: 3</div>
       <button class="btn-nav" id="btn-scan-radar" style="margin-top:auto;">RADAR SCAN</button>
+      <section id="developer-panel" class="developer-panel hidden" aria-label="Strumenti sviluppatore">
+        <h3>DEV MODE · ATTIVA</h3>
+        <p class="dev-status-text">999 Caramelle Rare e 999 Caramelle d’Oro nello zaino. Livelli fino a 100 senza limite medaglie.</p>
+        <button type="button" id="dev-radar">RADAR ∞</button>
+        <button type="button" id="dev-capture">CATTURA GARANTITA ON/OFF</button>
+      </section>
     </div>
   </div>
 
@@ -64,6 +118,7 @@
           <div style="margin-top:10px;">
             <div class="logo-title">POKÉXPLORER</div>
             <div style="font-size:7px; color:#5eead4; margin-top:6px;">UN’AVVENTURA POKÉMON ROGUELIKE</div>
+            <div id="build-version" style="font-size:6px; color:#facc15; margin-top:9px; letter-spacing:1px;">BUILD V7.7 · REBUILD R2.2 · DEV MODE</div>
           </div>
           <div class="menu-card">
             <button class="btn-nav" id="btn-start-game">NUOVA AVVENTURA</button>
@@ -103,6 +158,11 @@
         <!-- STARTER SELECTION OVERLAY -->
         <div id="starter-scene-overlay" class="hidden">
           <div style="font-size:9px; color:#38bdf8; margin-top:5px;">SCEGLI IL TUO POKÉMON</div>
+          <div class="trainer-choice" role="group" aria-label="Scegli il tuo personaggio">
+            <span>IL TUO PERSONAGGIO</span>
+            <button id="choose-male" type="button" class="selected" aria-pressed="true">RAGAZZO</button>
+            <button id="choose-female" type="button" aria-pressed="false">RAGAZZA</button>
+          </div>
           <div class="briefcase-container" role="group" aria-label="Valigetta con tre Poké Ball">
             <div class="briefcase-lid"><span class="briefcase-brand">PROFESSOR OAK · POKÉMON INIZIALI</span><span class="briefcase-lid-symbol">POKÉMON</span></div>
             <div class="briefcase-inner" id="briefcase-balls"></div>
@@ -134,8 +194,24 @@
             <button class="btn-nav" id="buy-potion-btn" style="background:#4ade80; color:#0f172a; box-shadow:0 4px 0 #16a34a;">Pozione x1 ($150)</button>
             <button class="btn-nav" id="buy-elixir-btn" style="background:#a78bfa;color:#142031;box-shadow:0 4px 0 #6d28d9;">Elisir x1 ($400)</button>
             <button class="btn-nav" id="buy-radar-btn" style="background:#38bdf8;color:#142031;box-shadow:0 4px 0 #0284c7;">Radar Scan +1 ($2.000)</button>
-            <button class="btn-nav" id="buy-rod-btn" style="background:#f59e0b; color:#0f172a; box-shadow:0 4px 0 #b45309;">Canna da Pesca ($500)</button>
             <button class="btn-nav" id="close-market-btn" style="background:#64748b; box-shadow:0 4px 0 #334155; margin-top:4px;">ESCI DAL NEGOZIO</button>
+          </div>
+          <div class="mart-display-props" aria-hidden="true">
+            <span class="mart-pokeball"></span><span class="mart-potion"></span>
+            <span class="mart-pokeball"></span><span class="mart-elixir"></span>
+            <span class="mart-pokeball"></span><span class="mart-potion"></span>
+          </div>
+        </div>
+
+        <!-- Gym entrance confirmation: no battles or queues committed until YES. -->
+        <div id="gym-entry-confirm" class="hidden gba-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="gym-entry-heading">
+          <div class="gba-dialog-card">
+            <h2 id="gym-entry-heading">SFIDA IN PALESTRA</h2>
+            <p id="gym-entry-text">Vuoi iniziare la sfida?</p>
+            <div class="gba-dialog-actions">
+              <button type="button" id="gym-entry-yes" class="btn-nav">INIZIA SFIDA</button>
+              <button type="button" id="gym-entry-no" class="btn-nav">ANNULLA</button>
+            </div>
           </div>
         </div>
 
@@ -239,7 +315,7 @@
             <!-- Piattaforma e Sprite Nemico (Corretto allineamento) -->
             <div class="battle-platform-gba enemy-platform-gba"></div>
             <img id="enemy-trainer-sprite" class="poke-sprite-gba trainer-throw-anim hidden" src="" alt="Allenatore avversario">
-            <div id="player-trainer-sprite" role="img" aria-label="Red, visto di spalle" class="poke-sprite-gba player-trainer-gba hidden"></div>
+            <div id="player-trainer-sprite" role="img" aria-label="Allenatore visto di spalle" class="poke-sprite-gba player-trainer-gba hidden"></div>
             <div id="battle-throw-ball" class="throw-ball" aria-hidden="true"></div>
             <div id="capture-ball" class="capture-ball" aria-hidden="true"></div>
             <div id="capture-smoke" class="capture-smoke" aria-hidden="true"></div>
@@ -368,7 +444,7 @@
 </div>
 
 <footer class="poke-site-footer" aria-label="Informazioni Pokéxplorer">
-  <span>POKÉXPLORER <small>· BETA</small></span>
+  <span>POKÉXPLORER <small>· V7.7 REBUILD R2.2</small></span>
   <a href="https://discord.gg/qNGscTEYHM" target="_blank" rel="noopener noreferrer" aria-label="Discord ufficiale di Pokéxplorer">✦ DISCORD UFFICIALE</a>
   <span>Developed by <strong>@17nico</strong></span>
   <div class="music-controls" role="group" aria-label="Volume musica di sottofondo">
@@ -378,6 +454,24 @@
     <span id="music-status" class="sr-only" role="status" aria-live="polite"></span>
   </div>
 </footer>
+
+<!-- Verify boot resources rather than showing an unstyled Game Over when ZIP is opened directly. -->
+<script>
+window.addEventListener('load', function () {
+  const css = document.getElementById('pokex-stylesheet');
+  const shell = document.getElementById('rotom-container');
+  const styleLoaded = !!(css && css.sheet) &&
+    !!shell && getComputedStyle(shell).position === 'relative';
+  const engineLoaded = !!(window.game && typeof window.game.returnToMainMenu === 'function');
+  if (!styleLoaded || !engineLoaded) {
+    const warning = document.getElementById('pokex-extraction-warning');
+    document.getElementById('pokex-extraction-diagnostic').textContent =
+      'Diagnostica: stile ' + (styleLoaded ? 'OK' : 'mancante') +
+      ', motore ' + (engineLoaded ? 'OK' : 'mancante') + '.';
+    warning.hidden = false;
+  }
+});
+</script>
 
 <!-- Audio locale: nessun servizio esterno, avvio al primo gesto se il browser blocca autoplay. -->
 <audio id="pokexplorer-background-music" src="assets/audio/pokexplorer_bg_music.mp3" preload="metadata" loop aria-label="Musica di sottofondo Pokéxplorer"></audio>

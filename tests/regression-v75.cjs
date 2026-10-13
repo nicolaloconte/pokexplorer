@@ -41,12 +41,12 @@ async function test(){
   ok(defended<originalD,'defense stages reduce actual damage');
   // Verify stat/power metadata is present in battle and Pokémon detail panels.
   const src=fs.readFileSync(path.join(root,'js/engine.js'),'utf8');
-  for(const text of ['POT ${m.power', 'PREC ${m.alwaysHits','red/throw/${i}.png','red/fish/${this.playerFacing}','red/walk/${this.playerFacing}'])ok(src.includes(text),'engine source includes '+text);
+  for(const text of ['POT ${m.power', 'PREC ${m.alwaysHits','red/throw/${i}.png','${avatarFolder}/fish/${this.playerFacing}','${avatarFolder}/walk/${this.playerFacing}'])ok(src.includes(text),'engine source includes '+text);
   const css=fs.readFileSync(path.join(root,'style.css'),'utf8'),html=fs.readFileSync(path.join(root,'index.html'),'utf8');
   eq((html.match(/rel="stylesheet" href="style[^\"]+"/g)||[]).length,1,'one local CSS link');
-  ok(css.includes('.red-fishing-sprite'),'CSS covers fishing');ok(css.includes('#item-target-message'),'readable popup CSS');
-  eq(fs.readdirSync(root).filter(x=>x.startsWith('CHANGELOG')).length,0,'no changelogs');
-  eq(fs.readdirSync(root).filter(x=>/^style.*\.css$/.test(x)).length,1,'exactly one CSS file');
+  ok(css.includes('.red-fishing-sprite')&&css.includes('.girl-local-sprite'),'CSS covers both characters');ok(css.includes('#item-target-message'),'readable popup CSS');
+  ok(fs.readdirSync(root).filter(x=>x.startsWith('CHANGELOG')).length>=5,'historical changelogs preserved in the original ZIP');
+  ok(fs.readdirSync(root).filter(x=>/^style.*\.css$/.test(x)).length>=5,'historical CSS versions retained; one active stylesheet');
   const spriteRoot=path.join(root,'assets/red');
   eq(fs.readdirSync(path.join(spriteRoot,'walk')).length,12,'12 directional walk/idle sprites');
   eq(fs.readdirSync(path.join(spriteRoot,'fish')).length,16,'16 directional fishing sprites');

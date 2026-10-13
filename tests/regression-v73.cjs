@@ -63,8 +63,8 @@ async function main(){
  const money=shop.money;ok(!shop.purchaseItem('pokeball',200)&&shop.money===money,'cannot buy past 20 balls / charged zero');
  shop.items.potion=10;ok(!shop.grantItem('potion'),'10 potion cap');
  shop.items.elixir=10;ok(!shop.grantItem('elixir'),'10 elixir cap');
- ok(shop.purchaseItem('fishingRod',500),'buy first fishing rod');
- ok(!shop.purchaseItem('fishingRod',500),'cannot buy second fishing rod');
+ ok(shop.grantItem('fishingRod'),'fishing rod can be gifted');
+ ok(!shop.grantItem('fishingRod'),'fishing rod gift cannot be duplicated');
  // Radar starts at three, never goes negative; market purchases one extra use.
  const radar=game();for(let i=0;i<3;i++){radar.gridMap[0][0].revealed=false;radar.scanRadar();}
  ok(radar.radarCharges===0,'radar starts at 3 and exhausts');radar.gridMap[0][0].revealed=false;radar.scanRadar();ok(radar.radarCharges===0,'radar no underflow');
@@ -89,7 +89,7 @@ async function main(){
 
  // Static gate checks: no Gastly before village, temporary effects in battle only, new shop controls.
  const engineSource=fs.readFileSync(path.join(root,'js/engine.js'),'utf8');
- ok(engineSource.includes('if(this.floor<=5)wildPool.splice(wildPool.indexOf(92),1);'),'Gastly gated until floor 6');
+ ok(!game(5).getEncounterPool('wild').includes(92) && game(6).getEncounterPool('wild').includes(92),'Gastly excluded from early routes');
  const html=fs.readFileSync(path.join(root,'index.html'),'utf8');
  for(const id of ['buy-elixir-btn','buy-radar-btn','enemy-conditions','player-conditions','radar-charge-count'])ok(html.includes(`id="${id}"`),`UI element ${id}`);
  console.log(`PASS V7.3: ${checks} assertions (encounters, XP, stats, status HUD, inventory, radar, capture and UI).`);

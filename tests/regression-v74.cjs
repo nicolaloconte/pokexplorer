@@ -45,7 +45,7 @@ async function test(){
  equal(g.activeMon,a,'clicking a team member does not change the active Pokémon');
  ok(!document.getElementById('party-action-menu').classList.contains('hidden'),'menu opens');
  g.beginPartyReorder();equal(g.partyMoveSource,b,'choose move');
- g.completePartyReorder(a);equal(g.team[0],b,'swap occupied slots');equal(g.activeMon,b,'first in party is lead');
+ g.completePartyReorder(a);equal(g.team[0],b,'swap occupied slots');equal(g.activeMon,a,'active Pokémon persists after party reorder');
  g.openPartyActions(a);g.beginPartyReorder();g.completePartyReorder(null);equal(g.team[0],b,'cannot swap into empty slot');g.closePartyActions();
  g.openPokemonInfo(b);equal(document.getElementById('pokemon-info-stats').children.length,6,'info lists six stats');
  equal(document.getElementById('pokemon-info-moves').children.length,b.moves.length,'info lists current moves');

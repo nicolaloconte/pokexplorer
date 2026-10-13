@@ -70,8 +70,8 @@ async function main(){
  eq(maxed.exp,0,'no XP accumulates at level cap');
  const src=fs.readFileSync(path.join(root,'js/engine.js'),'utf8');
  yes(src.includes('/pokemon-species/${species}'),'species growth fetched from PokéAPI');
- yes(src.includes('a.level>=100?100:'),'EXP bar safely handles level 100');
- yes(src.includes('ha già raggiunto il livello massimo (100)'),'battle shows no XP gain when max level');
+ yes(src.includes('a.level>=this.getLevelCap()?100:'),'EXP bar safely handles level 100');
+ yes(src.includes('ha già raggiunto il limite di livello ${levelCap}'),'battle shows no XP gain when max level');
  // Network integration: fake a Pokémon resource and its corresponding Species rate.
  const speciesCtx=vm.createContext({console,Math,document:{},fetch:async url=>({ok:true,json:async()=>url.includes('pokemon-species')?{growth_rate:{name:'slow'}}:pokemonData(58,null)})});
  vm.runInContext(engineSrc+';this.GameEngine=GameEngine;',speciesCtx);

@@ -78,17 +78,17 @@ fish.movePlayer(0,1);assert.equal(fish.playerPos.y,0,'Cannot walk during fishing
 fish.closeBattleConfirmation();assert(!fish.isLocked,'Cancel unlocks movement');
 fish.movePlayer(1,0);fish.acceptBattleConfirmation();assert(fish.isLocked&&!fish.fishingConfirmPending,'Confirm leaves fishing encounter locked');
 
-// Each Poké Ball individually has an exactly 10% roll. Test both boundaries.
-for(const [roll,shouldRaid] of [[.09,true],[.10,false],[.95,false]]){
+// Items never trigger raids: raids are hidden in grass and generated exactly once per route.
+for(const roll of [.09,.10,.95]){
  const g=gameOn(1);g.gridMap=Array.from({length:10},(_,y)=>Array.from({length:10},(_,x)=>({x,y,type:'path',entity:null,revealed:true})));
  g.gridMap[0][1].entity='item';controlledRand=roll;
  g.movePlayer(1,0);
- assert.equal(Boolean(g.isRaidActive),shouldRaid,`raid roll ${roll}`);
- assert.equal(g.gridMap[0][1].entity,null,'Item removed exactly once');
+ assert.equal(Boolean(g.isRaidActive),false,'items no longer cause random raid');
+ assert.equal(g.gridMap[0][1].entity,null,'Item collected exactly once');
  assert.equal(g.playerPos.x,1,'Player stands on collected Poké Ball');
- }
+}
 controlledRand=null;
-assert.equal(ctx.GAME_BALANCE.raidChancePerItem,.1);
+assert.equal(ctx.GAME_BALANCE.raidChancePerItem,undefined,"Old item-based raids removed");
 
 // Level balance: 60 early battles do not force a Pokémon above level 42.
 const cost=lv=>Math.round(110+22*lv+1.1*lv*lv);
