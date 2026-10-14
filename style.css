@@ -1861,3 +1861,49 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
 .dev-status-text{font:10px/1.65 system-ui,Arial,sans-serif;color:#ffdd90;}
 .dev-candy-symbol{font-size:20px;width:27px;text-align:center;flex:none;}
 @media(max-width:600px){#dev-mode-trigger{top:8px;right:8px;min-height:38px;font-size:8px;padding:8px 10px}}
+
+/* R2.4: full target surfaces and CSS-drawn D-pad, independent of emoji fonts. */
+#battle-controls #panel-main-actions>.act-btn,#battle-controls #panel-move-actions>.act-btn{position:relative!important;inset:auto!important;width:100%!important;height:100%!important;min-height:40px!important;pointer-events:auto!important;z-index:8!important;}
+#battle-controls #panel-main-actions>.act-btn *,#battle-controls #panel-move-actions>.act-btn *{pointer-events:none!important}
+.dpad-arrow{width:0;height:0;display:inline-block;border:7px solid transparent;vertical-align:middle;}
+.arrow-up{border-top:0;border-bottom:12px solid currentColor}.arrow-down{border-bottom:0;border-top:12px solid currentColor}.arrow-left{border-left:0;border-right:12px solid currentColor}.arrow-right{border-right:0;border-left:12px solid currentColor}
+#pokemon-info-close{color:#171717!important}
+#panel-move-actions .act-btn{font-weight:700;}
+#panel-move-actions .act-btn.move-fire{background:#e86131!important;color:#1d0e06!important}
+#panel-move-actions .act-btn.move-water{background:#459be7!important;color:#071e35!important}
+#panel-move-actions .act-btn.move-grass{background:#66c66d!important;color:#0c260d!important}
+#panel-move-actions .act-btn.move-electric{background:#f4d14f!important;color:#302300!important}
+#panel-move-actions .act-btn.move-dragon{background:#6954b6!important;color:#fff!important}
+#panel-move-actions .act-btn.move-flying{background:#8abfe7!important;color:#152a39!important}
+#panel-move-actions .act-btn.move-psychic{background:#e575a9!important;color:#371325!important}
+#panel-move-actions .act-btn.move-ice{background:#79d9da!important;color:#13373b!important}
+#panel-move-actions .act-btn.move-fighting{background:#c76e4c!important;color:#2d130a!important}
+#panel-move-actions .act-btn.move-poison{background:#aa6bb8!important;color:#fff!important}
+#panel-move-actions .act-btn.move-ground{background:#bc9e56!important;color:#2e240b!important}
+#panel-move-actions .act-btn.move-rock{background:#a79867!important;color:#26210e!important}
+#panel-move-actions .act-btn.move-bug{background:#a6bc43!important;color:#22300b!important}
+#panel-move-actions .act-btn.move-ghost{background:#8277b3!important;color:#fff!important}
+#panel-move-actions .act-btn.move-dark{background:#655754!important;color:#fff!important}
+#panel-move-actions .act-btn.move-steel{background:#aebcc4!important;color:#20323a!important}
+#panel-move-actions .act-btn.move-normal{background:#bfb3a5!important;color:#302a26!important}
+#pokemon-info-overlay:not(.hidden)~#mobile-dpad{pointer-events:none}
+
+/* R2.4 Legendary discovery: black fade followed by three bright pulses. */
+#pokenav-screen-root.legendary-encounter-transition::after{content:"";position:absolute;inset:0;z-index:250;pointer-events:none;background:#000;animation:legendary-pulses 1.2s steps(1,end) forwards}
+@keyframes legendary-pulses{0%,15%,40%,67%,94%{background:#000}26%,54%,80%{background:#fff}100%{background:transparent}}
+
+/* R2.4 Pokémarket: add a clerk's dialogue corner with Kecleon without changing shop logic. */
+#pokemart-overlay .mart-clerk-scene{display:flex;align-items:center;gap:7px;padding:9px;background:#edd1a0;border:3px solid #9c683e;border-radius:3px;min-height:86px;position:relative;isolation:isolate;box-shadow:inset 0 0 0 2px #fff1d3}
+#pokemart-overlay .mart-clerk-portrait{flex:0 0 54px;height:62px;position:relative;background:linear-gradient(#9ac2c8 0 36%,#896145 36% 100%);image-rendering:pixelated;border:2px solid #7a5839}
+#pokemart-overlay .mart-clerk-hair{position:absolute;left:12px;top:8px;width:29px;height:23px;background:#493127;border:3px solid #332317;border-radius:7px 7px 2px 2px}
+#pokemart-overlay .mart-clerk-face{position:absolute;left:16px;top:21px;width:22px;height:21px;background:#e6af77;border:3px solid #a86a45;border-radius:3px}
+#pokemart-overlay .mart-clerk-uniform{position:absolute;left:8px;bottom:0;width:37px;height:15px;background:#5c90c1;border:3px solid #334e77}
+#pokemart-overlay .mart-clerk-dialogue{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;color:#38474b;text-align:left;font:6px/1.8 'Press Start 2P',monospace}
+#pokemart-overlay .mart-clerk-dialogue strong{color:#8b422e}
+#pokemart-overlay .mart-kecleon{width:65px;height:65px;object-fit:contain;image-rendering:pixelated;flex:none}
+#pokemart-overlay .mart-clerk-scene.kecleon-offline::after{content:'KECLEON';font:7px/1.5 'Press Start 2P',monospace;color:#347052;padding:7px}
+@media(max-width:460px){#pokemart-overlay .mart-clerk-portrait{flex-basis:42px;height:52px}#pokemart-overlay .mart-kecleon{width:50px;height:50px}#pokemart-overlay .mart-clerk-dialogue{font-size:5px}}
+/* Town buildings must not be cut to one tile when avatars move nearby. */
+#dungeon-grid-board{isolation:isolate}
+#dungeon-grid-board .grid-cell:has(.map-building){overflow:visible!important;z-index:5!important}
+#dungeon-grid-board .grid-cell.player-cell{z-index:8!important;overflow:visible!important}

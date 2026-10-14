@@ -91,6 +91,7 @@
         <p class="dev-status-text">999 Caramelle Rare e 999 Caramelle d’Oro nello zaino. Livelli fino a 100 senza limite medaglie.</p>
         <button type="button" id="dev-radar">RADAR ∞</button>
         <button type="button" id="dev-capture">CATTURA GARANTITA ON/OFF</button>
+        <button type="button" id="dev-skip-encounter">SALTA RAID / TRAINER DUNGEON</button>
       </section>
     </div>
   </div>
@@ -118,7 +119,7 @@
           <div style="margin-top:10px;">
             <div class="logo-title">POKÉXPLORER</div>
             <div style="font-size:7px; color:#5eead4; margin-top:6px;">UN’AVVENTURA POKÉMON ROGUELIKE</div>
-            <div id="build-version" style="font-size:6px; color:#facc15; margin-top:9px; letter-spacing:1px;">BUILD V7.7 · REBUILD R2.2 · DEV MODE</div>
+            <div id="build-version" style="font-size:6px; color:#facc15; margin-top:9px; letter-spacing:1px;">BUILD V7.7 · R2.4 TEST</div>
           </div>
           <div class="menu-card">
             <button class="btn-nav" id="btn-start-game">NUOVA AVVENTURA</button>
@@ -190,6 +191,11 @@
           <div style="font-size:9px; color:#f59e0b; margin-bottom:8px;">POKÉMARKET</div>
           <div style="background:#0f172a; border:3px solid #38bdf8; border-radius:12px; padding:12px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:8px; text-align:center;">
             <div style="font-size:6px; color:#f8fafc; line-height:1.4;">Benvenuto al Negozio! Acquista strumenti utili:</div>
+            <div class="mart-clerk-scene" aria-label="Commesso Pokémon con assistente Kecleon">
+              <div class="mart-clerk-portrait" role="img" aria-label="Commesso del Pokémarket"><span class="mart-clerk-hair"></span><span class="mart-clerk-face"></span><span class="mart-clerk-uniform"></span></div>
+              <div class="mart-clerk-dialogue"><strong>COMMESSO</strong><span>Benvenuto! Il mio Kecleon ti aiuterà a scegliere gli strumenti.</span></div>
+              <img class="mart-kecleon" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/352.png" onerror="this.onerror=null;this.style.display='none';this.parentElement.classList.add('kecleon-offline')" alt="Kecleon, assistente del negozio" loading="lazy">
+            </div>
             <button class="btn-nav" id="buy-pokeball-btn" style="background:#ef4444; box-shadow:0 4px 0 #991b1b;">Poké Ball x1 ($200)</button>
             <button class="btn-nav" id="buy-potion-btn" style="background:#4ade80; color:#0f172a; box-shadow:0 4px 0 #16a34a;">Pozione x1 ($150)</button>
             <button class="btn-nav" id="buy-elixir-btn" style="background:#a78bfa;color:#142031;box-shadow:0 4px 0 #6d28d9;">Elisir x1 ($400)</button>
@@ -284,9 +290,9 @@
           <div id="dungeon-grid-board"></div>
           <!-- Comandi touch: visibili sopra la mappa su smartphone e tablet. -->
           <nav id="mobile-dpad" aria-label="Comandi di movimento su schermo">
-            <span></span><button type="button" class="mobile-dpad-key" data-move="up" aria-label="Vai in alto">▲</button><span></span>
-            <button type="button" class="mobile-dpad-key" data-move="left" aria-label="Vai a sinistra">◀</button><span class="mobile-dpad-center" aria-hidden="true"></span><button type="button" class="mobile-dpad-key" data-move="right" aria-label="Vai a destra">▶</button>
-            <span></span><button type="button" class="mobile-dpad-key" data-move="down" aria-label="Vai in basso">▼</button><span></span>
+            <span></span><button type="button" class="mobile-dpad-key" data-move="up" aria-label="Vai in alto"><span class="dpad-arrow arrow-up" aria-hidden="true"></span></button><span></span>
+            <button type="button" class="mobile-dpad-key" data-move="left" aria-label="Vai a sinistra"><span class="dpad-arrow arrow-left" aria-hidden="true"></span></button><span class="mobile-dpad-center" aria-hidden="true"></span><button type="button" class="mobile-dpad-key" data-move="right" aria-label="Vai a destra"><span class="dpad-arrow arrow-right" aria-hidden="true"></span></button>
+            <span></span><button type="button" class="mobile-dpad-key" data-move="down" aria-label="Vai in basso"><span class="dpad-arrow arrow-down" aria-hidden="true"></span></button><span></span>
           </nav>
         </div>
 
@@ -362,6 +368,7 @@
           <div id="panel-main-actions" class="grid-2x2">
             <button class="act-btn" id="btn-act-fight">LOTTA</button>
             <button class="act-btn" id="btn-act-run">FUGA</button>
+            <button class="act-btn" id="btn-act-switch" type="button">POKÉMON</button>
           </div>
           <div id="panel-move-actions" class="grid-2x2 hidden"></div>
           <div id="panel-team-actions" class="battle-panel-hint hidden"></div>
@@ -434,9 +441,9 @@
 
       <div class="panel-hdr" style="margin-top:auto;">CONTROLLI DI MOVIMENTO</div>
       <div class="dpad-container">
-        <div></div><button type="button" class="btn-dpad" id="btn-dpad-up" aria-label="Sposta in alto">▲</button><div></div>
-        <button type="button" class="btn-dpad" id="btn-dpad-left" aria-label="Sposta a sinistra">◀</button><div class="btn-dpad">•</div><button type="button" class="btn-dpad" id="btn-dpad-right" aria-label="Sposta a destra">▶</button>
-        <div></div><button type="button" class="btn-dpad" id="btn-dpad-down" aria-label="Sposta in basso">▼</button><div></div>
+        <div></div><button type="button" class="btn-dpad" id="btn-dpad-up" aria-label="Sposta in alto"><span class="dpad-arrow arrow-up" aria-hidden="true"></span></button><div></div>
+        <button type="button" class="btn-dpad" id="btn-dpad-left" aria-label="Sposta a sinistra"><span class="dpad-arrow arrow-left" aria-hidden="true"></span></button><div class="btn-dpad">•</div><button type="button" class="btn-dpad" id="btn-dpad-right" aria-label="Sposta a destra"><span class="dpad-arrow arrow-right" aria-hidden="true"></span></button>
+        <div></div><button type="button" class="btn-dpad" id="btn-dpad-down" aria-label="Sposta in basso"><span class="dpad-arrow arrow-down" aria-hidden="true"></span></button><div></div>
       </div>
     </div>
   </div>
