@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="146" viewBox="0 0 128 146"><defs><linearGradient id="body" x1=".1" y1="0" x2=".95" y2="1"><stop stop-color="#eee8ff"/><stop offset=".54" stop-color="#bdb5db"/><stop offset="1" stop-color="#746caa"/></linearGradient><linearGradient id="tail" x1="0" y1="0" x2=".9" y2="1"><stop stop-color="#ae79cf"/><stop offset="1" stop-color="#5c327d"/></linearGradient><filter id="glow"><feGaussianBlur stdDeviation="2.4"/></filter></defs>
+<!-- deep aura halo -->
+<ellipse cx="64" cy="73" rx="50" ry="60" fill="#7d37cb" opacity=".2" filter="url(#glow)"/>
+<!-- iconic high arcing tail -->
+<path d="M75 97 C119 74 119 126 99 134 C84 141 78 130 88 123 C94 119 101 124 98 128" stroke="#35234c" stroke-width="16" fill="none" stroke-linecap="round"/>
+<path d="M75 97 C119 74 119 126 99 134 C84 141 78 130 88 123 C94 119 101 124 98 128" stroke="url(#tail)" stroke-width="12" fill="none" stroke-linecap="round"/>
+<!-- upper legs -->
+<path d="M49 86 Q38 102 40 122 L34 138 Q43 143 52 136 L58 109 L69 107 L76 136 Q84 143 93 135 L81 115 Q89 98 77 85Z" fill="url(#body)" stroke="#514c7d" stroke-width="3"/>
+<path d="M42 105 Q49 111 56 109 M73 107 Q80 110 82 105" stroke="#7771a1" stroke-width="4" fill="none"/>
+<!-- torso with center purple plate -->
+<path d="M48 54 Q42 60 39 78 Q36 91 44 98 Q65 108 83 96 Q91 89 83 72 Q82 62 74 55Z" fill="url(#body)" stroke="#48496f" stroke-width="3"/>
+<path d="M56 72 Q63 77 72 71 L75 92 Q66 99 54 92Z" fill="#8264ae" opacity=".86"/>
+<!-- arms and articulated three-finger hands -->
+<path d="M45 62 Q34 64 29 78 L17 95 Q13 100 18 105 Q22 109 26 104 L34 95 L41 83" fill="none" stroke="#494775" stroke-width="13" stroke-linecap="round"/>
+<path d="M45 62 Q34 64 29 78 L17 95 Q13 100 18 105 Q22 109 26 104 L34 95 L41 83" fill="none" stroke="url(#body)" stroke-width="9" stroke-linecap="round"/>
+<path d="M17 97 8 102 M20 101 15 113 M24 102 27 110" stroke="#c9bde1" stroke-width="6" stroke-linecap="round"/>
+<path d="M82 62 Q93 64 98 81 L112 98 Q117 104 112 108 Q108 111 103 106 L94 98 L87 84" fill="none" stroke="#484674" stroke-width="13" stroke-linecap="round"/>
+<path d="M82 62 Q93 64 98 81 L112 98 Q117 104 112 108 Q108 111 103 106 L94 98 L87 84" fill="none" stroke="url(#body)" stroke-width="9" stroke-linecap="round"/>
+<path d="M110 99 118 105 M107 104 111 115 M104 106 101 116" stroke="#c9bde1" stroke-width="6" stroke-linecap="round"/>
+<!-- head with distinctive long pointed ear horns, broad dome and thin muzzle -->
+<path d="M41 43 Q39 24 44 7 L59 23 Q64 18 71 23 L86 7 Q91 25 86 43 Q91 57 78 65 Q65 72 51 65 Q37 58 41 43Z" fill="url(#body)" stroke="#484774" stroke-width="3" stroke-linejoin="round"/>
+<path d="M44 13 53 29 46 38Z M85 13 74 29 84 38Z" fill="#67458e"/>
+<path d="M45 37 Q55 33 60 37 M68 37 Q75 32 82 37" stroke="#7b70a4" stroke-width="2" fill="none"/>
+<path d="M47 44 57 43 56 48 48 49Z M71 43 81 44 80 49 72 48Z" fill="#ac2b76" stroke="#492653" stroke-width="1"/>
+<path d="M49 45 54 45 M75 45 80 45" stroke="#ff93d2" stroke-width="1.5"/>
+<path d="M58 55 Q65 60 72 55" stroke="#645b89" stroke-width="2.4" fill="none"/>
+</svg>

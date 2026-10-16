@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pokéxplorer — V7.7 Rebuild R2.19 TEST</title>
+  <meta name="theme-color" content="#fc4235">
+  <meta name="description" content="Pokéxplorer — un’avventura Pokémon roguelike in beta.">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link id="pokex-stylesheet" rel="stylesheet" href="style.css">
+  <!-- Emergency boot guard. This is NOT another CSS file: protects hidden dialogs
+       when Windows loads index.html without extracting style.css from the ZIP. -->
+  <style id="pokex-boot-guard">
+    .hidden,[hidden] { display:none !important; }
+    #pokex-extraction-warning:not([hidden]) {
+      position:fixed;inset:0;z-index:2147483647;display:flex!important;
+      justify-content:center;align-items:center;padding:20px;
+      background:#050d1f;color:#f8fafc;font:16px/1.7 Arial,sans-serif;
+    }
+    #pokex-extraction-warning .warning-card {
+      box-sizing:border-box;width:min(650px,95vw);padding:24px;
+      border:3px solid #38bdf8;border-radius:14px;background:#10223b;
+    }
+    #pokex-extraction-warning h1 {color:#ffd474;font-size:24px}
+  </style>
+</head>
+<body>
+<!-- Standalone recovery screen: intentionally has no dependency on external CSS/JS. -->
+<section id="pokex-extraction-warning" hidden role="alertdialog" aria-modal="true"
+         aria-label="File del gioco non caricati">
+  <div class="warning-card">
+    <h1>⚠️ Il gioco non è stato caricato</h1>
+    <p>Non è una sconfitta Nuzlocke. Mancano alcuni file necessari al funzionamento di Pokéxplorer.</p>
+    <p><strong>Come risolvere:</strong> chiudi questa scheda. Sul file ZIP fai clic destro →
+    <strong>Estrai tutto...</strong> (oppure <strong>Estrai qui</strong> con 7-Zip).
+    Entra nella cartella estratta e apri <code>Pokéxplorer/index.html</code>.</p>
+    <p><strong>Non aprire</strong> <code>index.html</code> direttamente dalla finestra dello ZIP:
+    Windows potrebbe estrarre temporaneamente solo quel file, senza stili e script.</p>
+    <p id="pokex-extraction-diagnostic" style="color:#91a9c3;font-size:13px"></p>
+  </div>
+</section>
+
+<!-- DEV MODE is unlocked locally with a 4-digit code; no URL parameter required. -->
+<div id="game-quick-settings" aria-label="Impostazioni rapide">
+  <button id="quick-settings-toggle" type="button" aria-label="Apri opzioni" aria-expanded="false" aria-controls="quick-settings-panel" title="Opzioni">
+    <span class="menu-hamburger" aria-hidden="true"><i></i><i></i><i></i></span>
+  </button>
+  <div id="quick-settings-panel" class="hidden" role="group" aria-label="Opzioni del gioco">
+    <div class="quick-settings-heading" data-i18n-it="OPZIONI" data-i18n-en="OPTIONS">OPZIONI</div>
+    <div class="quick-settings-label" data-i18n-it="LINGUA" data-i18n-en="LANGUAGE">LINGUA</div>
+    <div class="language-flags" role="group" aria-label="Lingua / Language">
+      <button id="language-it" type="button" aria-label="Italiano" aria-pressed="true"><img src="assets/flags/it.png" alt="Bandiera italiana"></button>
+      <button id="language-en" type="button" aria-label="English" aria-pressed="false"><img src="assets/flags/en.png" alt="United Kingdom flag"></button>
+    </div>
+    <div class="quick-settings-label" data-i18n-it="EXTRA" data-i18n-en="EXTRAS">EXTRA</div>
+    <div class="dev-shortcuts-row" role="group" aria-label="Scorciatoie test">
+      <button id="dev-mode-trigger" type="button" aria-pressed="false" aria-haspopup="dialog" aria-controls="dev-code-overlay">DEV MODE</button>
+      <button id="floor-jump-trigger" type="button" aria-haspopup="dialog" aria-controls="floor-jump-overlay" title="Vai al piano scelto (1–80) con codice 2103">VAI AL PIANO</button>
+    </div>
+  </div>
+</div>
+<section id="dev-code-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="dev-code-title">
+  <form id="dev-code-form" class="dev-code-card" autocomplete="off">
+    <h2 id="dev-code-title">DEV MODE</h2>
+    <p id="dev-code-description">Inserisci il codice di accesso a 4 cifre.</p>
+    <label for="dev-access-code" data-i18n-it="CODICE" data-i18n-en="CODE">CODICE</label>
+    <input id="dev-access-code" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
+           autocomplete="off" spellcheck="false" required aria-describedby="dev-code-error">
+    <p id="dev-code-error" class="dev-code-error" role="status" aria-live="polite"></p>
+    <div class="dev-code-actions">
+      <button id="dev-code-cancel" type="button" data-i18n-it="ANNULLA" data-i18n-en="CANCEL">ANNULLA</button>
+      <button id="dev-code-confirm" type="submit" data-i18n-it="SBLOCCA" data-i18n-en="UNLOCK">SBLOCCA</button>
+    </div>
+    <p class="dev-code-note">Sblocco per la sessione corrente. Oggetti DEV nello Zaino → Rimedi.</p>
+  </form>
+</section>
+
+<!-- Scorciatoia test separata dalla DEV MODE: qualsiasi piano da 1 a 80, con PIN 2103. -->
+<section id="floor-jump-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="floor-jump-title" aria-describedby="floor-jump-description">
+  <form id="floor-jump-form" class="dev-code-card" autocomplete="off">
+    <h2 id="floor-jump-title">TELETRASPORTO · PIANI 1–80</h2>
+    <p id="floor-jump-description">Scegli il piano da 1 a 80 e inserisci il codice 2103. Devi aver già scelto uno starter.</p>
+    <label for="floor-jump-code">CODICE</label>
+    <input id="floor-jump-code" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required aria-describedby="floor-jump-error">
+    <label for="floor-jump-level">PIANO DI DESTINAZIONE (1–80)</label>
+    <input id="floor-jump-level" type="number" inputmode="numeric" min="1" max="80" step="1" value="75" required aria-describedby="floor-jump-error">
+    <p id="floor-jump-error" class="dev-code-error" role="status" aria-live="polite"></p>
+    <div class="dev-code-actions">
+      <button id="floor-jump-cancel" type="button">ANNULLA</button>
+      <button id="floor-jump-confirm" type="submit">TELETRASPORTA</button>
+    </div>
+    <p class="dev-code-note">Solo test: mantiene squadra e inventario, rigenera il piano scelto. Il piano 75 ricrea l'incontro con Oak.</p>
+  </form>
+</section>
+
+<div id="rotom-container" class="wings-open">
+
+  <!-- ALA SINISTRA -->
+  <div class="rotom-wing-left">
+    <div class="wing-screen">
+      <div class="panel-hdr" data-i18n-it="SQUADRA POKÉMON" data-i18n-en="POKÉMON PARTY">SQUADRA POKÉMON</div>
+      <p class="party-intro" id="party-intro">Scegli il tuo compagno e parti per Kanto!</p>
+      <div id="team-grid" class="team-grid-2x3"></div>
+      <button class="btn-nav" id="btn-scan-radar" type="button" aria-describedby="radar-charge-count">
+        <span class="radar-button-label" data-i18n-it="RADAR SCAN" data-i18n-en="RADAR SCAN">RADAR SCAN</span>
+        <span id="radar-charge-count" class="radar-button-charges" role="status" aria-live="polite">SCANSIONI: 3</span>
+      </button>
+
+      
+      <button id="btn-badge-case" class="badge-case-trigger" type="button" aria-haspopup="dialog" aria-controls="badge-case-overlay">
+        <span>🏅 PORTAMEDAGLIE</span><span id="badges-container" class="badge-case-sidebar-count">0 / 8 MEDAGLIE</span>
+      </button>
+
+
+
+      <section id="developer-panel" class="developer-panel hidden" aria-label="Strumenti sviluppatore">
+        <h3 data-i18n-it="DEV MODE · ATTIVA" data-i18n-en="DEV MODE · ENABLED">DEV MODE · ATTIVA</h3>
+        <p class="dev-status-text" data-i18n-it="999 Caramelle Rare e 999 Caramelle d’Oro nello zaino. Livelli fino a 100 senza limite medaglie." data-i18n-en="999 Rare Candies and 999 Gold Candies in your Bag. Levels up to 100, with no Badge level cap.">999 Caramelle Rare e 999 Caramelle d’Oro nello zaino. Livelli fino a 100 senza limite medaglie.</p>
+        <button type="button" id="dev-radar">RADAR ∞</button>
+        <button type="button" id="dev-capture">CATTURA 100% ✓</button>
+        <button type="button" id="dev-skip-encounter">SALTA RAID / TRAINER DUNGEON</button>
+      </section>
+    </div>
+      <div id="party-action-menu" class="party-action-menu hidden" role="group" aria-label="Azioni squadra">
+        <div id="party-action-title" class="party-action-title">POKÉMON</div>
+        <button type="button" id="party-info-action" data-i18n-it="INFO POKÉMON" data-i18n-en="POKÉMON INFO">INFO POKÉMON</button>
+        <button type="button" id="party-move-action" data-i18n-it="SPOSTA POKÉMON" data-i18n-en="MOVE POKÉMON">SPOSTA POKÉMON</button>
+        <button type="button" id="party-lead-action">IMPOSTA ATTIVO</button>
+        <button type="button" id="party-send-action" class="hidden" data-i18n-it="MANDA IN CAMPO" data-i18n-en="SEND INTO BATTLE">MANDA IN CAMPO</button>
+        <button type="button" id="party-close-action" data-i18n-it="CHIUDI" data-i18n-en="CLOSE">CHIUDI</button>
+        <div id="party-move-hint" class="hidden">Seleziona un altro Pokémon occupato.</div>
+      </div>
+  </div>
+
+  <!-- CORPO CENTRALE ROTOM -->
+  <div id="rotom-body">
+    <div class="rotom-top-spike"></div>
+
+    <div class="rotom-dots-left"><div class="head-dot"></div><div class="head-dot"></div></div>
+    <div class="rotom-dots-right"><div class="head-dot"></div><div class="head-dot"></div></div>
+
+    <div class="rotom-face">
+      <div class="rotom-eye-ball left"></div>
+      <span style="font-size:8px; color:#38bdf8; letter-spacing:1px;">ROTOM-DEX</span>
+      <div class="rotom-eye-ball right"></div>
+      <div class="rotom-mouth"><span></span></div>
+    </div>
+
+    <!-- SCHERMO CENTRALE DI GIOCO -->
+    <div class="rotom-screen-frame">
+      <div class="pokenav-screen" id="pokenav-screen-root">
+        
+        <!-- GRO TTA CELESTE: STORY DIALOGUE, BLACKOUT, CINEMATIC -->
+        <section id="celestial-dialog" class="hidden celestial-story" role="dialog" aria-modal="true" aria-label="Professor Oak">
+          <div class="celestial-story-card">
+            <div class="celestial-story-speaker"><img src="assets/characters/oak-frlg-mugshot-clean.png" alt="" width="65" height="65"><span>PROFESSOR OAK</span></div>
+            <p id="celestial-dialog-text"></p>
+            <button type="button" class="btn-nav" id="celestial-dialog-next">CONTINUA ▾ <small>SPAZIO</small></button>
+            <div id="celestial-dialog-actions" class="hidden celestial-choices">
+              <button type="button" class="btn-nav" id="celestial-dialog-yes">SÌ, LO SEGUO</button>
+              <button type="button" class="btn-nav" id="celestial-dialog-no">NO</button>
+            </div>
+          </div>
+        </section>
+        <section id="celestial-cinematic" class="hidden celestial-cinematic" role="status" aria-live="polite">
+          <div class="celestial-cinematic-glow"></div>
+          <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/150.png" onerror="this.onerror=null;this.src='assets/characters/mewtwo-cave.svg'" alt="Mewtwo" class="celestial-cinematic-mon">
+          <h2>MEWTWO</h2>
+          <p id="celestial-cinematic-subtitle">Un potere psichico travolge la grotta…</p>
+          <div class="celestial-cinematic-line"></div>
+        </section>
+        <div id="celestial-blackout" class="celestial-blackout" aria-hidden="true"></div>
+
+        <!-- MAIN MENU OVERLAY -->
+        <div id="main-menu-overlay">
+          <div style="margin-top:10px;">
+            <div class="logo-title">POKÉXPLORER</div>
+            <div style="font-size:7px; color:#5eead4; margin-top:6px;">UN’AVVENTURA POKÉMON ROGUELIKE</div>
+            <div id="build-version" style="font-size:6px; color:#facc15; margin-top:9px; letter-spacing:1px;">BUILD V7.7 · R2.19 TEST</div>
+          </div>
+          <div class="menu-card">
+            <button class="btn-nav" id="btn-start-game">NUOVA AVVENTURA</button>
+          </div>
+          <div style="font-size:6px; color:#94a3b8;">SVILUPPATO DA @17nico</div>
+        </div>
+
+        <!-- Selettore strumenti: overlay non bloccante, squadra selezionabile a sinistra. -->
+        <div id="item-target-prompt" class="hidden" role="status" aria-live="polite">
+          <div class="item-target-box">
+            <div id="item-target-message">A quale Pokémon vuoi dare lo strumento?</div>
+            <div class="item-target-help">Scegli un Pokémon dalla squadra a sinistra.</div>
+            <div id="item-target-mobile-list" class="item-target-mobile-list" aria-label="Scegli un Pokémon"></div>
+            <button type="button" id="item-target-cancel" data-i18n-it="ANNULLA" data-i18n-en="CANCEL">ANNULLA</button>
+          </div>
+        </div>
+
+        <!-- Scheda Pokémon: le informazioni non modificano la formazione. -->
+        <section id="pokemon-info-overlay" class="hidden" role="dialog" aria-modal="false" aria-label="Informazioni Pokémon">
+          <div class="pokemon-info-card">
+            <div class="pokemon-info-header"><h2 id="pokemon-info-name"></h2><button id="pokemon-info-close" type="button" aria-label="Chiudi informazioni">✕</button></div>
+            <div class="pokemon-info-hero" id="pokemon-info-hero"><img id="pokemon-info-sprite" alt="Sprite Pokémon"><div><strong id="pokemon-info-level"></strong><span id="pokemon-info-types"></span><span id="pokemon-info-nature"></span><span id="pokemon-info-ability"></span><p id="pokemon-info-ability-description" class="pokedex-description"></p></div></div>
+            <h3 data-i18n-it="STATISTICHE" data-i18n-en="STATS">STATISTICHE</h3>
+            <div id="pokemon-info-stats" class="pokemon-info-stats"></div>
+            <h3 data-i18n-it="MOSSE" data-i18n-en="MOVES">MOSSE</h3>
+            <div id="pokemon-info-moves" class="pokemon-info-moves"></div>
+            <div class="pokemon-info-footnote">Le statistiche comprendono livello, natura, IV ed EV. I modificatori temporanei sono visibili solo in battaglia.</div>
+          </div>
+        </section>
+        <!-- R2.18 — Portamedaglie di Kanto: separate readable screen, not 8 clipped miniatures. -->
+        <section id="badge-case-overlay" class="hidden" role="dialog" aria-modal="true" aria-label="Portamedaglie di Kanto">
+          <div class="badge-case-panel">
+            <header class="badge-case-header">
+              <div><span class="badge-case-overline">REGIONE DI KANTO · LE OTTO PALESTRE</span><h2>PORTAMEDAGLIE</h2></div>
+              <button id="badge-case-close" type="button" aria-label="Chiudi portamedaglie">✕</button>
+            </header>
+            <p class="badge-case-description">Otto sfide. Otto simboli del tuo viaggio.</p>
+            <div id="badge-case-grid" class="badge-case-grid" aria-label="Le otto Medaglie di Kanto"></div>
+            <footer id="badge-case-progress" class="badge-case-progress">0 DI 8 MEDAGLIE CONQUISTATE</footer>
+          </div>
+        </section>
+        <!-- GAME OVER OVERLAY -->
+        <div id="gameover-overlay" class="hidden" style="position:absolute; inset:0; z-index:200; background:#020617; display:none; flex-direction:column; align-items:center; justify-content:center; padding:20px; text-align:center;">
+          <div style="font-size:22px; color:#ef4444; margin-bottom:15px; text-shadow:2px 2px #000;" data-i18n-it="FINE DELL’AVVENTURA" data-i18n-en="END OF ADVENTURE">FINE DELL’AVVENTURA</div>
+          <div style="font-size:7px; color:#94a3b8; margin-bottom:20px; line-height:1.6;">Non hai più Pokémon disponibili. La tua avventura Nuzlocke è terminata.</div>
+          <button class="btn-nav" id="btn-return-main-menu" style="background:#ef4444; box-shadow:0 4px 0 #991b1b; width:auto; padding:10px 24px;" data-i18n-it="TORNA AL MENU" data-i18n-en="RETURN TO MENU">TORNA AL MENU</button>
+        </div>
+
+        <!-- STARTER SELECTION OVERLAY -->
+        <div id="starter-scene-overlay" class="hidden">
+          <div style="font-size:9px; color:#38bdf8; margin-top:5px;" data-i18n-it="SCEGLI IL TUO POKÉMON" data-i18n-en="CHOOSE YOUR POKÉMON">SCEGLI IL TUO POKÉMON</div>
+          <div class="trainer-choice" role="group" aria-label="Scegli il tuo personaggio">
+            <span data-i18n-it="IL TUO PERSONAGGIO" data-i18n-en="YOUR CHARACTER">IL TUO PERSONAGGIO</span>
+            <button id="choose-male" type="button" class="selected" aria-pressed="true" data-i18n-it="RAGAZZO" data-i18n-en="BOY">RAGAZZO</button>
+            <button id="choose-female" type="button" aria-pressed="false" data-i18n-it="RAGAZZA" data-i18n-en="GIRL">RAGAZZA</button>
+          </div>
+          <div class="briefcase-container" role="group" aria-label="Valigetta con tre Poké Ball">
+            <div class="briefcase-lid"><span class="briefcase-brand" data-i18n-it="PROFESSOR OAK · POKÉMON INIZIALI" data-i18n-en="PROFESSOR OAK · STARTER POKÉMON">PROFESSOR OAK · POKÉMON INIZIALI</span><span class="briefcase-lid-symbol">POKÉMON</span></div>
+            <div class="briefcase-inner" id="briefcase-balls"></div>
+            <div class="briefcase-plate" data-i18n-it="VALIGETTA POKÉMON" data-i18n-en="POKÉMON CASE">VALIGETTA POKÉMON</div>
+          </div>
+          <div class="starter-preview-strip">
+            <div id="starter-showcase" class="pokemon-showcase-box">
+              <img id="starter-showcase-img" class="pokemon-showcase-img" src="" alt="Pokémon iniziale selezionato">
+            </div>
+            <div id="starter-selection-info" aria-live="polite">Tre compagni. Un solo inizio.</div>
+          </div>
+          <div style="background:#0f172a; border:2px solid #38bdf8; border-radius:10px; padding:10px; width:100%; max-width:440px; margin-bottom:5px; z-index:15;">
+            <div id="dialog-text" style="font-size:7px; line-height:1.5; color:#f8fafc;">
+              RotomDex: Seleziona una Poké Ball dalla valigetta per scegliere il tuo compagno.
+            </div>
+            <div id="dialog-actions" class="hidden" style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+              <button class="btn-nav" id="btn-confirm-yes" style="width:auto; padding:6px 16px;" data-i18n-it="CONFERMA" data-i18n-en="CONFIRM">CONFERMA</button>
+              <button class="btn-nav" id="btn-confirm-no" style="width:auto; padding:6px 16px; background:#ef4444;" data-i18n-it="ANNULLA" data-i18n-en="CANCEL">ANNULLA</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- POKÉMARKET OVERLAY -->
+        <div id="pokemart-overlay" class="hidden">
+          <div style="font-size:9px; color:#f59e0b; margin-bottom:8px;">POKÉMARKET</div>
+          <div style="background:#0f172a; border:3px solid #38bdf8; border-radius:12px; padding:12px; width:100%; max-width:400px; display:flex; flex-direction:column; gap:8px; text-align:center;">
+            <div style="font-size:6px; color:#f8fafc; line-height:1.4;">Benvenuto al Negozio! Acquista strumenti utili:</div>
+            <div class="mart-clerk-scene" aria-label="Commesso Pokémon con assistente Kecleon">
+              <div class="mart-clerk-portrait" role="img" aria-label="Commesso del Pokémarket"><span class="mart-clerk-hair"></span><span class="mart-clerk-face"></span><span class="mart-clerk-uniform"></span></div>
+              <div class="mart-clerk-dialogue"><strong>COMMESSO</strong><span>Benvenuto! Il mio Kecleon ti aiuterà a scegliere gli strumenti.</span></div>
+              <img class="mart-kecleon" src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/352.png" onerror="this.onerror=null;this.style.display='none';this.parentElement.classList.add('kecleon-offline')" alt="Kecleon, assistente del negozio" loading="lazy">
+            </div>
+            <button class="btn-nav" id="buy-pokeball-btn" style="background:#ef4444; box-shadow:0 4px 0 #991b1b;"><img class="mart-item-icon" src="assets/items/pokeball-game.png" onerror="this.onerror=null;this.src='assets/items/pokeball-game.png'" alt="" aria-hidden="true">Poké Ball x1 ($200)</button>
+            <button class="btn-nav" id="buy-potion-btn" style="background:#4ade80; color:#0f172a; box-shadow:0 4px 0 #16a34a;"><img class="mart-item-icon" src="assets/items/potion-user.png" alt="" aria-hidden="true">Pozione x1 ($150)</button>
+            <button class="btn-nav hidden" id="buy-super-potion-btn" style="background:#60a5fa;color:#0f172a;box-shadow:0 4px 0 #2563eb;"><img class="mart-item-icon" src="assets/items/super-potion-user.png" alt="">Superpozione x1 ($600)</button>
+            <button class="btn-nav hidden" id="buy-hyper-potion-btn" style="background:#f472b6;color:#0f172a;box-shadow:0 4px 0 #be185d;"><img class="mart-item-icon" src="assets/items/hyper-potion-user.png" alt="">Iperpozione x1 ($1.000)</button>
+            <button class="btn-nav" id="buy-elixir-btn" style="background:#a78bfa;color:#142031;box-shadow:0 4px 0 #6d28d9;"><img class="mart-item-icon" src="assets/items/elixir-user.png" alt="" aria-hidden="true">Elisir x1 ($400)</button>
+            <button class="btn-nav" id="buy-radar-btn" style="background:#38bdf8;color:#142031;box-shadow:0 4px 0 #0284c7;"><img class="mart-item-icon" src="assets/items/radar-user.png" alt="" aria-hidden="true">Radar Scan +1 ($1.500)</button>
+            <button class="btn-nav" id="close-market-btn" style="background:#64748b; box-shadow:0 4px 0 #334155; margin-top:4px;" data-i18n-it="ESCI DAL NEGOZIO" data-i18n-en="LEAVE SHOP">ESCI DAL NEGOZIO</button>
+          </div>
+          <div class="mart-display-props" aria-hidden="true">
+            <img class="mart-shelf-icon" src="assets/items/pokeball-game.png" alt="">
+            <img class="mart-shelf-icon" src="assets/items/super-potion-user.png" alt="">
+            <img class="mart-shelf-icon" src="assets/items/pokeball-game.png" alt="">
+            <img class="mart-shelf-icon" src="assets/items/hyper-potion-user.png" alt="">
+            <img class="mart-shelf-icon" src="assets/items/pokeball-game.png" alt="">
+            <img class="mart-shelf-icon" src="assets/items/radar-user.png" alt="">
+          </div>
+        </div>
+
+        <!-- Gym entrance confirmation: no battles or queues committed until YES. -->
+        <div id="gym-entry-confirm" class="hidden gba-dialog-overlay" role="dialog" aria-modal="true" aria-labelledby="gym-entry-heading">
+          <div class="gba-dialog-card">
+            <h2 id="gym-entry-heading">SFIDA IN PALESTRA</h2>
+            <p id="gym-entry-text">Vuoi iniziare la sfida?</p>
+            <div class="gba-dialog-actions">
+              <button type="button" id="gym-entry-yes" class="btn-nav">INIZIA SFIDA</button>
+              <button type="button" id="gym-entry-no" class="btn-nav" data-i18n-it="ANNULLA" data-i18n-en="CANCEL">ANNULLA</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOX PC OVERLAY -->
+        <div id="box-pc-overlay" class="hidden" style="position:absolute; inset:0; z-index:110; background:rgba(2,6,23,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px;">
+          <div style="font-size:9px; color:#f59e0b; margin-bottom:10px;">CENTRO POKÉMON</div>
+          <div style="background:#0f172a; border:3px solid #f59e0b; border-radius:12px; padding:14px; width:100%; max-width:420px; text-align:center;">
+            <div style="font-size:6px; color:#f8fafc; margin-bottom:10px;">Squadra e PP curati al 100%!</div>
+            <button class="btn-nav" id="close-box-btn" style="background:#38bdf8; margin-top:10px;">CHIUDI</button>
+          </div>
+        </div>
+
+        <!-- DIALOGO NPC / SCAMBIO -->
+        <div id="npc-dialog-overlay" class="hidden" style="position:absolute; inset:0; z-index:115; background:rgba(2,6,23,0.85); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px;">
+          <div class="trainer-avatar-card" style="border-color:#f59e0b;"><span id="npc-portrait-img" class="npc-portrait-sheet" role="img" aria-label="Abitante"></span></div>
+          <div class="trainer-dialog-box" style="margin-top:10px;">
+            <div id="npc-speech-text" style="margin-bottom:10px;">"Ciao viaggiatore!"</div>
+            <div id="npc-actions" style="display:flex; gap:10px; justify-content:center;">
+              <button class="btn-nav" id="npc-btn-yes" style="width:auto; padding:6px 14px;">ACCETTA</button>
+              <button class="btn-nav" id="npc-btn-no" style="width:auto; padding:6px 14px; background:#ef4444;">RIFIUTA</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- APPRENDIMENTO NUOVA MOSSA -->
+        <div id="learn-move-overlay" class="hidden" style="position:absolute; inset:0; z-index:150; background:rgba(2,6,23,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:16px;">
+          <div style="font-size:8px; color:#f59e0b; margin-bottom:10px;">NUOVA MOSSA DISPONIBILE</div>
+          <div style="background:#0f172a; border:3px solid #38bdf8; border-radius:12px; padding:14px; width:100%; max-width:400px; text-align:center;">
+            <div id="learn-move-text" style="font-size:6px; color:#f8fafc; line-height:1.5; margin-bottom:12px;">Il Pokémon ha già 4 mosse. Scegli quale dimenticare:</div>
+            <div id="forget-moves-list" style="display:flex; flex-direction:column; gap:6px; margin-bottom:12px;"></div>
+            <button class="btn-nav" id="skip-new-move-btn" style="background:#64748b; box-shadow:0 4px 0 #334155; font-size:6px;">NON IMPARARE</button>
+          </div>
+        </div>
+
+        <!-- Introduzione esclusiva dopo tre allenatori, prima del capopalestra -->
+        <div id="gym-leader-intro" class="hidden" role="dialog" aria-modal="true" aria-label="Sfida del capopalestra">
+          <div class="gym-intro-sparks" aria-hidden="true"></div>
+          <div class="gym-intro-kicker">SFIDA FINALE DELLA PALESTRA</div>
+          <img id="gym-leader-portrait" alt="Capopalestra" src="" />
+          <h2 id="gym-leader-name" data-i18n-it="CAPOPALESTRA" data-i18n-en="GYM LEADER">CAPOPALESTRA</h2>
+          <div id="gym-leader-specialty">SPECIALITÀ</div>
+          <div id="gym-leader-roster">SQUADRA</div>
+          <p>Tre avversari superati. Adesso affronti il vero capopalestra!</p>
+          <button class="btn-nav" id="btn-start-gym-leader" data-i18n-it="INIZIA LA SFIDA" data-i18n-en="START CHALLENGE">INIZIA LA SFIDA</button>
+        </div>
+
+        <!-- OVERLAY DIALOGO ALLENATORE / PALESTRA -->
+        <div id="trainer-encounter-overlay" class="hidden">
+          <div class="trainer-avatar-card">
+            <img id="trainer-portrait-img" src="" alt="Allenatore">
+          </div>
+          <div class="trainer-dialog-box">
+            <div id="trainer-dialog-speech">"Ehi tu! I nostri sguardi si sono incrociati!"</div>
+            <button class="btn-nav" id="btn-start-trainer-battle" style="margin-top:10px; width:auto; padding:6px 20px;" data-i18n-it="LOTTA!" data-i18n-en="BATTLE!">LOTTA!</button>
+          </div>
+        </div>
+
+        <!-- ENCOUNTER WARNING OVERLAY (SELVATICO) -->
+        <div id="wild-encounter-overlay" class="hidden">
+          <div style="font-size:9px; color:#f8fafc; text-align:center; margin-bottom:15px;" data-i18n-it="ATTENZIONE!" data-i18n-en="WARNING!">ATTENZIONE!</div>
+          <div class="trainer-avatar-card" style="border-color:#4ade80;"><img src="assets/items/pokeball-game.png" alt="Incontro"></div>
+          <div class="trainer-dialog-box" style="margin-top:15px;">
+            <div id="wild-encounter-speech">Un Pokémon selvatico è comparso!</div>
+            <button class="btn-nav" id="btn-start-wild-battle" style="margin-top:10px; width:auto; padding:6px 20px;" data-i18n-it="LOTTA!" data-i18n-en="BATTLE!">LOTTA!</button>
+          </div>
+        </div>
+
+        <!-- ROUTE MAP VIEWPORT -->
+        <div id="dungeon-viewport">
+          <div id="dungeon-grid-board"></div>
+          <!-- Comandi touch: visibili sopra la mappa su smartphone e tablet. -->
+          <nav id="mobile-dpad" aria-label="Comandi di movimento su schermo">
+            <span></span><button type="button" class="mobile-dpad-key" data-move="up" aria-label="Vai in alto"><span class="dpad-arrow arrow-up" aria-hidden="true"></span></button><span></span>
+            <button type="button" class="mobile-dpad-key" data-move="left" aria-label="Vai a sinistra"><span class="dpad-arrow arrow-left" aria-hidden="true"></span></button><span class="mobile-dpad-center" aria-hidden="true"></span><button type="button" class="mobile-dpad-key" data-move="right" aria-label="Vai a destra"><span class="dpad-arrow arrow-right" aria-hidden="true"></span></button>
+            <span></span><button type="button" class="mobile-dpad-key" data-move="down" aria-label="Vai in basso"><span class="dpad-arrow arrow-down" aria-hidden="true"></span></button><span></span>
+          </nav>
+        </div>
+
+        <div id="exp-log-bar">
+          <span id="log-status-text">Seleziona una direzione per esplorare.</span>
+        </div>
+
+        <!-- BATTLE OVERLAY STILE GBA -->
+        <div id="overlay-battle" class="full-overlay hidden">
+          <div id="battle-stage" class="battle-bg-gba" data-biome="meadow">
+            
+            <!-- HUD NEMICO -->
+            <div id="enemy-hud" class="hud-card-gba">
+              <div class="hud-mon-header-gba">
+                <span id="enemy-name">SQUIRTLE</span>
+                <span class="hud-lv-tag">Lv<span id="enemy-lv">13</span></span>
+              </div>
+              <div class="hud-hp-row-gba">
+                <span class="hud-hp-badge">HP</span>
+                <div class="stat-bar-bg-gba"><div id="enemy-hp-fill" class="stat-bar-hp-gba"></div></div>
+              </div>
+              <div id="enemy-hp-text" class="hud-hp-num-gba">--/ --</div>
+              <div id="enemy-conditions" class="battle-conditions" aria-label="Effetti in battaglia sull'avversario"></div>
+            </div>
+
+            <!-- Piattaforma e Sprite Nemico (Corretto allineamento) -->
+            <div class="battle-platform-gba enemy-platform-gba"></div>
+            <img id="enemy-trainer-sprite" class="poke-sprite-gba trainer-throw-anim hidden" src="" alt="Allenatore avversario">
+            <div id="player-trainer-sprite" role="img" aria-label="Allenatore visto di spalle" class="poke-sprite-gba player-trainer-gba hidden"></div>
+            <div id="battle-throw-ball" class="throw-ball" aria-hidden="true"></div>
+            <div id="capture-ball" class="capture-ball" aria-hidden="true"></div>
+            <div id="capture-smoke" class="capture-smoke" aria-hidden="true"></div>
+            <img id="enemy-sprite" class="poke-sprite-gba" src="" alt="Enemy">
+
+            <!-- Particelle mosse ed effetti di evocazione -->
+            <div id="attack-fx-container" aria-hidden="true"></div>
+            <div id="wild-appear-fx" aria-hidden="true"></div>
+            <div id="summon-flash" class="summon-flash" aria-hidden="true"></div>
+
+            <!-- Piattaforma e Sprite Giocatore -->
+            <div class="battle-platform-gba player-platform-gba"></div>
+            <img id="player-sprite" class="poke-sprite-gba" src="" alt="Player">
+
+            <!-- HUD GIOCATORE -->
+            <div id="player-hud" class="hud-card-gba">
+              <div class="hud-mon-header-gba">
+                <span id="player-name">CHARMANDER</span>
+                <span class="hud-lv-tag">Lv<span id="player-lv">5</span></span>
+              </div>
+              <div class="hud-hp-row-gba">
+                <span class="hud-hp-badge">HP</span>
+                <div class="stat-bar-bg-gba"><div id="player-hp-fill" class="stat-bar-hp-gba"></div></div>
+              </div>
+              <div id="player-hp-text" class="hud-hp-num-gba">--/ --</div>
+              <div id="player-conditions" class="battle-conditions" aria-label="Effetti in battaglia sul Pokémon alleato"></div>
+              
+              <div class="hud-exp-row-gba">
+                <span class="hud-exp-badge">EXP</span>
+                <div class="stat-bar-exp-bg-gba"><div id="player-exp-fill" class="stat-bar-exp-gba"></div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- CHAT DI BATTAGLIA APPARISCENTE E LEGGIBILE -->
+          <div id="battle-log" class="battle-dialog-gba">
+            <span id="battle-msg">Battaglia Iniziata!</span>
+          </div>
+
+        </div>
+
+        <div id="battle-controls" class="hidden" aria-label="Comandi della battaglia">
+          <button id="btn-move-back" class="hidden" type="button" aria-label="Torna ai comandi">←</button>
+          <div id="panel-main-actions" class="grid-2x2">
+            <button class="act-btn" id="btn-act-fight" data-i18n-it="LOTTA" data-i18n-en="FIGHT">LOTTA</button>
+            <button class="act-btn" id="btn-act-run" data-i18n-it="FUGA" data-i18n-en="RUN">FUGA</button>
+            <button class="act-btn" id="btn-act-switch" type="button">POKÉMON</button>
+          </div>
+          <div id="panel-move-actions" class="grid-2x2 hidden"></div>
+          <div id="panel-team-actions" class="battle-panel-hint hidden"></div>
+          <div id="panel-bag-actions" class="battle-panel-hint hidden"></div>
+        </div>
+        <!-- Finale beta: accessibile soltanto dopo Giovanni e l'uscita dell'ottava città. -->
+        <section id="victory-overlay" class="hidden finale-screen" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+          <div class="finale-stars" aria-hidden="true"></div>
+          <div class="finale-kicker">POKÉXPLORER · FINALE BETA</div>
+          <h2 id="victory-title">CONGRATULAZIONI!<span>HAI VINTO... O QUASI!</span></h2>
+          <div class="finale-medal-preview" id="victory-badge-preview" aria-hidden="true"></div>
+          <p>Il gioco è ancora in fase di beta, attualmente stiamo preparando nuovi aggiornamenti!</p>
+          <div class="finale-actions">
+            <button class="finale-button primary" id="btn-victory-photo" type="button" data-i18n-it="FOTO RICORDO" data-i18n-en="SOUVENIR PHOTO">FOTO RICORDO</button>
+            <button class="finale-button secondary" id="btn-victory-menu" type="button" data-i18n-it="TORNA AL MENÙ PRINCIPALE" data-i18n-en="MAIN MENU">TORNA AL MENÙ PRINCIPALE</button>
+          </div>
+        </section>
+
+        <!-- Cartolina ricordo pensata per essere catturata come screenshot dal giocatore. -->
+        <section id="memory-photo-overlay" class="hidden finale-screen" role="dialog" aria-modal="true" aria-labelledby="memory-photo-title">
+          <div class="memory-photo-card">
+            <div class="memory-photo-head">
+              <span class="memory-photo-tag">POKÉXPLORER · KANTO</span>
+              <h2 id="memory-photo-title" data-i18n-it="FOTO RICORDO" data-i18n-en="SOUVENIR PHOTO">FOTO RICORDO</h2>
+              <p>LA TUA SQUADRA CAMPIONE</p>
+            </div>
+            <div id="memory-photo-team" class="memory-photo-team" aria-label="La tua squadra Pokémon"></div>
+            <div class="memory-photo-subtitle">LE OTTO MEDAGLIE DI KANTO</div>
+            <div id="memory-photo-badges" class="memory-photo-badges" aria-label="Medaglie conquistate"></div>
+            <div class="memory-photo-footer">INVIA QUESTO SCREEN SU DISCORD A @17nico</div>
+          </div>
+          <button class="finale-button photo-back" type="button" id="btn-photo-back" data-i18n-it="INDIETRO" data-i18n-en="BACK">INDIETRO</button>
+        </section>
+
+        <div id="evolution-overlay" class="hidden" role="dialog" aria-label="Evoluzione del Pokémon">
+          <h3>EVOLUZIONE!</h3>
+          <div class="evolution-sprites"><img id="evolution-from" alt="Prima dell'evoluzione"><img id="evolution-to" class="hidden" alt="Pokémon evoluto"></div>
+          <p id="evolution-caption"></p>
+          <button class="btn-nav" id="evolution-start" type="button">AVVIA EVOLUZIONE ▶</button>
+          <button class="btn-nav hidden" id="evolution-finish" type="button">CONTINUA ▶</button>
+        </div>
+
+      </div>
+    </div>
+
+    <div id="battle-confirm" class="hidden" role="dialog" aria-modal="false" aria-label="Conferma azione">
+      <div class="battle-confirm-box"><p id="battle-confirm-text"></p>
+      <div class="confirm-row"><button id="btn-battle-confirm-yes" class="act-btn" data-i18n-it="CONFERMA" data-i18n-en="CONFIRM">CONFERMA</button><button id="btn-battle-confirm-no" class="act-btn" data-i18n-it="ANNULLA" data-i18n-en="CANCEL">ANNULLA</button></div></div>
+    </div>
+    <div class="rotom-feet"><div class="rotom-foot"></div><div class="rotom-foot"></div></div>
+  </div>
+
+  <!-- ALA DESTRA -->
+  <div class="rotom-wing-right">
+    <div class="wing-screen">
+      <div class="panel-hdr">DATI PERCORSO</div>
+      <div style="font-size:6px; display:flex; flex-direction:column; gap:4px;">
+        <div><span data-i18n-it="LIVELLO:" data-i18n-en="FLOOR:">LIVELLO:</span> <strong id="floor-num" style="color:#38bdf8;">1</strong></div>
+        <div><span data-i18n-it="TIPO:" data-i18n-en="TYPE:">TIPO:</span> <strong id="area-type-label" style="color:#4ade80;">PERCORSO</strong></div>
+        <div><span data-i18n-it="DENARO:" data-i18n-en="MONEY:">DENARO:</span> <strong id="player-money" style="color:#4ade80;">$600</strong></div>
+      </div>
+
+      <div class="panel-hdr" style="margin-top:6px;">ZAINO</div>
+      <div id="bag-tabs" role="tablist" aria-label="Categorie dello zaino">
+        <button type="button" data-bag-tab="rimedi" class="active" role="tab" data-i18n-it="RIMEDI" data-i18n-en="MEDICINE">RIMEDI</button>
+        <button type="button" data-bag-tab="pokeball" role="tab">POKÉ BALL</button>
+        <button type="button" data-bag-tab="chiave" role="tab" data-i18n-it="OGGETTI CHIAVE" data-i18n-en="KEY ITEMS">OGGETTI CHIAVE</button>
+      </div>
+      <div id="bag-list" style="font-size:6px; display:flex; flex-direction:column; gap:3px;"></div>
+
+      <div class="panel-hdr" style="margin-top:auto;" data-i18n-it="CONTROLLI DI MOVIMENTO" data-i18n-en="MOVEMENT CONTROLS">CONTROLLI DI MOVIMENTO</div>
+      <div class="dpad-container">
+        <div></div><button type="button" class="btn-dpad" id="btn-dpad-up" aria-label="Sposta in alto"><span class="dpad-arrow arrow-up" aria-hidden="true"></span></button><div></div>
+        <button type="button" class="btn-dpad" id="btn-dpad-left" aria-label="Sposta a sinistra"><span class="dpad-arrow arrow-left" aria-hidden="true"></span></button><div class="btn-dpad">•</div><button type="button" class="btn-dpad" id="btn-dpad-right" aria-label="Sposta a destra"><span class="dpad-arrow arrow-right" aria-hidden="true"></span></button>
+        <div></div><button type="button" class="btn-dpad" id="btn-dpad-down" aria-label="Sposta in basso"><span class="dpad-arrow arrow-down" aria-hidden="true"></span></button><div></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer class="poke-site-footer" aria-label="Informazioni Pokéxplorer">
+  <button id="speed-toggle" type="button" aria-pressed="false" title="Velocità gioco">VELOCITÀ ×1</button>
+  <span>POKÉXPLORER <small>· V7.7 · R2.19 TEST</small></span>
+  <a href="https://discord.gg/qNGscTEYHM" target="_blank" rel="noopener noreferrer" aria-label="Discord ufficiale di Pokéxplorer"><span data-i18n-it="✦ DISCORD UFFICIALE" data-i18n-en="✦ OFFICIAL DISCORD">✦ DISCORD UFFICIALE</span></a>
+  <span>Developed by <strong>@17nico</strong></span>
+  <div class="music-controls" role="group" aria-label="Volume musica di sottofondo">
+    <label for="music-volume" data-i18n-it="♫ MUSICA" data-i18n-en="♫ MUSIC">♫ MUSICA</label>
+    <input id="music-volume" type="range" min="0" max="100" step="1" value="10" aria-label="Volume musica di sottofondo">
+    <output id="music-volume-value" for="music-volume">10%</output>
+    <span id="music-status" class="sr-only" role="status" aria-live="polite"></span>
+  </div>
+</footer>
+
+<!-- Verify boot resources rather than showing an unstyled Game Over when ZIP is opened directly. -->
+<script>
+window.addEventListener('load', function () {
+  const css = document.getElementById('pokex-stylesheet');
+  const shell = document.getElementById('rotom-container');
+  const styleLoaded = !!(css && css.sheet) &&
+    !!shell && getComputedStyle(shell).position === 'relative';
+  const engineLoaded = !!(window.game && typeof window.game.returnToMainMenu === 'function');
+  if (!styleLoaded || !engineLoaded) {
+    const warning = document.getElementById('pokex-extraction-warning');
+    document.getElementById('pokex-extraction-diagnostic').textContent =
+      'Diagnostica: stile ' + (styleLoaded ? 'OK' : 'mancante') +
+      ', motore ' + (engineLoaded ? 'OK' : 'mancante') + '.';
+    warning.hidden = false;
+  }
+});
+</script>
+
+<!-- Audio locale: nessun servizio esterno, avvio al primo gesto se il browser blocca autoplay. -->
+<audio id="pokexplorer-background-music" src="assets/audio/pokexplorer_bg_music.mp3" preload="metadata" loop aria-label="Musica di sottofondo Pokéxplorer"></audio>
+
+<script src="js/music.js"></script>
+<script src="js/pokemon.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/main.js"></script>
+
+</body>
+</html>
