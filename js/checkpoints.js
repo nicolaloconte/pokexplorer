@@ -21,7 +21,7 @@
   function isGuestMode(){return guestMode;}
   const primary=()=>KEY+':'+owner, backup=()=>primary()+':previous';
   function setUser(userId){owner=typeof userId==='string'&&/^[0-9a-f-]{36}$/i.test(userId)?userId:'local';}
-  const gameFields=['floor','money','playerPos','playerGender','playerFacing','playerStep','items','radarCharges','badges','expShareEnabled','expShareClaimed','fishingRodGiftClaimed','adventureCompleted','oakEventDismissed','celestialPhase','caughtLegendarySpecies','completedGymFloors','gridMap','team','activeIndex'];
+  const gameFields=['floor','money','playerPos','playerGender','playerFacing','playerStep','items','radarCharges','badges','expShareEnabled','expShareClaimed','fishingRodGiftClaimed','adventureCompleted','oakEventDismissed','celestialPhase','caughtLegendarySpecies','completedGymFloors','gridMap','team','activeIndex','laboratoryPokemon'];
   const monFields=['id','name','level','growthRate','baseExperience','weight','types','type','gender','isShiny','spriteFront','spriteBack','baseStats','ivs','evs','nature','abilityOptions','ability','abilityName','evYield','exp','expToNext','maxHp','attack','defense','spAtk','spDef','speed','currentHp','learnset','moves','movesLoaded'];
   function copy(value){return JSON.parse(JSON.stringify(value));}
   function take(game, now=new Date().toISOString()){
@@ -30,7 +30,7 @@
     const result={version:2,createdAt:now,runId:game.runId||('run-'+Date.now()),game:{}};
     for(const key of gameFields){
       if(key==='activeIndex')result.game[key]=game.team.indexOf(game.activeMon);
-      else if(key==='team')result.game[key]=game.team.map(p=>Object.fromEntries(monFields.map(k=>[k,copy(k==='moves'?p.moves.map(m=>({...m})):p[k]??null)])));
+      else if(key==='team'||key==='laboratoryPokemon')result.game[key]=(game[key]||[]).map(p=>Object.fromEntries(monFields.map(k=>[k,copy(k==='moves'?p.moves.map(m=>({...m})):p[k]??null)])));
       else if(['caughtLegendarySpecies','completedGymFloors'].includes(key))result.game[key]=[...game[key]];
       else result.game[key]=copy(game[key]??null);
     }
@@ -41,6 +41,7 @@
     const g=s.game;
     if(!Number.isInteger(g.floor)||g.floor<1||g.floor>80||!Number.isSafeInteger(g.money)||g.money<0)throw Error('Invalid progression');
     if(!Array.isArray(g.team)||g.team.length<1||g.team.length>6||g.team.some(p=>!p||!Number.isInteger(p.id)||p.id<1||p.id>1025||!Number.isInteger(p.level)||p.level<1||p.level>100||!Number.isFinite(p.currentHp)||p.currentHp<0||p.currentHp>p.maxHp||!Array.isArray(p.moves)||p.moves.length>4))throw Error('Invalid party');
+    if(g.laboratoryPokemon!=null && (!Array.isArray(g.laboratoryPokemon)||g.laboratoryPokemon.length>250||g.laboratoryPokemon.some(p=>!p||!Number.isInteger(p.id)||p.id<1||p.id>1025||!Number.isInteger(p.level)||p.level<1||p.level>100||!Array.isArray(p.moves)||p.moves.length>4)))throw Error('Invalid laboratory');
     if(g.team.some(p=>(p.gender!=null&&!['male','female','genderless','unknown'].includes(p.gender))||
       (p.isShiny!=null&&typeof p.isShiny!=='boolean')))throw Error('Invalid variant data');
     if(!Number.isInteger(g.activeIndex)||g.activeIndex<0||g.activeIndex>=g.team.length)throw Error('Invalid lead');
@@ -73,19 +74,23 @@
     // Import only species from pre-variant checkpoints, no fabricated sexes/shinies.
     if(typeof window!=='undefined')window.PokexDex?.importLegacyTeam?.(snapshot);
     // Rebuild class prototypes: mere JSON objects would break healAll/learnset/etc.
-    const team=data.team.map(p=>{
+    const rebuildPokemon=p=>{
       const mon=Object.assign(Object.create(Pokemon.prototype),p);
       // Old v2 checkpoints had no sex/shiny: do not invent a discovered variant.
       if(!['male','female','genderless'].includes(mon.gender))mon.gender='unknown';
       if(typeof mon.isShiny!=='boolean')mon.isShiny=false;
       mon.moves=p.moves.map(m=>Object.assign(Object.create(Move.prototype),m));
       mon.clearVolatile();return mon;
-    });
-    for(const key of gameFields){if(key==='team'||key==='activeIndex')continue;
+    };
+    const team=data.team.map(rebuildPokemon);
+    const lab=(data.laboratoryPokemon||[]).map(rebuildPokemon);
+    for(const key of gameFields){if(key==='team'||key==='laboratoryPokemon'||key==='activeIndex')continue;
       if(['caughtLegendarySpecies','completedGymFloors'].includes(key))game[key]=new Set(data[key]);
       else game[key]=copy(data[key]);}
     game.items.abilityCapsule=Number.isSafeInteger(game.items.abilityCapsule)&&game.items.abilityCapsule>=0?game.items.abilityCapsule:0;
-    game.team=team;game.activeMon=team[data.activeIndex];game.runId=snapshot.runId;
+    game.team=team;game.laboratoryPokemon=lab;game.activeMon=team[data.activeIndex];game.runId=snapshot.runId;
+    game.celestialReserve=[];game.celestialRosterSelection=new Set();game.celestialDepositRequired=false;game.celestialExpeditionBusy=false;
+    game.$id('celestial-expedition')?.classList.add('hidden');game.$id('oak-laboratory')?.classList.add('hidden');
     game.cancelPokemonCenterHealing?.();
     game.isLocked=false;game.isRaidActive=false;game.raidQueueCount=0;
     game.clearRaidTransientState?.();game.battleBusy=false;game.battleMode=null;
@@ -95,6 +100,7 @@
     game.$id('overlay-battle')?.classList.add('hidden');
     game.$id('gameover-overlay')?.classList.add('hidden');
     game.$id('rotom-body')?.classList.remove('battle-active');
+    game.ensureOakEventAccessible?.();
     game.renderDungeon();game.renderSidebar();game.openWings?.();
     return true;
   }

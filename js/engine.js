@@ -77,7 +77,8 @@ class GameEngine {
     this.caughtLegendarySpecies=new Set();
     this.activeDialogNpcCell=null;
     this.oakEventDismissed=false;this.isCelestialCave=false;this.celestialPhase='unvisited';
-    this.celestialReturnState=null;this.celestialCutsceneActive=false;
+    this.celestialReturnState=null;this.celestialCutsceneActive=false;this.celestialDeparturePending=false;
+    this.celestialReserve=[];this.celestialRosterSelection=new Set();this.laboratoryPokemon=[];this.celestialDepositRequired=false;this.celestialExpeditionBusy=false;
     // Direct Nurse Joy interaction outside the building; no separate interior.
     this.pokemonCenterHealTimer=null;
     this.pokemonCenterHealSequence=0;
@@ -240,7 +241,7 @@ class GameEngine {
     for(const id of ['gameover-overlay','starter-scene-overlay','overlay-battle',
       'battle-controls','gym-leader-intro','trainer-encounter-overlay',
       'wild-encounter-overlay','pokemart-overlay','gym-entry-confirm','box-pc-overlay',
-      'npc-dialog-overlay','celestial-dialog','celestial-cinematic','badge-case-overlay','pokedex-overlay','learn-move-overlay','evolution-overlay','battle-confirm']){
+      'npc-dialog-overlay','celestial-dialog','celestial-expedition','oak-laboratory','celestial-cinematic','badge-case-overlay','pokedex-overlay','learn-move-overlay','evolution-overlay','battle-confirm']){
       this.$id(id)?.classList.add('hidden');
     }
     this.$id('rotom-body')?.classList.remove('battle-active');
@@ -261,7 +262,9 @@ class GameEngine {
     this.caughtLegendarySpecies=new Set();
     this.activeDialogNpcCell=null;this.oakEventDismissed=false;this.isCelestialCave=false;
     this.cancelPokemonCenterHealing();
-    this.celestialPhase='unvisited';this.celestialReturnState=null;this.celestialCutsceneActive=false;
+    this.celestialPhase='unvisited';this.celestialReturnState=null;this.celestialCutsceneActive=false;this.celestialDeparturePending=false;
+    this.celestialReserve=[];this.celestialRosterSelection.clear();this.laboratoryPokemon=[];this.celestialDepositRequired=false;this.celestialExpeditionBusy=false;
+    this.$id('celestial-expedition')?.classList.add('hidden');this.$id('oak-laboratory')?.classList.add('hidden');
     this.$id('celestial-dialog')?.classList.add('hidden');
     this.$id('celestial-cinematic')?.classList.add('hidden');
     this.$id('celestial-blackout')?.classList.remove('active');
@@ -409,6 +412,12 @@ class GameEngine {
     safeOnClick('celestial-dialog-next',()=>this.advanceCelestialDialog());
     safeOnClick('celestial-dialog-yes',()=>this.answerOakInvitation(true));
     safeOnClick('celestial-dialog-no',()=>this.answerOakInvitation(false));
+    safeOnClick('celestial-team-confirm',()=>this.confirmCelestialTeam());
+    safeOnClick('celestial-team-cancel',()=>this.cancelCelestialTeam());
+    safeOnClick('oak-lab-close',()=>this.closeOakLaboratory());
+    safeOnClick('btn-oak-lab',()=>this.openOakLaboratory());
+    // Dedicated keyboard handling prevents overworld walking behind these modals.
+    document.addEventListener('keydown',event=>this.handleCelestialModalKey(event),true);
     safeOnClick('choose-male',()=>this.selectPlayerGender('male'));
     safeOnClick('choose-female',()=>this.selectPlayerGender('female'));
     safeOnClick('btn-start-game', () => {
@@ -667,8 +676,24 @@ class GameEngine {
       if(e.key==='Escape' && !this.$id('badge-case-overlay')?.classList.contains('hidden')){this.closeBadgeCase();return;}
       if(e.key==='Escape' && !this.$id('party-action-menu')?.classList.contains('hidden')){this.closePartyActions();return;}
       if(e.code==='Space' && !e.repeat){
+        // A trainer challenge is a confirmation screen, not the overworld:
+        // Space must activate the very same LOTTA! button as a mouse click.
+        // Consume the keyboard default too, or the browser may click a focused
+        // button again on keyup. Repeated/held keys must never start two battles.
+        const trainerIntro=this.$id('trainer-encounter-overlay');
+        if(trainerIntro && !trainerIntro.classList.contains('hidden')){
+          e.preventDefault();e.stopImmediatePropagation();
+          const fightButton=this.$id('btn-start-trainer-battle');
+          if(fightButton && !fightButton.disabled)fightButton.click();
+          return;
+        }
         if(!this.$id('celestial-dialog')?.classList.contains('hidden')){
-          e.preventDefault();this.advanceCelestialDialog();return;
+          e.preventDefault();e.stopImmediatePropagation();
+          if(this.celestialDialogStep==='question'){
+            const choice=this.$id('celestial-dialog-actions');
+            (choice?.contains(document.activeElement)?document.activeElement:this.$id('celestial-dialog-yes'))?.click();
+          }else this.advanceCelestialDialog();
+          return;
         }
         if(this.dialogueResolve){e.preventDefault();this.acknowledgeDialogue();return;}
         const npc=this.$id('npc-dialog-overlay');
@@ -680,6 +705,14 @@ class GameEngine {
       }
       const dir=keys[e.key]||keys[e.key?.toLowerCase()];
       if(!dir)return;
+      if(!this.$id('celestial-dialog')?.classList.contains('hidden')){
+        e.preventDefault();
+        if(this.celestialDialogStep==='question'){
+          const current=document.activeElement===this.$id('celestial-dialog-no')?'no':'yes';
+          this.$id(current==='yes'?'celestial-dialog-no':'celestial-dialog-yes')?.focus();
+        }
+        return;
+      }
       if(this.$id('pokemon-info-overlay')&&!this.$id('pokemon-info-overlay').classList.contains('hidden'))return;
       if(this.$id('badge-case-overlay')&&!this.$id('badge-case-overlay').classList.contains('hidden'))return;
       if(this.$id('pokedex-overlay')&&!this.$id('pokedex-overlay').classList.contains('hidden'))return;
@@ -1011,8 +1044,8 @@ generateFloorDungeon() {
       if(this.floor===75&&!this.oakEventDismissed){
         const oak=this.gridMap[3][5];oak.type='town-ground';oak.entity='npc';oak.decoration=null;
         oak.specialRole='celestial-oak';oak.npcName='Professor Oak';
-        oak.npcSprite='assets/sprites/npc/oak-overworld-local.svg';
-        oak.localSpriteFallback='assets/sprites/npc/oak-overworld-local.svg';
+        oak.npcSprite='assets/sprites/npc/oak-frlg-down.png';
+        oak.localSpriteFallback='assets/sprites/npc/oak-frlg-down.png';
       }
       place(9,9,'door');
     } else {
@@ -1090,47 +1123,267 @@ generateFloorDungeon() {
     } else this.revealArea(0,0);
     this.renderDungeon();
     this.renderSidebar();
-    this.logMsg(`Sei arrivato al Livello ${this.floor}. Esplora liberamente!`);
+    if(this.floor===75&&!this.oakEventDismissed){
+      this.logMsg('Un silenzio innaturale avvolge il villaggio. Il Professor Oak ti sta aspettando.');
+      this.showDiscoveryNotice?.('UN PRESAGIO · IL PROFESSOR OAK TI ASPETTA',3600);
+    }else this.logMsg(`Sei arrivato al Livello ${this.floor}. Esplora liberamente!`);
   }
 
-  // Optional floor-75 story: no floor advance and no modifications to the village layout.
+  // Floor 75: authored story event. A refusal does not permanently lose the invitation.
+  // The two expedition members are a temporary battle party; the remaining
+  // Pokémon never enter the cave and must survive even if the mission fails.
+  openCelestialTeamSelection(){
+    if(this.isCelestialCave||!this.team.length)return false;
+    this.celestialRosterSelection=new Set();this.celestialExpeditionBusy=false;
+    this.$id('celestial-expedition')?.classList.remove('hidden');
+    this.$id('celestial-dialog')?.classList.add('hidden');
+    this.isLocked=true;this.stopContinuousWalk();
+    this.renderCelestialTeamSelection();return true;
+  }
+  renderCelestialTeamSelection(){
+    const list=this.$id('celestial-team-list');if(!list)return;
+    list.replaceChildren();
+    const max=Math.min(2,Math.max(0,this.team.length-1));
+    for(const [index,mon] of this.team.entries()){
+      const selected=this.celestialRosterSelection.has(index);
+      const button=document.createElement('button');button.type='button';
+      button.className='celestial-roster-choice'+(selected?' selected':'');
+      button.setAttribute('aria-pressed',String(selected));
+      const marker=document.createElement('span');marker.textContent=selected?'✓':'○';
+      const picture=document.createElement('img');picture.src=resolvedSpritePath(mon.spriteFront||'assets/sprites/ui/pokemon-placeholder.svg');picture.alt='';
+      picture.onerror=()=>{picture.onerror=null;picture.src='assets/sprites/ui/pokemon-placeholder.svg';};
+      const name=document.createElement('span');name.textContent=`${mon.name} · Lv.${mon.level} · ${mon.currentHp}/${mon.maxHp} PS`;
+      button.append(marker,picture,name);
+      button.onclick=()=>{
+        if(this.celestialExpeditionBusy)return;
+        if(selected)this.celestialRosterSelection.delete(index);
+        else if(this.celestialRosterSelection.size<max)this.celestialRosterSelection.add(index);
+        this.renderCelestialTeamSelection();
+        list.children[index]?.focus({preventScroll:true});
+      };
+      if(!selected&&this.celestialRosterSelection.size>=max)button.disabled=true;
+      list.append(button);
+    }
+    const count=this.celestialRosterSelection.size;
+    this.$id('celestial-team-counter').textContent=`${count} / ${max} SELEZIONATI · ${this.team.length-count} AL SICURO`;
+    const confirm=this.$id('celestial-team-confirm');confirm.disabled=count<1||this.celestialExpeditionBusy;
+    const help=this.$id('celestial-team-help');
+    help.textContent=max<1?'Serve almeno un Pokémon da lasciare al villaggio prima di partire.':
+      'Scegli al massimo due Pokémon. Se tutti i compagni della spedizione vengono sconfitti, li perderai definitivamente.';
+    const first=list.querySelector('button:not(:disabled)');
+    if(!list.contains(document.activeElement)&&document.activeElement!==confirm)first?.focus({preventScroll:true});
+  }
+  cancelCelestialTeam(){
+    if(this.celestialExpeditionBusy)return;
+    this.$id('celestial-expedition')?.classList.add('hidden');
+    this.celestialRosterSelection.clear();this.isLocked=false;
+    this.oakEventDismissed=false;
+    this.logMsg('Il Professor Oak ti attenderà quando sarai pronto.');
+  }
+  async confirmCelestialTeam(){
+    if(this.celestialExpeditionBusy||this.isCelestialCave)return false;
+    const choice=[...this.celestialRosterSelection].sort((a,b)=>a-b);
+    if(choice.length<1||choice.length>2||choice.length>=this.team.length||
+       choice.some(index=>!this.team[index]||this.team[index].currentHp<=0))return false;
+    this.celestialExpeditionBusy=true;
+    const chosen=new Set(choice),previous=this.team;
+    this.celestialReserve=previous.filter((_,index)=>!chosen.has(index));
+    this.team=previous.filter((_,index)=>chosen.has(index));
+    this.ensureActivePokemon();this.celestialRosterSelection.clear();
+    this.$id('celestial-expedition')?.classList.add('hidden');
+    this.oakEventDismissed=true;
+    const oak=this.gridMap?.[3]?.[5];
+    if(oak?.specialRole==='celestial-oak'){oak.entity=null;oak.specialRole=null;}
+    this.renderDungeon();this.renderSidebar();
+    try{await this.enterCelestialCave();return true;}
+    finally{this.celestialExpeditionBusy=false;}
+  }
+  handleCelestialModalKey(event){
+    if(!['ArrowUp','ArrowDown','ArrowLeft','ArrowRight','w','a','s','d','W','A','S','D',' ','Enter','Escape'].includes(event.key))return;
+    let modal=this.$id('celestial-expedition');
+    if(modal?.classList.contains('hidden'))modal=this.$id('oak-laboratory');
+    if(!modal||modal.classList.contains('hidden'))return;
+    event.preventDefault();event.stopImmediatePropagation();
+    if(event.repeat && [' ','Enter'].includes(event.key))return;
+    const options=[...modal.querySelectorAll('button:not(:disabled):not(.hidden)')].filter(button=>button.offsetParent!==null);
+    if(event.key==='Escape'){
+      if(modal.id==='celestial-expedition')this.cancelCelestialTeam();
+      else if(!this.celestialDepositRequired)this.closeOakLaboratory();
+      return;
+    }
+    if(event.key===' '||event.key==='Enter'){
+      const active=options.includes(document.activeElement)?document.activeElement:options[0];
+      active?.click();return;
+    }
+    if(!options.length)return;
+    const forward=['s','d','S','D','ArrowDown','ArrowRight'].includes(event.key);
+    const index=options.indexOf(document.activeElement);
+    options[(index+(forward?1:-1)+options.length)%options.length]?.focus({preventScroll:true});
+  }
+  // Stored Pokémon keep their individual identity, moves, ability, gender and
+  // shiny state. They are not casualties and can be withdrawn in towns.
+  openOakLaboratory(forceDeposit=false){
+    if(!forceDeposit && (this.isCelestialCave||this.isBattleVisible()||!this.isTownFloor()||this.isLocked))return false;
+    this.celestialDepositRequired=!!forceDeposit;
+    this.isLocked=true;this.stopContinuousWalk();
+    this.$id('oak-laboratory')?.classList.remove('hidden');
+    this.renderOakLaboratory();return true;
+  }
+  renderOakLaboratory(){
+    const list=this.$id('oak-lab-options');if(!list)return;
+    list.replaceChildren();
+    const forced=this.celestialDepositRequired;
+    const message=this.$id('oak-lab-message');
+    message.textContent=forced?'Professor Oak: «Hai sette Pokémon con te! Quale vuoi lasciare al mio laboratorio? Sarà al sicuro e potrai recuperarlo in un altro villaggio.»':
+      'Laboratorio del Professor Oak · Deposita un Pokémon oppure ritiralo quando hai uno spazio libero.';
+    const add=(mon,kind,index)=>{
+      const button=document.createElement('button');button.type='button';button.className='celestial-roster-choice';
+      const img=document.createElement('img');img.src=resolvedSpritePath(mon.spriteFront||'assets/sprites/ui/pokemon-placeholder.svg');img.alt='';
+      img.onerror=()=>{img.onerror=null;img.src='assets/sprites/ui/pokemon-placeholder.svg';};
+      const label=document.createElement('span');label.textContent=`${kind==='deposit'?'DEPOSITA':'RITIRA'} · ${mon.name} Lv.${mon.level}`;
+      button.append(img,label);button.onclick=()=>{
+        if(kind==='deposit')this.depositOakPokemon(index);else this.withdrawOakPokemon(index);
+      };list.append(button);
+    };
+    const canDeposit=forced?this.team.length>6:this.team.length>1;
+    if(canDeposit)this.team.forEach((mon,index)=>add(mon,'deposit',index));
+    if(!forced && this.team.length<6)this.laboratoryPokemon.forEach((mon,index)=>add(mon,'withdraw',index));
+    if(!list.children.length){const empty=document.createElement('p');empty.textContent='Nessun trasferimento disponibile.';list.append(empty);}
+    this.$id('oak-lab-count').textContent=`IN SQUADRA ${this.team.length}/6 · AL LABORATORIO ${this.laboratoryPokemon.length}`;
+    const close=this.$id('oak-lab-close');close.classList.toggle('hidden',forced);
+    if(forced)close.disabled=true;else close.disabled=false;
+    list.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
+  }
+  depositOakPokemon(index){
+    if(!this.isTownFloor()||this.isCelestialCave||this.isBattleVisible())return false;
+    const forced=this.celestialDepositRequired;
+    if(index<0||index>=this.team.length||this.laboratoryPokemon.length>=250||(!forced&&this.team.length<=1)||
+       (forced&&this.team.length!==7))return false;
+    const [mon]=this.team.splice(index,1);
+    this.laboratoryPokemon.push(mon);this.ensureActivePokemon();
+    this.renderSidebar();
+    if(forced){this.celestialDepositRequired=false;this.closeOakLaboratory();}
+    else this.renderOakLaboratory();
+    this.saveCheckpoint();return true;
+  }
+  withdrawOakPokemon(index){
+    if(this.celestialDepositRequired||!this.isTownFloor()||this.isCelestialCave||this.isBattleVisible()||
+       this.team.length>=Math.min(6,this.getTeamSlotLimit())||index<0||index>=this.laboratoryPokemon.length)return false;
+    this.team.push(...this.laboratoryPokemon.splice(index,1));this.ensureActivePokemon();
+    this.renderSidebar();this.renderOakLaboratory();this.saveCheckpoint();return true;
+  }
+  closeOakLaboratory(){
+    if(this.celestialDepositRequired)return false;
+    this.$id('oak-laboratory')?.classList.add('hidden');this.isLocked=false;
+    this.renderSidebar();return true;
+  }
+  finishCelestialExpeditionDefeat(){
+    if(!this.isCelestialCave||!this.celestialReturnState)return false;
+    const casualties=this.team.length;this.team=[...this.celestialReserve];this.celestialReserve=[];
+    this.celestialPhase='unvisited';this.oakEventDismissed=false;
+    this.battleToken++;this.battleBusy=false;this.pendingForcedSwitch=false;
+    this.battleMode=null;this.battleType=null;this.battleWeather=null;this.pendingItemTarget=null;
+    this.enemyMon?.clearBattleConditions?.();this.enemyMon=null;
+    this.closePartyActions();this.closePokemonInfo();
+    this.$id('overlay-battle')?.classList.add('hidden');
+    this.$id('overlay-battle')?.classList.remove('battle-preparing','battle-revealing');
+    this.$id('battle-controls')?.classList.add('hidden');
+    this.$id('battle-confirm')?.classList.add('hidden');
+    this.$id('item-target-prompt')?.classList.add('hidden');
+    this.$id('rotom-body')?.classList.remove('battle-active');
+    this.updateBattleWingCloseButtons();
+    this.$id('gameover-overlay')?.classList.add('hidden');
+    this.$id('celestial-dialog')?.classList.add('hidden');
+    const saved=this.celestialReturnState;this.gridMap=saved.gridMap;
+    this.playerPos={...saved.playerPos};this.floor=saved.floor;
+    this.celestialReturnState=null;this.isCelestialCave=false;
+    this.$id('dungeon-grid-board')?.classList.remove('celestial-cave');
+    this.$id('area-type-label').textContent='VILLAGGIO';
+    this.ensureOakEventAccessible();this.ensureActivePokemon();
+    this.isLocked=false;this.renderDungeon();this.renderSidebar();
+    this.logMsg(`La Grotta Celeste ti respinge. Hai perso definitivamente ${casualties} Pokémon della spedizione. Gli altri sono al sicuro.`);
+    this.showDiscoveryNotice('SPEDIZIONE FALLITA · POKÉMON PERSI',3500);
+    window.pokexplorerMusic?.setScene('exploration');
+    this.saveCheckpoint();return true;
+  }
   showOakIntroduction(){
     this.$id('npc-dialog-overlay')?.classList.add('hidden');
     this.pendingNpcAdvance=null;this.hideDialogNpcBackground(false);
-    this.showCelestialDialogue('Oh! Sei tu, quanta strada hai fatto per arrivare fin qui!', 'intro-one');
+    this.showCelestialDialogue('Ti stavo aspettando. Da giorni gli strumenti del laboratorio registrano un segnale impossibile, proprio sotto queste montagne.', 'intro-one');
   }
   showCelestialDialogue(line,step){
     this.celestialDialogStep=step;this.isLocked=true;this.stopContinuousWalk();
     const panel=this.$id('celestial-dialog');
     this.$id('celestial-dialog-text').textContent=line;
-    this.$id('celestial-dialog-actions').classList.toggle('hidden',step!=='question');
-    this.$id('celestial-dialog-next').classList.toggle('hidden',step==='question');
+    const question=step==='question';
+    this.$id('celestial-dialog-actions').classList.toggle('hidden',!question);
+    this.$id('celestial-dialog-next').classList.toggle('hidden',question);
+    const heading=this.$id('celestial-dialog-chapter');
+    const progress=this.$id('celestial-dialog-progress');
+    const chapter=step.startsWith('intro')||question?'PIANO 75 · IL RICHIAMO':
+      step.startsWith('arrival')?'GROTTA CELESTE · LA SOGLIA':
+      step.startsWith('reward')?'GROTTA CELESTE · LA PROVA':
+      'GROTTA CELESTE · EPILOGO';
+    if(heading)heading.textContent=chapter;
+    if(progress)progress.textContent=({
+      'intro-one':'01 / 05','intro-two':'02 / 05','intro-three':'03 / 05','intro-four':'04 / 05',
+      question:'05 / 05','arrival-one':'01 / 03','arrival-two':'02 / 03','arrival-three':'03 / 03',
+      'reward-one':'01 / 03','reward-two':'02 / 03','reward-three':'03 / 03',
+      'farewell-one':'01 / 02','farewell-two':'02 / 02'
+    })[step]||'';
     panel.classList.remove('hidden');
+    (question?this.$id('celestial-dialog-yes'):this.$id('celestial-dialog-next'))?.focus({preventScroll:true});
   }
   advanceCelestialDialog(){
     if(this.$id('celestial-dialog')?.classList.contains('hidden'))return;
-    if(this.celestialDialogStep==='intro-one'){
-      this.showCelestialDialogue('C’è una cosa interessante che devo mostrarti assolutamente, seguimi.','intro-two');
-    }else if(this.celestialDialogStep==='intro-two'){
-      this.showCelestialDialogue('Vuoi seguire il Prof. Oak?','question');
-    }else if(this.celestialDialogStep==='arrival'||this.celestialDialogStep==='reward'){
-      this.$id('celestial-dialog').classList.add('hidden');
-      this.isLocked=false;
-      if(this.celestialDialogStep==='reward'){
-        this.logMsg('La Master Ball è tua. Mewtwo ti attende ancora!');
-        this.showDiscoveryNotice('MASTER BALL OTTENUTA · MEWTWO TI ATTENDE',3100);
-      }
+    const lines={
+      'intro-one':['intro-two','Nessun Pokémon selvatico si avvicina più alla Grotta Celeste. Persino i più coraggiosi fuggono quando cala il silenzio.'],
+      'intro-two':['intro-three','Non si tratta di un fenomeno naturale. Qualcuno ha creato una forza che non avrebbe mai dovuto essere liberata. Il suo nome è Mewtwo.'],
+      'intro-three':['intro-four','Questa missione non perdona gli errori. Potrai portare al massimo due Pokémon, lasciando gli altri al sicuro. Se entrambi saranno sconfitti, non faranno ritorno.'],
+      'intro-four':['question','Vuoi accompagnarmi nella Grotta Celeste? Puoi rifiutare e tornare quando sarai pronto.'],
+      'arrival-one':['arrival-two','Ascolta… non è il vento. Qualcosa ci osserva da molto prima che varcassimo l’ingresso.'],
+      'arrival-two':['arrival-three','Davanti a noi c’è Mewtwo. Prima di tentare la cattura dovrai affrontarlo e dimostrare di saper resistere alla sua forza.'],
+      'reward-one':['reward-two','Mewtwo ti ha messo alla prova e ora ti riconosce come avversario. Ma non è finita: è ancora lì, in attesa.'],
+      'reward-two':['reward-three','Questa Master Ball è il risultato di anni di ricerca. Può riuscire dove ogni altra Poké Ball fallirebbe. Usala con giudizio.'],
+      'farewell-one':['farewell-two','La Grotta Celeste tornerà silenziosa, ma ciò che hai dimostrato qui resterà con te.'],
+    };
+    const next=lines[this.celestialDialogStep];
+    if(next){this.showCelestialDialogue(next[1],next[0]);return;}
+    if(this.celestialDialogStep==='question')return;
+    const ending=this.celestialDialogStep;
+    this.$id('celestial-dialog').classList.add('hidden');
+    if(ending==='farewell-two'){
+      this.finishCelestialReturn();return;
+    }
+    this.isLocked=false;
+    if(ending==='reward-three'){
+      this.logMsg('MASTER BALL ottenuta. Mewtwo ti attende per la seconda sfida.');
+      this.showDiscoveryNotice('MASTER BALL OTTENUTA · SECONDA SFIDA',3100);
     }
   }
   answerOakInvitation(yes){
     if(this.celestialDialogStep!=='question')return;
     this.$id('celestial-dialog').classList.add('hidden');
-    this.oakEventDismissed=true;
-    const oak=this.gridMap?.[3]?.[5];
-    if(oak?.specialRole==='celestial-oak'){oak.entity=null;oak.specialRole=null;}
-    this.renderDungeon();
-    if(yes){this.enterCelestialCave();}
-    else{this.isLocked=false;this.logMsg('Hai deciso di non seguire il Prof. Oak.');}
+    if(!yes){
+      // Reversible: Oak stays on floor 75 and may be spoken to again.
+      this.isLocked=false;
+      this.oakEventDismissed=false;
+      this.logMsg('Oak annuisce. «Prenditi il tempo che serve. Ti aspetterò qui.»');
+      return;
+    }
+    this.openCelestialTeamSelection();
+  }
+  // Older checkpoints could mark Oak as dismissed despite the player refusing.
+  ensureOakEventAccessible(){
+    if(this.floor!==75||this.isCelestialCave||this.celestialPhase!=='unvisited')return;
+    const oak=this.gridMap?.[3]?.[5];if(!oak)return;
+    if(!oak.entity || oak.specialRole==='celestial-oak'){
+      this.oakEventDismissed=false;
+      oak.entity='npc';oak.type='town-ground';oak.decoration=null;
+      oak.specialRole='celestial-oak';oak.npcName='Professor Oak';
+      oak.npcSprite='assets/sprites/npc/oak-frlg-down.png';
+      oak.localSpriteFallback='assets/sprites/npc/oak-frlg-down.png';
+    }
   }
   async celestialFadeTo(action){
     const black=this.$id('celestial-blackout');
@@ -1158,15 +1411,15 @@ generateFloorDungeon() {
       const exit=this.gridMap[9][5];exit.type='cave-stone';exit.entity='cave-exit';
       this.gridMap[4][5].entity='mewtwo';
       const oak=this.gridMap[7][4];oak.entity='npc';oak.specialRole='cave-oak';
-      oak.npcName='Professor Oak';oak.npcSprite='assets/sprites/npc/oak-overworld-local.svg';
-      oak.localSpriteFallback='assets/sprites/npc/oak-overworld-local.svg';
+      oak.npcName='Professor Oak';oak.npcSprite='assets/sprites/npc/oak-frlg-down.png';
+      oak.localSpriteFallback='assets/sprites/npc/oak-frlg-down.png';
       this.$id('area-type-label').textContent='GROTTA CELESTE';
       this.renderDungeon();this.renderSidebar();
     });
     if(!this.isCelestialCave)return;
     await this.wait(600);
     window.pokexplorerMusic?.setScene('cave');
-    this.showCelestialDialogue('Batti quel Pokémon, dimostra il tuo valore e riceverai un dono speciale.','arrival');
+    this.showCelestialDialogue('La luce si spegne alle nostre spalle. Guarda quelle pareti… sembrano pulsare al ritmo di un cuore.','arrival-one');
   }
   async startMewtwoCinematic(){
     if(!this.isCelestialCave||!['trial','rematch'].includes(this.celestialPhase)||this.celestialCutsceneActive)return;
@@ -1174,7 +1427,7 @@ generateFloorDungeon() {
     const overlay=this.$id('celestial-cinematic');
     overlay.classList.remove('hidden');
     this.$id('celestial-cinematic-subtitle').textContent=this.celestialPhase==='trial'
-      ?'Un potere psichico travolge la Grotta Celeste…':'Mewtwo accetta la tua seconda sfida!';
+      ?'Il silenzio si spezza. Una presenza immensa si risveglia…':'La grotta trema. Mewtwo ti riconosce e accetta l’ultima sfida.';
     window.pokexplorerMusic?.setScene('mewtwo');
     await this.wait(1900);
     if(!this.isCelestialCave){overlay.classList.add('hidden');this.celestialCutsceneActive=false;return;}
@@ -1184,26 +1437,37 @@ generateFloorDungeon() {
   showOakMasterBallReward(){
     if(this.items.masterball===0)this.grantItem('masterball');
     this.renderSidebar();
-    this.showCelestialDialogue('Con questa potrai catturarlo. Hai ricevuto una Master Ball!','reward');
+    this.showCelestialDialogue('Hai resistito a un potere che nessuno aveva mai saputo fronteggiare. Oak apre lentamente la valigetta che portava con sé…','reward-one');
   }
   completeMewtwoEncounter(){
     this.celestialPhase='complete';
     const mon=this.gridMap?.[4]?.[5];if(mon?.entity==='mewtwo')mon.entity=null;
-    this.logMsg('La sfida di Mewtwo è conclusa. Raggiungi l’uscita a sud.');
+    this.logMsg('La Grotta Celeste torna silenziosa. Oak ti aspetta prima dell’uscita a sud.');
   }
-  async leaveCelestialCave(){
+  leaveCelestialCave(){
+    if(!this.isCelestialCave||this.celestialPhase!=='complete'||!this.celestialReturnState||this.celestialDeparturePending)return false;
+    this.celestialDeparturePending=true;
+    this.showCelestialDialogue('Ce l’hai fatta. Per un istante, la grotta è rimasta immobile, come se il mondo intero avesse trattenuto il respiro.','farewell-one');
+    return true;
+  }
+  async finishCelestialReturn(){
     if(!this.isCelestialCave||this.celestialPhase!=='complete'||!this.celestialReturnState)return;
     this.isLocked=true;this.stopContinuousWalk();
     window.pokexplorerMusic?.setScene('exploration');
-    await this.celestialFadeTo(async()=>{
-      const previous=this.celestialReturnState;
-      this.gridMap=previous.gridMap;this.playerPos={...previous.playerPos};
-      this.floor=previous.floor;this.celestialReturnState=null;this.isCelestialCave=false;
-      this.$id('dungeon-grid-board')?.classList.remove('celestial-cave');
-      this.$id('area-type-label').textContent='VILLAGGIO';
-      this.renderDungeon();this.renderSidebar();
-    });
-    this.isLocked=false;this.logMsg('Sei tornato al villaggio prima della palestra di Giovanni.');this.saveCheckpoint();
+    try{
+      await this.celestialFadeTo(async()=>{
+        const previous=this.celestialReturnState;
+        this.gridMap=previous.gridMap;this.playerPos={...previous.playerPos};
+        this.floor=previous.floor;this.celestialReturnState=null;this.isCelestialCave=false;
+        this.team=[...this.celestialReserve,...this.team];this.celestialReserve=[];this.ensureActivePokemon();
+        this.$id('dungeon-grid-board')?.classList.remove('celestial-cave');
+        this.$id('area-type-label').textContent='VILLAGGIO';
+        this.renderDungeon();this.renderSidebar();
+      });
+    }finally{this.celestialDeparturePending=false;this.isLocked=false;}
+    this.logMsg('Sei tornato al villaggio. Il ricordo della Grotta Celeste non ti abbandonerà.');
+    if(this.team.length>6){this.openOakLaboratory(true);return;}
+    this.saveCheckpoint();
   }
   // revealArea moved to js/map-helpers.js (R2.22 modularisation).
   // scanRadar moved to js/map-helpers.js (R2.22 modularisation).
@@ -1693,7 +1957,7 @@ generateFloorDungeon() {
   getNpcLocalFallback(npcCell,x=0,y=0){
     if(npcCell?.localSpriteFallback)return resolvedSpritePath(npcCell.localSpriteFallback);
     if(npcCell?.specialRole==='fisherman')return 'assets/sprites/ui/trainer-avatar-fallback.svg';
-    if(['celestial-oak','cave-oak'].includes(npcCell?.specialRole))return 'assets/sprites/npc/oak-overworld-local.svg';
+    if(['celestial-oak','cave-oak'].includes(npcCell?.specialRole))return 'assets/sprites/npc/oak-frlg-down.png';
     if(npcCell?.specialRole==='exp-share-gift')return 'assets/sprites/ui/trainer-avatar-fallback.svg';
     if(npcCell?.specialRole==='gate-police')return 'assets/sprites/ui/trainer-avatar-fallback.svg';
     // Do not pretend the removed placeholder portraits match FireRed NPCs.
@@ -1781,9 +2045,9 @@ generateFloorDungeon() {
     }
     if(npcCell.specialRole==='celestial-oak'){this.showOakIntroduction();return;}
     if(npcCell.specialRole==='cave-oak'){
-      speech.textContent=this.celestialPhase==='complete'?'Professor Oak: “L’impresa è compiuta. L’uscita è in basso.”':
-        this.celestialPhase==='rematch'?'Professor Oak: “Con questa potrai catturarlo.”':
-        'Professor Oak: “Batti quel Pokémon, dimostra il tuo valore e riceverai un dono speciale.”';
+      speech.textContent=this.celestialPhase==='complete'?'Professor Oak: «Ora la grotta tace. Hai cambiato qualcosa, qui dentro. Quando sei pronto, raggiungi l’uscita a sud.»':
+        this.celestialPhase==='rematch'?'Professor Oak: «Mewtwo ti osserva. Ricorda ciò che ti ho affidato: hai una sola occasione da non sprecare.»':
+        'Professor Oak: «Avverti questa pressione? Non avanzare se la tua squadra non è pronta. Mewtwo percepisce ogni esitazione.»';
       this.waitForNpcClick(overlay);return;
     }
     if(npcCell.specialRole==='exp-share-gift'){
@@ -1993,11 +2257,12 @@ generateFloorDungeon() {
           }else if(cell.entity==='cave-exit'){
             node.innerHTML='<span class="celestial-cave-exit" role="img" aria-label="Uscita dalla Grotta Celeste">▼</span>';
           }else if(cell.entity==='npc'){
+            if(cell.specialRole==='celestial-oak')node.classList.add('oak-story-event');
             if(this.activeDialogNpcCell!==cell && ['celestial-oak','cave-oak'].includes(cell.specialRole)){
               const oak=document.createElement('img');oak.className='celestial-oak-sprite';
               node.appendChild(this.createSingleFrameAvatar(
-                cell.npcSprite||'assets/sprites/npc/oak-overworld-local.svg',
-                'assets/sprites/npc/oak-overworld-local.svg','Professor Oak','celestial-oak-sprite'));
+                cell.npcSprite||'assets/sprites/npc/oak-frlg-down.png',
+                'assets/sprites/npc/oak-frlg-down.png','Professor Oak','celestial-oak-sprite'));
             }else if(this.activeDialogNpcCell!==cell){
               const fallback=this.getNpcLocalFallback(cell,x,y);
               node.appendChild(this.createSingleFrameAvatar(cell.npcSprite||this.npcSprites[0],
@@ -2297,6 +2562,7 @@ generateFloorDungeon() {
     const token=++this.battleToken;
     if(!this.activeMon || this.activeMon.currentHp<=0){
       const alive=this.team.find(p=>p.currentHp>0);
+      if(!alive && this.isCelestialCave){this.finishCelestialExpeditionDefeat();return;}
       if(!alive){this.isRaidActive=false;this.raidQueueCount=0;this.clearRaidTransientState();this.endBattle('Tutta la squadra è esausta.');this.$id('gameover-overlay').classList.remove('hidden');window.PokexCheckpoints?.discard();this.updateContinueButton();return;}
       this.activeMon=alive;
     }
@@ -2404,7 +2670,7 @@ generateFloorDungeon() {
     if(token!==this.battleToken)return;
     if(!continuousRound)this.revealPreparedBattle(token);
     await this.battleText(hostile ? (leader?`Il Capopalestra ${this.currentGym.name} ti sfida!`:'Un allenatore ti sfida!') :
-      (type==='mewtwo'?'Appare Mewtwo.':this.isRaidActive?`RAID ${6-this.raidQueueCount}/5 · Una presenza misteriosa!`:type==='legendary'?'UN POKÉMON LEGGENDARIO APPARE!':'Un Pokémon selvatico appare!'));
+      (type==='mewtwo'?'Appare MEWTWO!':this.isRaidActive?`RAID ${6-this.raidQueueCount}/5 · Una presenza misteriosa!`:type==='legendary'?'UN POKÉMON LEGGENDARIO APPARE!':'Un Pokémon selvatico appare!'));
     if(token!==this.battleToken)return;
     if(hostile){
       const trainer=this.$id('enemy-trainer-sprite');
@@ -3044,6 +3310,11 @@ generateFloorDungeon() {
   async resolveBattleFaints(){
     if(this.activeMon?.currentHp>0)return false;
     if(this.enemyMon?.currentHp>0){await this.onPlayerFainted();return true;}
+    // In the cave a single faint is never permanent: only a wiped expedition is lost.
+    if(this.isCelestialCave){
+      if(!this.team.some(mon=>mon.currentHp>0)){this.finishCelestialExpeditionDefeat();return true;}
+      await this.handleBattleVictory();return true;
+    }
     // Both fainted: keep the existing permadeath rule, but do not leave an
     // invisible zero-HP enemy in the next turn when Destiny Bond triggers.
     const fallen=this.activeMon;
@@ -3596,6 +3867,12 @@ generateFloorDungeon() {
     }
   }
   async onPlayerFainted(){
+    if(this.isCelestialCave){
+      const fallen=this.activeMon;this.updateBattleHUD();
+      await this.battleText(`${fallen.name} è esausto!`);
+      if(!this.team.some(p=>p.currentHp>0)){this.finishCelestialExpeditionDefeat();return;}
+      this.battleBusy=false;this.showTeamMenu(true);return;
+    }
     const lost=this.activeMon;
     this.updateBattleHUD();this.$id('player-sprite').classList.add('faint-anim');
     await this.battleText(`${lost.name} è esausto e lascia definitivamente la squadra!`);
@@ -3668,7 +3945,8 @@ generateFloorDungeon() {
         this.celestialPhase='rematch';this.endBattle('Hai sconfitto Mewtwo!');
         this.isLocked=true;
         setTimeout(()=>{if(this.isCelestialCave&&this.celestialPhase==='rematch')this.showOakMasterBallReward();},this.gameDelay(550));
-      }else{this.completeMewtwoEncounter();this.endBattle('Hai sconfitto nuovamente Mewtwo!');}
+      }else{this.endBattle('Mewtwo si rialza tra le ombre. Per completare la spedizione devi catturarlo!');
+        this.showDiscoveryNotice('MEWTWO È ANCORA NELLA GROTTA · DEVI CATTURARLO',3500);}
       return;
     }
     if(this.battleType==='gym'&&this.gymQueue.length>0){
@@ -3964,6 +4242,7 @@ generateFloorDungeon() {
   }
   closePokemonInfo(){this.pokemonInfoRequest++;this.partyInfoPokemon=null;this.$id('pokemon-info-overlay')?.classList.add('hidden');}
   renderSidebar() {
+    const oakLab=this.$id('btn-oak-lab');if(oakLab){const visible=this.laboratoryPokemon.length>0;oakLab.classList.toggle('hidden',!visible);oakLab.disabled=!this.isTownFloor()||this.isCelestialCave;}
     // Keep availability and purchase validation tied to the same city milestones.
     // CSS alone is not an access control: locked purchases must also be disabled.
     for(const [itemId,buttonId] of [['superPotion','buy-super-potion-btn'],['hyperPotion','buy-hyper-potion-btn']]){

@@ -3671,3 +3671,62 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
   visibility:hidden!important;
   pointer-events:none!important;
 }
+
+/* Beta 1.4.3 — Oak's authored cinematic dialogue. The map and portrait are distinct assets. */
+#celestial-dialog .celestial-story-card{position:relative;border:2px solid #a58fd4;box-shadow:0 0 0 3px #0d1630,0 0 29px #986ee755,inset 0 0 24px #9b6bec18;}
+.celestial-chapter-row{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-bottom:11px;
+  color:#cbb9ed;font:clamp(6px,.65vw,8px)/1.5 'Press Start 2P',monospace;letter-spacing:.03em;}
+#celestial-dialog-progress{color:#93cbf4;white-space:nowrap;}
+#celestial-dialog-text{color:#f7f0ff;min-height:75px;line-height:1.9;}
+#dungeon-grid-board .grid-cell.oak-story-event:after{content:'';position:absolute;inset:5%;border:1px solid #b8a0ff80;border-radius:8px;
+  box-shadow:0 0 10px #ad8bffa1;pointer-events:none;animation:oakStoryPulse 2.8s ease-in-out infinite alternate;}
+@keyframes oakStoryPulse{from{opacity:.35}to{opacity:.95}}
+@media(prefers-reduced-motion:reduce){#dungeon-grid-board .grid-cell.oak-story-event:after{animation:none;}}
+
+/* Beta 1.5 – selection and laboratory. Fully inside the existing RotomDex. */
+.celestial-expedition{position:absolute;inset:0;z-index:193;display:flex;align-items:center;justify-content:center;padding:9px;background:#050f24ed;box-sizing:border-box;}
+.celestial-expedition.hidden{display:none!important;}
+.celestial-expedition-card{display:flex;flex-direction:column;gap:9px;box-sizing:border-box;max-height:98%;width:min(100%,470px);min-width:0;background:linear-gradient(#13294d,#0d1d35);border:3px solid #68c5f1;border-radius:12px;padding:14px 11px;box-shadow:0 0 0 4px #06142b,0 0 25px #54b8ff35;overflow:hidden;color:#f5eacb;}
+.celestial-expedition-card header>span{font:6px/1.7 'Press Start 2P',monospace;color:#9edcf7;}
+.celestial-expedition-card h2{font:clamp(8px,1.4vw,12px)/1.5 'Press Start 2P',monospace;margin:7px 0 0;color:#ffe3a4;}
+.celestial-expedition-card p{font:clamp(6px,1vw,8px)/1.7 'Press Start 2P',monospace;margin:0;}
+.celestial-roster-count{color:#9febcb!important;}
+.celestial-roster-list{display:flex;flex-direction:column;gap:5px;overflow-y:auto;min-height:30px;max-height:43vh;scrollbar-width:thin;}
+.celestial-roster-choice{display:flex;align-items:center;gap:9px;min-height:43px;background:#183957;border:2px solid #4c86a3;border-radius:6px;padding:5px 8px;color:#f7f2dc;cursor:pointer;text-align:left;font:clamp(6px,.8vw,8px)/1.5 'Press Start 2P',monospace;}
+.celestial-roster-choice img{width:30px;height:30px;object-fit:contain;image-rendering:pixelated;flex-shrink:0;}
+.celestial-roster-choice span{min-width:0;overflow-wrap:anywhere;}
+.celestial-roster-choice.selected{border-color:#f9d27b;background:#32634e;}
+.celestial-roster-choice:focus-visible,.celestial-roster-footer button:focus-visible{outline:3px solid #fff0ad;outline-offset:1px;}
+.celestial-roster-choice:disabled{opacity:.42;cursor:not-allowed;}
+.celestial-roster-footer{display:flex;gap:7px;justify-content:center;flex-wrap:wrap;}
+.celestial-roster-footer .btn-nav{min-height:34px;flex:1 1 130px;font-size:clamp(6px,.8vw,8px);}
+.celestial-roster-footer .btn-nav:disabled{opacity:.45;cursor:not-allowed;}
+@media(max-width:550px){.celestial-expedition{padding:4px}.celestial-expedition-card{padding:8px 7px;gap:6px}.celestial-roster-list{max-height:44vh}.celestial-roster-choice{min-height:37px;padding:3px 5px}.celestial-roster-choice img{width:24px;height:24px}}
+/* Readability of the expedition and Oak's mandatory deposit on the Rotom screen. */
+#celestial-expedition .celestial-expedition-card,
+#oak-laboratory .celestial-expedition-card{color:#f4f1e7!important;}
+#celestial-expedition .celestial-expedition-card>p,
+#oak-laboratory .celestial-expedition-card>p{font-size:clamp(7px,.85vw,9px)!important;color:#e1ebf9!important;line-height:1.75!important;}
+#celestial-expedition .celestial-roster-choice,
+#oak-laboratory .celestial-roster-choice{color:#f5f6fc!important;font-size:clamp(7px,.85vw,9px)!important;line-height:1.6!important;opacity:1;}
+#celestial-expedition .celestial-roster-choice:disabled{opacity:.42!important;}
+#celestial-expedition .celestial-roster-count,
+#oak-laboratory .celestial-roster-count{color:#a9f8c9!important;font-size:clamp(7px,.88vw,9px)!important;}
+#celestial-expedition .celestial-expedition-card h2,
+#oak-laboratory .celestial-expedition-card h2{font-size:clamp(10px,1.18vw,13px)!important;color:#ffe4a6!important;}
+#celestial-expedition .celestial-roster-footer button,
+#oak-laboratory .celestial-roster-footer button{color:#082037!important;font-size:clamp(7px,.8vw,9px)!important;}
+
+/* Beta 1.5.1 — Professor Oak: the user-approved replacement uses a 24×32
+   single-frame RGBA sprite. Match the viewport to its real dimensions;
+   retaining the old 16px viewport cut off his head and coat. */
+#dungeon-grid-board .grid-cell .sprite-frame.celestial-oak-sprite{
+  width:24px!important;height:32px!important;overflow:hidden!important;
+  transform:translate(-50%,-53%) scale(1.04)!important;
+}
+#dungeon-grid-board .grid-cell .sprite-frame.celestial-oak-sprite .overworld-frame-img{
+  position:absolute!important;left:0!important;top:0!important;
+  width:24px!important;height:32px!important;max-width:24px!important;max-height:32px!important;
+  object-fit:contain!important;object-position:center bottom!important;
+  image-rendering:pixelated!important;
+}

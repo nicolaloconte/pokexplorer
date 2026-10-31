@@ -62,7 +62,7 @@ function resolvedSpritePath(path){
   // dialogue portraits.  Redirect those back to the real FireRed map sheets.
   const badMapPath=name.match(/^assets\/sprites\/npc\/overworld\/([a-z_]+)\.png$/);
   if(badMapPath && FIRERED_OVERWORLD_NAMES.includes(badMapPath[1]))return overworldSpriteUrl(badMapPath[1]);
-  if(name==='assets/characters/oak-frlg-down.png')return 'assets/sprites/npc/oak-overworld-local.svg';
+  if(name==='assets/characters/oak-frlg-down.png'||name==='assets/sprites/npc/oak-overworld-local.svg')return 'assets/sprites/npc/oak-frlg-down.png';
   if(name==='assets/characters/oak-frlg-mugshot-clean.png')return 'assets/sprites/npc/oak-frlg-mugshot.png';
   if(/^assets\/characters\/npc-\d{2}\.png$/.test(name) || [
     'assets/characters/fisher-overworld-reference.png',

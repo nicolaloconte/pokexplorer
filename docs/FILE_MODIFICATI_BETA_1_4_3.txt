@@ -1,0 +1,11 @@
+FILE MODIFICATI — BETA 1.4.3
+js/engine.js — scena Oak, Mewtwo e conferma Lotta con Spazio; compatibilità sprite.
+js/game-data.js — migrazione vecchi percorsi Oak.
+js/checkpoints.js — recupero invito Oak nei checkpoint preesistenti.
+index.html — capitoli e progressione del dialogo Oak.
+style.css — stile della scena Oak.
+assets/sprites/npc/oak-frlg-down.png — posa frontale dal riferimento fornito.
+assets/sprites/npc/ritratti/OW-10.png — poliziotto fornito dall'utente, senza alterazioni.
+tests/trainer-intro-space.browser.py — miglioria harness test.
+tests/oak-story.browser.py — test regressione introdotti.
+docs/FIX_1_4_3_OAK_STORIA_SPAZIO.md — documentazione.

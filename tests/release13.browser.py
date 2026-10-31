@@ -83,7 +83,7 @@ def run_viewport(browser,w,h):
     })''')
     assert npc['fisher']=='assets/sprites/npc/ritratti/OW-18.png',npc
     assert npc['elder']=='assets/sprites/npc/ritratti/OW-15.png',npc
-    assert npc['legacyNpc']=='assets/sprites/ui/trainer-avatar-fallback.svg' and npc['legacyOak'].endswith('oak-overworld-local.svg'),npc
+    assert npc['legacyNpc']=='assets/sprites/ui/trainer-avatar-fallback.svg' and npc['legacyOak'].endswith('oak-frlg-down.png'),npc
     assert 'assets/sprites/player/girl/walk/left-2.png' in npc['currentFish'],npc
     assert not errors,errors
     page.close()

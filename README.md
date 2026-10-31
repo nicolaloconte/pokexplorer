@@ -66,3 +66,7 @@ Dettagli, differenze e limiti: [`docs/CHANGELOG_1_3_PULIZIA_E_FIX.md`](docs/CHAN
 ## Beta 1.4.1 — Correzione overworld/ritratti (31 ottobre 2026)
 
 Gli sprite OW approvati sono **ritratti di dialogo**, non modelli da posizionare sulla mappa. La mappa usa nuovamente i spritesheet overworld originali FireRed/LeafGreen; i vecchi checkpoint che referenziano gli adattamenti 16×32 della Beta 1.4 vengono corretti a runtime. Gli spritesheet di mappa sono online e richiedono connettività. Leggi `docs/FIX_1_4_1_OVERWORLD_E_RITRATTI.md`.
+
+### Aggiornamento Beta 1.5 — Grotta Celeste
+
+Prima dell'ingresso, il Professor Oak fa scegliere al massimo due Pokémon da portare nella Grotta Celeste; gli altri restano al villaggio. Una sconfitta completa comporta la perdita definitiva dei Pokémon selezionati. In caso di cattura di Mewtwo, al ritorno Oak fa depositare uno dei sette Pokémon quando necessario. I Pokémon depositati restano conservati e possono essere ritirati dal laboratorio disponibile nei villaggi. Vedi `docs/FIX_1_5_GROTTA_CELESTE_LABORATORIO_OAK.md` per test e limitazioni.

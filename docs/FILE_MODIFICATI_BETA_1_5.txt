@@ -1,0 +1,15 @@
+Pokéxplorer Beta 1.5 — file modificati
+js/engine.js — squadra della grotta, perdita permanente alla sconfitta, laboratorio, logica Mewtwo.
+js/checkpoints.js — deposito Pokémon nel formato v2 compatibile.
+index.html — selezione spedizione, deposito e accesso laboratorio.
+style.css — interfacce spedizione e laboratorio.
+assets/sprites/npc/oak-frlg-up.png
+assets/sprites/npc/oak-frlg-down.png
+assets/sprites/npc/oak-frlg-left.png
+assets/sprites/npc/oak-frlg-right.png
+assets/sprites/npc/oak-frlg-mugshot.png
+assets/sprites/npc/originali-approvati/ — tavole dell'utente originali.
+tests/celestial-expedition.browser.py — nuovi test del flusso completo.
+tests/oak-story.browser.py — aggiornato per la scelta prima di entrare.
+tests/release13.browser.py — aggiornata aspettativa obsoleta sul percorso Oak.
+docs/FIX_1_5_GROTTA_CELESTE_LABORATORIO_OAK.md
