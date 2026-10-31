@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap");
 /* Consolidated from style.css */
 * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
 
 body {
-  background-color: #060913; color: #f8fafc; font-family: 'Press Start 2P', monospace;
+  background-color: #060913; color: #f8fafc; font-family: "Press Start 2P", monospace;
   display: flex; justify-content: center; align-items: center; min-height: 100vh; padding: 10px; overflow: hidden;
 }
 
@@ -50,7 +50,7 @@ body {
 .rotom-top-spike { position: absolute; top: -70px; width: 0; height: 0; border-left: 28px solid transparent; border-right: 28px solid transparent; border-bottom: 75px solid #ff432a; filter: drop-shadow(0 -5px 0 #991b1b); }
 .rotom-face { width: 300px; height: 80px; background: #020617; border: 5px solid #1e293b; border-radius: 40px; display: flex; justify-content: space-around; align-items: center; padding: 0 30px; margin-top: 5px; margin-bottom: 14px; box-shadow: inset 0 0 12px rgba(0,0,0,0.9); }
 .rotom-eye-ball { width: 34px; height: 56px; background: #38bdf8; border: 4px solid #fff; border-radius: 50%; position: relative; }
-.rotom-eye-ball::after { content: ''; position: absolute; top: 8px; left: 5px; width: 10px; height: 20px; background: #fff; border-radius: 50%; }
+.rotom-eye-ball::after { content: ""; position: absolute; top: 8px; left: 5px; width: 10px; height: 20px; background: #fff; border-radius: 50%; }
 .rotom-eye-ball.left { transform: rotate(-8deg); }
 .rotom-eye-ball.right { transform: rotate(8deg); }
 
@@ -238,7 +238,7 @@ body {
 .rotom-wing-right {right:50%; transform:translate(90%,-49%) scale(.86);}
 #rotom-container.wings-open .rotom-wing-left {transform:translate(calc(-360px - 100%),-49%) rotate(-2deg);opacity:1;}
 #rotom-container.wings-open .rotom-wing-right {transform:translate(calc(360px + 100%),-49%) rotate(2deg);opacity:1;}
-#toggle-wings {position:fixed;top:12px;right:16px;z-index:30;background:#e54835;border:3px solid #80251f;border-radius:12px;padding:12px;color:white;font:9px 'Press Start 2P',monospace;cursor:pointer;box-shadow:0 5px 0 #75231b;}
+#toggle-wings {position:fixed;top:12px;right:16px;z-index:30;background:#e54835;border:3px solid #80251f;border-radius:12px;padding:12px;color:white;font:9px "Press Start 2P",monospace;cursor:pointer;box-shadow:0 5px 0 #75231b;}
 .rotom-eye-ball {animation:rotom-blink 8s infinite,rotom-glance 13s infinite;transform-origin:center;}
 .rotom-eye-ball.right {animation-delay:.13s,1s;}
 @keyframes rotom-blink {0%,42%,45%,74%,77%,100%{scale:1 1}43%,75%{scale:1 .07}}
@@ -247,7 +247,7 @@ body {
 .grid-cell {position:relative;overflow:hidden;border:0!important;isolation:isolate;image-rendering:pixelated;}
 .grid-cell.path {background-color:#d9bd79;background-image:radial-gradient(#b9975b 1px,transparent 1.5px),radial-gradient(#f6d99c 1px,transparent 2px);background-size:13px 17px,19px 21px;background-position:2px 4px,7px 3px;box-shadow:inset 0 0 7px #a98d5a!important;}
 .grid-cell.grass {background-color:#74b76d;background-image:repeating-linear-gradient(110deg,transparent 0 6px,#589d57 7px 8px,transparent 9px 14px),radial-gradient(#b1d78a 1px,transparent 2px);background-size:19px 23px,13px 17px;}
-.grid-cell.grass::before {content:'♧ ♧';position:absolute;inset:0;color:#3e8746;font:19px Georgia,serif;letter-spacing:2px;opacity:.48;transform:translateY(5px);pointer-events:none;}
+.grid-cell.grass::before {content:"♧ ♧";position:absolute;inset:0;color:#3e8746;font:19px Georgia,serif;letter-spacing:2px;opacity:.48;transform:translateY(5px);pointer-events:none;}
 .grid-cell.tree {background:linear-gradient(130deg,#4f9453,#36763f);}
 .forest-canopy {position:absolute;inset:-7px -4px -3px;background:radial-gradient(ellipse at 35% 30%,#b2d78b 0 12%,transparent 14%),radial-gradient(ellipse at 65% 30%,#8dc56c 0 21%,transparent 23%),radial-gradient(ellipse at 50% 57%,#4e9a57 0 40%,#286c3b 41% 49%,transparent 51%);filter:drop-shadow(1px 4px 2px #20472d);}
 .grid-cell.water {background:#55b7dd;background-image:repeating-radial-gradient(ellipse at 25% 40%,#86d4e9 0 2px,transparent 3px 12px,#3695c6 13px 14px,transparent 15px 22px);box-shadow:inset 0 0 8px #26739b!important;}
@@ -256,7 +256,7 @@ body {
 .grid-cell.town-ground {background-color:#82bd78;background-image:radial-gradient(#4c9558 1px,transparent 2px),radial-gradient(#b4d48d 1px,transparent 2px);background-size:12px 15px,17px 13px;}
 .grid-cell.town-ground:nth-child(10n + 5),.grid-cell.town-ground:nth-child(n + 41):nth-child(-n + 50) {background-color:#dfbc7e;background-image:radial-gradient(#c79f66 1px,transparent 2px);background-size:11px 14px;}
 .grid-cell .grid-icon {position:relative;z-index:2;filter:drop-shadow(1px 3px 2px #0006);}
-#discovery-notice {position:fixed;top:12%;left:50%;transform:translate(-50%,-25px);opacity:0;z-index:1000;background:#13283aee;border:3px solid #f7cf60;border-radius:14px;box-shadow:0 8px 35px #000a;padding:18px 24px;color:#fff;font:10px/1.8 'Press Start 2P',monospace;text-align:center;max-width:85vw;pointer-events:none;transition:opacity .35s,transform .35s;}
+#discovery-notice {position:fixed;top:12%;left:50%;transform:translate(-50%,-25px);opacity:0;z-index:1000;background:#13283aee;border:3px solid #f7cf60;border-radius:14px;box-shadow:0 8px 35px #000a;padding:18px 24px;color:#fff;font:10px/1.8 "Press Start 2P",monospace;text-align:center;max-width:85vw;pointer-events:none;transition:opacity .35s,transform .35s;}
 #discovery-notice.visible {opacity:1;transform:translate(-50%,0);}
 .raid-discovery {animation:raid-shock 1.6s ease-in-out;}
 @keyframes raid-shock {0%,100%{filter:none}20%,60%{filter:brightness(2) sepia(1) hue-rotate(170deg)}40%,80%{filter:brightness(.55) saturate(2)}}
@@ -303,7 +303,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
   radial-gradient(ellipse at 30% 70%,#a4d489 0 5%,transparent 6%),
   repeating-linear-gradient(92deg,transparent 0 8px,#66a861 9px 10px,transparent 11px 17px); background-size:18px 20px,31px 27px; }
 .grid-cell.grass::before {content:""; position:absolute; inset:16% 6%; opacity:.68;
-  background:url('assets/grass-tuft.svg') center / 30% auto repeat; transform:none; pointer-events:none; }
+  background:url("assets/sprites/world/grass-tuft.svg") center / 30% auto repeat; transform:none; pointer-events:none; }
 .grid-cell.tree { background:#427e4d; overflow:visible; z-index:3; }
 .grid-cell.tree .terrain-tree { position:absolute; width:115%; height:125%; left:-7%; bottom:-3%; object-fit:contain;
   image-rendering:pixelated; filter:drop-shadow(0 3px 1px #2243338a); pointer-events:none; }
@@ -369,7 +369,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 @media(prefers-reduced-motion:reduce){ #gym-leader-intro *,#gym-leader-intro::before {animation:none!important;} }
 
 /* Fog artwork sampled continuously across the ten-by-ten board. */
-.grid-cell.fog {background:#13253a url('assets/fog.svg')!important;
+.grid-cell.fog {background:#13253a url("assets/sprites/world/fog.svg")!important;
  background-size:1000% 1000%!important; background-repeat:no-repeat!important;}
 
 /* --------------------------------------------------------------
@@ -412,7 +412,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 #battle-stage .player-platform-gba {background:radial-gradient(ellipse,#d3dc97 0%,#a4c477 65%,#6f9859 100%);box-shadow:0 10px 13px #26432c85;}
 #battle-stage .poke-sprite-gba {object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 5px 1px #2d483755);}
 #player-trainer-sprite {bottom:15px;left:50px;width:128px;height:150px;}
-#battle-throw-ball {position:absolute;z-index:24;width:33px;height:33px;opacity:0;background:url('assets/items/pokeball-game.png') center/contain no-repeat;pointer-events:none;}
+#battle-throw-ball {position:absolute;z-index:24;width:33px;height:33px;opacity:0;background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat;pointer-events:none;}
 .throw-ball.ball-enemy.ball-flying {animation:ball-from-enemy .8s cubic-bezier(.2,.45,.37,1.04) forwards;}
 .throw-ball.ball-player.ball-flying {animation:ball-from-player .8s cubic-bezier(.2,.45,.37,1.04) forwards;}
 @keyframes ball-from-enemy {0%{right:80px;top:75px;opacity:1;transform:scale(.8)}50%{right:110px;top:3px;opacity:1;transform:scale(1.2)}100%{right:77px;top:48px;opacity:0;transform:scale(.3)}}
@@ -538,14 +538,14 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 #battle-controls #btn-move-back{position:absolute;left:7px;top:12px;font:18px sans-serif;font-weight:900;background:#fef1d4;color:#4e2b1b;border:2px solid #7f4d35;border-radius:6px;cursor:pointer;width:33px;height:34px}
 #battle-controls #panel-team-actions,#battle-controls #panel-bag-actions{font-size:8px;color:#4b2d24}
 #battle-controls .act-btn{white-space:normal}
-#battle-log.awaiting-click::after{content:'▾ CLICCA PER CONTINUARE';display:block;position:absolute;right:14px;bottom:5px;color:#f7e4a9;font-size:5px;animation:dialogue-nudge .8s infinite alternate}
+#battle-log.awaiting-click::after{content:"▾ CLICCA PER CONTINUARE";display:block;position:absolute;right:14px;bottom:5px;color:#f7e4a9;font-size:5px;animation:dialogue-nudge .8s infinite alternate}
 #battle-log.awaiting-click{cursor:pointer;position:relative;padding-bottom:17px}
 @keyframes dialogue-nudge{to{transform:translateY(3px)}}
 #battle-stage{min-height:0}
 #battle-log{flex:0 0 auto;min-height:54px}
 /* Menù zaino con tre scomparti ispirati al classico borsone Pokémon. */
 #bag-tabs{display:grid;grid-template-columns:1fr 1fr 1.25fr;gap:3px;margin:5px 0 7px}
-#bag-tabs button{font:6px 'Press Start 2P',monospace;line-height:1.6;border:2px solid #916f48;background:#ccae7a;color:#463625;border-radius:7px;padding:7px 2px;cursor:pointer}
+#bag-tabs button{font:6px "Press Start 2P",monospace;line-height:1.6;border:2px solid #916f48;background:#ccae7a;color:#463625;border-radius:7px;padding:7px 2px;cursor:pointer}
 #bag-tabs button.active{background:#fff1c7;color:#802e21;border-color:#f5ce78;box-shadow:inset 0 2px 0 #fff}
 #bag-list{min-height:135px!important}
 .bag-item{min-height:42px!important;font-size:7px!important}
@@ -553,7 +553,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 .bag-rod{color:#36261d;font-size:7px;line-height:1.8;padding:10px 3px}
 .item-fishing{font-size:19px}
 /* Cattura: atterraggio, tre oscillazioni, ball scura + particelle al successo. */
-.capture-ball{display:none;position:absolute;top:27%;right:14%;width:45px;height:45px;z-index:32;background:url('assets/items/pokeball-game.png') center/contain no-repeat;filter:drop-shadow(0 7px 3px #163b314e)}
+.capture-ball{display:none;position:absolute;top:27%;right:14%;width:45px;height:45px;z-index:32;background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat;filter:drop-shadow(0 7px 3px #163b314e)}
 .capture-ball.visible{display:block;animation:capture-land .28s ease-out}
 .capture-ball.shake{animation:capture-shake .61s ease-in-out forwards!important}
 .capture-ball.sealed{filter:brightness(.52) drop-shadow(0 5px 5px #0008);animation:capture-seal .8s ease-out infinite alternate}
@@ -571,7 +571,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 #evolution-overlay p{font-size:9px;line-height:2}
 #evolution-overlay .evolution-sprites{width:100%;height:160px;position:relative;display:flex;align-items:center;justify-content:center}
 #evolution-overlay img{width:138px;height:138px;object-fit:contain;image-rendering:pixelated;position:absolute;filter:drop-shadow(0 0 14px #82d4fc)}
-#evolution-overlay .evolution-sprites:before{content:'';position:absolute;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18) 0%,rgba(255,255,255,.02) 68%,transparent 72%);animation:evo-background 1.5s linear infinite}
+#evolution-overlay .evolution-sprites:before{content:"";position:absolute;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.18) 0%,rgba(255,255,255,.02) 68%,transparent 72%);animation:evo-background 1.5s linear infinite}
 #evolution-overlay button{width:min(280px,92%);font-size:8px}
 .evo-transform{animation:evo-disappear 1.6s ease-in forwards}
 .evo-reveal{animation:evo-arrive 1.6s ease-out forwards}
@@ -604,7 +604,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 .move-particle{position:absolute;z-index:28;left:var(--start-x);top:var(--start-y);font:26px sans-serif;opacity:0;text-shadow:0 0 11px #fff7;animation:move-projectile .85s ease-out var(--delay) forwards;will-change:transform,opacity}
 @keyframes move-projectile{0%{opacity:0;transform:translate(0,0) scale(.25) rotate(-70deg)}25%{opacity:1}75%{opacity:1}100%{opacity:0;transform:translate(var(--dx),var(--dy)) scale(1.35) rotate(20deg)}}
 #discovery-notice.raid-notice{max-width:560px;border-color:#ffd35c;background:linear-gradient(160deg,#4a1d38,#151532);font-size:12px;pointer-events:auto;padding:22px 25px}
-#discovery-notice.raid-notice:before{content:'';display:block;margin:0 auto 8px;width:54px;height:54px;background:url('assets/items/pokeball-game.png') center/contain no-repeat;filter:drop-shadow(0 2px 5px #fbe3ae8c);animation:raid-bait 1.2s ease-in-out infinite alternate}
+#discovery-notice.raid-notice:before{content:"";display:block;margin:0 auto 8px;width:54px;height:54px;background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat;filter:drop-shadow(0 2px 5px #fbe3ae8c);animation:raid-bait 1.2s ease-in-out infinite alternate}
 @keyframes raid-bait{to{transform:translateY(-7px) rotate(9deg)}}
 .npc-click-hint{font-size:7px;color:#ffe4b0;line-height:2;margin-top:14px;animation:dialogue-nudge .8s infinite alternate;cursor:pointer}
 
@@ -628,7 +628,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 .team-slot .team-hp-text{font-size:5px;color:#d8edf7;margin-top:2px;text-align:right}
 
 #battle-stage{background:linear-gradient(180deg,#dfeffd 0%,#b8d6f0 34%,#dceecf 35%,#99c36b 68%,#6c9653 100%)!important}
-#battle-stage::before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.22;background:radial-gradient(circle at 18% 16%,#ffffffd0 0 10%,transparent 13%),radial-gradient(circle at 30% 22%,#ffffffbc 0 7%,transparent 10%),radial-gradient(circle at 76% 14%,#ffffffc4 0 9%,transparent 12%)}
+#battle-stage::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;background:radial-gradient(circle at 18% 16%,#ffffffd0 0 10%,transparent 13%),radial-gradient(circle at 30% 22%,#ffffffbc 0 7%,transparent 10%),radial-gradient(circle at 76% 14%,#ffffffc4 0 9%,transparent 12%)}
 .enemy-platform-gba,.player-platform-gba{background:radial-gradient(ellipse at center,#d7efb7 0%,#8fbb6e 58%,#638a54 100%)!important;border:3px solid #d7f2bf!important;box-shadow:0 10px 0 rgba(42,70,33,.16),0 16px 18px rgba(0,0,0,.22)!important}
 .enemy-platform-gba{top:112px!important;right:46px!important;width:165px!important;height:40px!important}
 .player-platform-gba{bottom:32px!important;left:38px!important;width:180px!important;height:44px!important}
@@ -645,18 +645,18 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 #battle-controls #panel-move-actions{margin-left:28px!important;width:calc(100% - 28px)!important}
 
 .move-particle{font-size:0!important;width:18px;height:18px;background-position:center;background-size:contain;background-repeat:no-repeat;filter:drop-shadow(0 0 4px rgba(255,255,255,.35))}
-.move-particle[data-type='fire']{background-image:radial-gradient(circle,#ffd466 0 28%,#f97316 29% 60%,transparent 61%)}
-.move-particle[data-type='water']{background-image:radial-gradient(circle at 50% 40%,#dff7ff 0 18%,#5cc8ff 19% 55%,transparent 56%)}
-.move-particle[data-type='grass']{background-image:linear-gradient(135deg,transparent 0 20%,#4ade80 20% 70%,transparent 70%),linear-gradient(315deg,transparent 0 40%,#86efac 40% 78%,transparent 78%)}
-.move-particle[data-type='electric']{background-image:linear-gradient(135deg,transparent 0 35%,#fde047 35% 60%,transparent 60%),linear-gradient(315deg,transparent 0 55%,#facc15 55% 80%,transparent 80%)}
-.move-particle[data-type='ghost']{background-image:radial-gradient(circle,#c084fc 0 32%,#7c3aed 33% 58%,transparent 59%)}
-.move-particle[data-type='poison']{background-image:radial-gradient(circle,#e879f9 0 32%,#a855f7 33% 58%,transparent 59%)}
-.move-particle[data-type='rock'],.move-particle[data-type='ground']{background-image:radial-gradient(circle,#d6b38a 0 32%,#9a6c3e 33% 58%,transparent 59%)}
-.move-particle[data-type='ice']{background-image:radial-gradient(circle,#d9f7ff 0 30%,#7dd3fc 31% 58%,transparent 59%)}
-.move-particle[data-type='psychic']{background-image:radial-gradient(circle,#fbcfe8 0 30%,#ec4899 31% 58%,transparent 59%)}
-.move-particle[data-type='bug']{background-image:radial-gradient(circle,#d9f99d 0 30%,#84cc16 31% 58%,transparent 59%)}
-.move-particle[data-type='flying']{background-image:linear-gradient(90deg,transparent 0 30%,#cbd5e1 30% 80%,transparent 80%)}
-.move-particle[data-type='normal'],.move-particle[data-type='fighting'],.move-particle[data-type='dragon'],.move-particle[data-type='dark'],.move-particle[data-type='steel'],.move-particle[data-type='fairy']{background-image:radial-gradient(circle,#ffffff 0 28%,#94a3b8 29% 58%,transparent 59%)}
+.move-particle[data-type="fire"]{background-image:radial-gradient(circle,#ffd466 0 28%,#f97316 29% 60%,transparent 61%)}
+.move-particle[data-type="water"]{background-image:radial-gradient(circle at 50% 40%,#dff7ff 0 18%,#5cc8ff 19% 55%,transparent 56%)}
+.move-particle[data-type="grass"]{background-image:linear-gradient(135deg,transparent 0 20%,#4ade80 20% 70%,transparent 70%),linear-gradient(315deg,transparent 0 40%,#86efac 40% 78%,transparent 78%)}
+.move-particle[data-type="electric"]{background-image:linear-gradient(135deg,transparent 0 35%,#fde047 35% 60%,transparent 60%),linear-gradient(315deg,transparent 0 55%,#facc15 55% 80%,transparent 80%)}
+.move-particle[data-type="ghost"]{background-image:radial-gradient(circle,#c084fc 0 32%,#7c3aed 33% 58%,transparent 59%)}
+.move-particle[data-type="poison"]{background-image:radial-gradient(circle,#e879f9 0 32%,#a855f7 33% 58%,transparent 59%)}
+.move-particle[data-type="rock"],.move-particle[data-type="ground"]{background-image:radial-gradient(circle,#d6b38a 0 32%,#9a6c3e 33% 58%,transparent 59%)}
+.move-particle[data-type="ice"]{background-image:radial-gradient(circle,#d9f7ff 0 30%,#7dd3fc 31% 58%,transparent 59%)}
+.move-particle[data-type="psychic"]{background-image:radial-gradient(circle,#fbcfe8 0 30%,#ec4899 31% 58%,transparent 59%)}
+.move-particle[data-type="bug"]{background-image:radial-gradient(circle,#d9f99d 0 30%,#84cc16 31% 58%,transparent 59%)}
+.move-particle[data-type="flying"]{background-image:linear-gradient(90deg,transparent 0 30%,#cbd5e1 30% 80%,transparent 80%)}
+.move-particle[data-type="normal"],.move-particle[data-type="fighting"],.move-particle[data-type="dragon"],.move-particle[data-type="dark"],.move-particle[data-type="steel"],.move-particle[data-type="fairy"]{background-image:radial-gradient(circle,#ffffff 0 28%,#94a3b8 29% 58%,transparent 59%)}
 
 #starter-scene-overlay{background:radial-gradient(circle at 50% 10%,rgba(32,88,142,.25),transparent 38%),linear-gradient(180deg,#06112b 0%,#081833 45%,#020617 100%)}
 #starter-scene-overlay .briefcase-container{background:linear-gradient(180deg,#30445f,#17243d);border:6px solid #425b79;border-radius:26px;box-shadow:0 10px 24px rgba(0,0,0,.45), inset 0 0 0 4px rgba(255,255,255,.05)}
@@ -682,17 +682,17 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 .hp-red{background:linear-gradient(90deg,#ef5b5b,#ff9797)!important}
 .stat-bar-hp-gba{transition:width .32s ease,background .2s ease}
 .briefcase-container{width:560px!important;height:280px!important;border-radius:28px!important;position:relative;overflow:hidden;background:linear-gradient(180deg,#6b7f98 0%,#41536d 100%)!important;border:6px solid #2e4054!important;box-shadow:0 10px 25px rgba(0,0,0,.5), inset 0 0 0 3px rgba(255,255,255,.08)!important}
-.briefcase-container:before{content:'';position:absolute;left:12px;right:12px;top:18px;height:18px;border-radius:12px;background:linear-gradient(180deg,#93a4ba,#74859b)}
+.briefcase-container:before{content:"";position:absolute;left:12px;right:12px;top:18px;height:18px;border-radius:12px;background:linear-gradient(180deg,#93a4ba,#74859b)}
 .briefcase-inner{width:500px!important;height:210px!important;background:linear-gradient(180deg,#1a2a3e,#0a1424)!important;border:3px solid #5b738e!important;border-radius:18px!important;gap:42px}
 .briefcase-latch{position:absolute;top:8px;width:34px;height:18px;border-radius:0 0 10px 10px;background:linear-gradient(180deg,#e7d08b,#a98a4b);border:2px solid #6d532c;z-index:5}
 .briefcase-latch.left{left:120px}.briefcase-latch.right{right:120px}
 .briefcase-plate{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);padding:5px 14px;border-radius:999px;background:#d8e7f5;color:#22334b;border:2px solid #576c85;font-size:7px;z-index:5}
 .pokeball-wrapper{transform:scale(1.24)}
-.pokeball-wrapper:after{content:'BALL';position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:6px;color:#dce7f3;letter-spacing:1px}
+.pokeball-wrapper:after{content:"BALL";position:absolute;bottom:-26px;left:50%;transform:translateX(-50%);font-size:6px;color:#dce7f3;letter-spacing:1px}
 .pokemon-showcase-box{width:210px!important;height:210px!important}
 .pokemon-showcase-img{width:170px!important;height:170px!important}
 #battle-stage{background:linear-gradient(180deg,#d5e8fa 0%,#b6d1e9 30%,#dbe9dc 31%,#9ac06d 57%,#678d4f 82%,#5a7942 100%)!important}
-#battle-stage::after{content:'';position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(180deg,rgba(76,108,56,0),rgba(60,86,45,.18));pointer-events:none}
+#battle-stage::after{content:"";position:absolute;left:0;right:0;bottom:0;height:34%;background:linear-gradient(180deg,rgba(76,108,56,0),rgba(60,86,45,.18));pointer-events:none}
 .enemy-platform-gba{top:150px!important;right:34px!important;width:210px!important;height:54px!important}
 .player-platform-gba{bottom:40px!important;left:28px!important;width:200px!important;height:48px!important}
 #battle-stage .poke-sprite-gba{width:148px!important;height:148px!important}
@@ -710,16 +710,16 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 @keyframes impactBurst{0%{transform:scale(.25);opacity:0}25%{opacity:.92}100%{transform:scale(1.25);opacity:0}}
 .impact-fire{border-color:rgba(255,133,51,.8)}.impact-water{border-color:rgba(92,200,255,.75)}.impact-grass{border-color:rgba(110,231,123,.82)}.impact-electric{border-color:rgba(250,204,21,.82)}.impact-normal{border-color:rgba(255,255,255,.72)}
 .move-particle{width:22px!important;height:22px!important;filter:drop-shadow(0 0 5px rgba(255,255,255,.55))!important}
-.move-particle[data-type='fire']{background-image:radial-gradient(circle,#fff3a0 0 18%,#fb923c 19% 48%,#dc2626 49% 74%,transparent 75%)}
-.move-particle[data-type='water']{background-image:radial-gradient(circle at 50% 35%,#effdff 0 16%,#6dd3ff 17% 56%,transparent 57%)}
-.move-particle[data-type='grass']{background-image:linear-gradient(140deg,transparent 0 18%,#34d399 18% 70%,transparent 70%),linear-gradient(320deg,transparent 0 36%,#bbf7d0 36% 74%,transparent 74%)}
-.move-particle[data-type='electric']{background-image:linear-gradient(145deg,transparent 0 30%,#fde047 30% 56%,transparent 56%),linear-gradient(325deg,transparent 0 52%,#facc15 52% 80%,transparent 80%)}
-.move-particle[data-type='normal']{background-image:radial-gradient(circle,#f8fafc 0 24%,#cbd5e1 25% 58%,transparent 59%)}
-.move-particle[data-type='rock'],.move-particle[data-type='ground']{background-image:radial-gradient(circle,#efd8bf 0 26%,#b08968 27% 58%,transparent 59%)}
-.move-particle[data-type='poison']{background-image:radial-gradient(circle,#f5d0fe 0 26%,#c084fc 27% 58%,transparent 59%)}
-.move-particle[data-type='ghost']{background-image:radial-gradient(circle,#ddd6fe 0 26%,#8b5cf6 27% 58%,transparent 59%)}
-.move-particle[data-type='ice']{background-image:radial-gradient(circle,#ffffff 0 24%,#93c5fd 25% 58%,transparent 59%)}
-.capture-ball{display:none;position:absolute;top:175px;right:126px;width:42px;height:42px;z-index:36;background:url('assets/items/pokeball-game.png') center/contain no-repeat;filter:drop-shadow(0 6px 4px rgba(0,0,0,.35))}
+.move-particle[data-type="fire"]{background-image:radial-gradient(circle,#fff3a0 0 18%,#fb923c 19% 48%,#dc2626 49% 74%,transparent 75%)}
+.move-particle[data-type="water"]{background-image:radial-gradient(circle at 50% 35%,#effdff 0 16%,#6dd3ff 17% 56%,transparent 57%)}
+.move-particle[data-type="grass"]{background-image:linear-gradient(140deg,transparent 0 18%,#34d399 18% 70%,transparent 70%),linear-gradient(320deg,transparent 0 36%,#bbf7d0 36% 74%,transparent 74%)}
+.move-particle[data-type="electric"]{background-image:linear-gradient(145deg,transparent 0 30%,#fde047 30% 56%,transparent 56%),linear-gradient(325deg,transparent 0 52%,#facc15 52% 80%,transparent 80%)}
+.move-particle[data-type="normal"]{background-image:radial-gradient(circle,#f8fafc 0 24%,#cbd5e1 25% 58%,transparent 59%)}
+.move-particle[data-type="rock"],.move-particle[data-type="ground"]{background-image:radial-gradient(circle,#efd8bf 0 26%,#b08968 27% 58%,transparent 59%)}
+.move-particle[data-type="poison"]{background-image:radial-gradient(circle,#f5d0fe 0 26%,#c084fc 27% 58%,transparent 59%)}
+.move-particle[data-type="ghost"]{background-image:radial-gradient(circle,#ddd6fe 0 26%,#8b5cf6 27% 58%,transparent 59%)}
+.move-particle[data-type="ice"]{background-image:radial-gradient(circle,#ffffff 0 24%,#93c5fd 25% 58%,transparent 59%)}
+.capture-ball{display:none;position:absolute;top:175px;right:126px;width:42px;height:42px;z-index:36;background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat;filter:drop-shadow(0 6px 4px rgba(0,0,0,.35))}
 .capture-ball.visible{display:block}.capture-ball.drop{animation:captureDrop .34s ease-out forwards}.capture-ball.shake{animation:captureShake .55s ease-in-out forwards!important}.capture-ball.sealed{filter:brightness(.72) drop-shadow(0 5px 4px rgba(0,0,0,.55))}.capture-ball.breakout{animation:captureBreakout .42s ease-out forwards}
 @keyframes captureDrop{0%{transform:translate(70px,-68px) scale(.55)}70%{transform:translate(0,0) scale(1.02)}100%{transform:translate(0,0) scale(1)}}
 @keyframes captureShake{0%,100%{transform:rotate(0deg)}20%{transform:rotate(-18deg)}40%{transform:rotate(14deg)}60%{transform:rotate(-12deg)}80%{transform:rotate(9deg)}}
@@ -730,8 +730,8 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 .door-lock{font:700 8px/1 monospace;color:#ffe394;background:#5f2741;padding:2px 4px;border-radius:4px;border:1px solid #f1ce72}
 .trainer-avatar-card img{width:84px;height:84px;object-fit:contain;image-rendering:pixelated}
 #buy-pokeball-btn,#buy-potion-btn,#buy-rod-btn{position:relative;padding-left:18px!important}
-#buy-pokeball-btn::before,#buy-potion-btn::before,#buy-rod-btn::before{content:'';position:absolute;left:8px;top:50%;transform:translateY(-50%);width:12px;height:12px;background-size:contain;background-repeat:no-repeat;background-position:center}
-#buy-pokeball-btn::before{background-image:url('assets/items/pokeball-game.png')}#buy-potion-btn::before{background-image:url('assets/items/potion-user.png')}#buy-rod-btn::before{background-image:url('assets/items/elixir-user.png')}
+#buy-pokeball-btn::before,#buy-potion-btn::before,#buy-rod-btn::before{content:"";position:absolute;left:8px;top:50%;transform:translateY(-50%);width:12px;height:12px;background-size:contain;background-repeat:no-repeat;background-position:center}
+#buy-pokeball-btn::before{background-image:url("assets/sprites/items/pokeball-game.png")}#buy-potion-btn::before{background-image:url("assets/sprites/items/potion-user.png")}#buy-rod-btn::before{background-image:url("assets/sprites/items/elixir-user.png")}
 .item-fishing{display:none}
 
 
@@ -754,14 +754,14 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
   box-shadow:0 13px 0 #584b49,0 17px 18px #38221f7a,inset 0 0 0 3px #bfcbd4!important;
   overflow:visible!important;
 }
-.briefcase-container::before{content:''!important;display:none!important}
+.briefcase-container::before{content:""!important;display:none!important}
 .briefcase-lid{
   position:relative;width:100%;height:69px;flex:none;border:4px solid #62718b;border-radius:10px 10px 4px 4px;
   background:repeating-linear-gradient(140deg,#adc4db 0 8px,#bed0e0 9px 18px);box-shadow:inset 0 4px #d9e7ef,inset 0 -5px #839bb2;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
 }
-.briefcase-brand{font:6px 'Press Start 2P',monospace;color:#56708e;letter-spacing:.8px}
-.briefcase-lid-symbol{font:12px 'Press Start 2P',monospace;color:#d15c48;text-shadow:2px 2px #fff3d5}
+.briefcase-brand{font:6px "Press Start 2P",monospace;color:#56708e;letter-spacing:.8px}
+.briefcase-lid-symbol{font:12px "Press Start 2P",monospace;color:#d15c48;text-shadow:2px 2px #fff3d5}
 #starter-scene-overlay .briefcase-inner{
   width:100%!important;height:123px!important;flex:1;min-height:123px!important;
   display:grid!important;grid-template-columns:repeat(3,1fr);align-items:center;gap:8px!important;padding:5px 12px 10px!important;
@@ -770,7 +770,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
   box-shadow:inset 0 8px 15px #4c4c4c26!important;
 }
 .briefcase-plate{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);padding:5px 12px;
-  border-radius:5px;border:2px solid #6d7080;background:#f7ead0;color:#4e5871;font:6px 'Press Start 2P',monospace;z-index:3;white-space:nowrap}
+  border-radius:5px;border:2px solid #6d7080;background:#f7ead0;color:#4e5871;font:6px "Press Start 2P",monospace;z-index:3;white-space:nowrap}
 #starter-scene-overlay .pokeball-wrapper{
   width:100%!important;height:105px!important;display:flex;flex-direction:column;align-items:center;
   justify-content:center;gap:2px;cursor:pointer;transform:none!important;filter:none!important;
@@ -785,8 +785,8 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 .ball-model .pokeball-top{border-radius:32px 32px 0 0}
 .ball-model .pokeball-bottom{border-radius:0 0 32px 32px}
 .ball-model .pokeball-button{width:20px;height:20px}
-#starter-scene-overlay .starter-name{font:7px 'Press Start 2P',monospace;color:#2c4567;white-space:nowrap}
-#starter-scene-overlay .starter-kind{font:6px 'Press Start 2P',monospace;color:#7e7164;white-space:nowrap}
+#starter-scene-overlay .starter-name{font:7px "Press Start 2P",monospace;color:#2c4567;white-space:nowrap}
+#starter-scene-overlay .starter-kind{font:6px "Press Start 2P",monospace;color:#7e7164;white-space:nowrap}
 #starter-scene-overlay .pokeball-wrapper.open .pokeball-top{transform:translateY(-13px) rotate(-12deg)}
 #starter-scene-overlay .pokeball-wrapper.open .pokeball-bottom{transform:translateY(5px)}
 .starter-preview-strip{width:min(100%,500px);height:66px;min-height:66px;display:flex;gap:9px;align-items:center;
@@ -798,22 +798,22 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 }
 #starter-scene-overlay .pokemon-showcase-box.active{opacity:1!important;transform:none!important}
 #starter-scene-overlay .pokemon-showcase-img{width:52px!important;height:52px!important}
-#starter-selection-info{font:7px/1.9 'Press Start 2P',monospace;color:#375779;flex:1;text-align:left}
+#starter-selection-info{font:7px/1.9 "Press Start 2P",monospace;color:#375779;flex:1;text-align:left}
 #starter-scene-overlay>div:last-child{background:#f5f0dc!important;border:3px solid #70849b!important;max-width:100%!important;border-radius:9px!important;margin:0!important;padding:9px!important;box-shadow:0 3px #7b90a8}
 #starter-scene-overlay #dialog-text{font-size:7px!important;color:#354861!important}
 #starter-scene-overlay #dialog-actions{margin-top:7px!important}
 #starter-scene-overlay #dialog-actions button{font-size:7px!important;min-height:27px}
 
 /* === Scenery paintings tailored to terrain and route === */
-#battle-stage{background:#9bbca3 url('assets/battle/meadow.svg') center/cover no-repeat!important;isolation:isolate;}
-#battle-stage[data-biome="forest"]{background-image:url('assets/battle/forest.svg')!important}
-#battle-stage[data-biome="coast"]{background-image:url('assets/battle/coast.svg')!important}
-#battle-stage[data-biome="cavern"]{background-image:url('assets/battle/cavern.svg')!important}
-#battle-stage[data-biome="city"]{background-image:url('assets/battle/city.svg')!important}
+#battle-stage{background:#9bbca3 url("assets/battle/meadow.svg") center/cover no-repeat!important;isolation:isolate;}
+#battle-stage[data-biome="forest"]{background-image:url("assets/battle/neutral-bg/woodland.webp")!important}
+#battle-stage[data-biome="coast"]{background-image:url("assets/battle/coast.svg")!important}
+#battle-stage[data-biome="cavern"]{background-image:url("assets/battle/cavern.svg")!important}
+#battle-stage[data-biome="city"]{background-image:url("assets/battle/city.svg")!important}
 #battle-stage.wild-battle{background-color:#9bbca3!important}
-#battle-stage::before{content:''!important;position:absolute;inset:0;opacity:.25!important;pointer-events:none;
+#battle-stage::before{content:""!important;position:absolute;inset:0;opacity:.25!important;pointer-events:none;
   background:linear-gradient(180deg,transparent 0 61%,rgba(27,66,51,.10) 61% 100%)!important;}
-#battle-stage::after{content:'';position:absolute;inset:auto 0 0 0;height:15%;background:linear-gradient(transparent,#344c3760);pointer-events:none;z-index:0}
+#battle-stage::after{content:"";position:absolute;inset:auto 0 0 0;height:15%;background:linear-gradient(transparent,#344c3760);pointer-events:none;z-index:0}
 #battle-stage .battle-platform-gba{z-index:5;border:3px solid #d7eabb!important;
   background:radial-gradient(ellipse at 50% 23%,#e1eebb,#a9c978 48%,#64855b 75%,#405e49 100%)!important;
   box-shadow:0 7px 0 #456650aa,0 15px 18px #2f4a4160,inset 0 -7px #426a4a75!important;
@@ -834,7 +834,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 
 /* === Trainer entrance, authentic-feeling ball toss and white summon energy === */
 #battle-throw-ball{position:absolute!important;width:37px!important;height:37px!important;z-index:42!important;
-  opacity:0;background:url('assets/items/pokeball-game.png') center/contain no-repeat;pointer-events:none;}
+  opacity:0;background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat;pointer-events:none;}
 #battle-throw-ball.ball-player.ball-flying-v6{animation:v6-player-throw .80s cubic-bezier(.24,.56,.42,1) forwards!important;}
 #battle-throw-ball.ball-enemy.ball-flying-v6{animation:v6-enemy-throw .80s cubic-bezier(.24,.56,.42,1) forwards!important;}
 @keyframes v6-player-throw{0%{left:17%;top:73%;opacity:1;transform:rotate(-20deg) scale(.7)}38%{left:35%;top:37%;opacity:1;transform:rotate(160deg) scale(1)}76%{left:39%;top:48%;opacity:1;transform:rotate(310deg) scale(.95)}100%{left:39%;top:48%;opacity:0;transform:rotate(360deg) scale(1.5)}}
@@ -888,7 +888,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 
 /* === Poké Ball arc, beam, grounded shakes, confirmation smoke === */
 #capture-ball{display:none!important;opacity:0;position:absolute;width:38px;height:38px;z-index:51;pointer-events:none;
-  background:url('assets/items/pokeball-game.png') center/contain no-repeat;filter:drop-shadow(0 5px 3px #1f302f70);}
+  background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat;filter:drop-shadow(0 5px 3px #1f302f70);}
 #capture-ball.flying-v6{display:block!important;opacity:1;animation:v6-capture-arc .80s ease-in-out both!important}
 @keyframes v6-capture-arc{0%{left:var(--ball-sx);top:var(--ball-sy);transform:rotate(-35deg) scale(.75);opacity:1}
   42%{left:calc((var(--ball-sx) + var(--ball-tx)) / 2);top:calc(var(--ball-ty) - 115px);transform:rotate(170deg) scale(1.12)}
@@ -952,7 +952,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
  #battle-stage .enemy-platform-gba,#battle-stage .player-platform-gba{height:36px!important}
 }
 /* Higher specificity than the legacy .wild-battle background shorthand. */
-#battle-stage[data-biome="meadow"]{background:#9bbca3 url('assets/battle/meadow.svg') center/cover no-repeat!important}
+#battle-stage[data-biome="meadow"]{background:#9bbca3 url("assets/battle/meadow.svg") center/cover no-repeat!important}
 /* Extra polish: discrete idle motion for village inhabitants and more readable starter labels. */
 .grid-cell .town-npc{animation:v6-town-idle 3.1s steps(2,end) infinite alternate}
 @keyframes v6-town-idle{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
@@ -969,7 +969,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
   position:relative!important;display:block!important;flex:none!important;
   width:62px!important;height:62px!important;aspect-ratio:1/1!important;
   margin:0 auto 5px!important;border-radius:50%;
-  background:url('assets/items/pokeball-game.png') center/contain no-repeat!important;
+  background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat!important;
   transform:none!important;
   filter:drop-shadow(0 4px 2px rgba(34,42,49,.30))!important;
   transition:transform .22s ease,filter .22s ease!important;
@@ -1057,7 +1057,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 #battle-throw-ball.ball-compositor{
   width:34px!important;height:34px!important;
   position:absolute!important;z-index:45!important;
-  background:url('assets/items/pokeball-game.png') center/contain no-repeat!important;
+  background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat!important;
   opacity:1;will-change:transform,opacity;pointer-events:none;
   animation:none!important;
 }
@@ -1065,7 +1065,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
   position:absolute!important;display:block!important;
   width:38px!important;height:38px!important;
   opacity:1;z-index:51!important;
-  background:url('assets/items/pokeball-game.png') center/contain no-repeat!important;
+  background:url("assets/sprites/items/pokeball-game.png") center/contain no-repeat!important;
   will-change:transform,opacity;animation:none!important;
 }
 #capture-ball.compositor-ball:not(.flying-v6):not(.at-contact):not(.landing-v6):not(.grounded-v6){animation:none!important}
@@ -1095,7 +1095,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
   position:absolute;
   width:clamp(128px,30%,170px) !important;
   height:clamp(128px,30%,170px) !important;
-  background-image:url('assets/trainers/red-back-fallback.svg');
+  background-image:url("assets/sprites/player/red/throw/0.png");
   background-position:0 0;
   background-repeat:no-repeat;
   background-size:100% 100%;
@@ -1187,7 +1187,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
   backface-visibility:hidden;
   transform-origin:50% 90%;
 }
-#battle-stage #player-trainer-sprite.hidden {display:none!important}
+
 
 /* I ritratti avversari occupano un solo box: nessun background / riflesso
    fantasma sotto le pose e nessuna classe animazione obsoleta al riavvio. */
@@ -1231,7 +1231,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
   color:#83d9ec;font-size:7px;line-height:1.6;letter-spacing:1px;
 }
 #victory-title{
-  font:12px/1.75 'Press Start 2P',monospace;
+  font:12px/1.75 "Press Start 2P",monospace;
   max-width:96%;color:#ffe29c;
   text-shadow:0 3px #863c57,0 0 15px rgba(255,227,152,.29);
 }
@@ -1244,7 +1244,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 .finale-medal-preview img{width:100%;height:32px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 2px 2px #0007)}
 .finale-actions{display:flex;flex-direction:column;gap:10px;align-items:center;width:100%;margin-top:6px}
 .finale-button{
-  font:7px/1.6 'Press Start 2P',monospace;
+  font:7px/1.6 "Press Start 2P",monospace;
   cursor:pointer;text-align:center;min-height:37px;
   padding:10px 12px;border:2px solid #fbe5be;
   border-radius:8px;box-shadow:0 4px #0007;
@@ -1270,8 +1270,8 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 }
 .memory-photo-head{display:flex;flex-direction:column;gap:5px;align-items:center}
 .memory-photo-tag{font-size:6px;color:#937150;line-height:1.4}
-#memory-photo-title{font:11px/1.5 'Press Start 2P',monospace;color:#bd4a3b;text-shadow:1px 1px #fff}
-.memory-photo-head p{font:6px/1.6 'Press Start 2P',monospace;color:#5a6481}
+#memory-photo-title{font:11px/1.5 "Press Start 2P",monospace;color:#bd4a3b;text-shadow:1px 1px #fff}
+.memory-photo-head p{font:6px/1.6 "Press Start 2P",monospace;color:#5a6481}
 .memory-photo-team{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
 .memory-mon{
   display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -1281,14 +1281,14 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 }
 .memory-mon.empty{opacity:.34;background:#e3d2ae}
 .memory-mon img{width:44px;height:44px;object-fit:contain;image-rendering:pixelated}
-.memory-mon strong{max-width:100%;overflow-wrap:anywhere;font:6px/1.5 'Press Start 2P',monospace}
-.memory-mon span{font:6px/1.6 'Press Start 2P',monospace;color:#8a6949}
-.memory-photo-subtitle{font:6px/1.5 'Press Start 2P',monospace;color:#966746}
+.memory-mon strong{max-width:100%;overflow-wrap:anywhere;font:6px/1.5 "Press Start 2P",monospace}
+.memory-mon span{font:6px/1.6 "Press Start 2P",monospace;color:#8a6949}
+.memory-photo-subtitle{font:6px/1.5 "Press Start 2P",monospace;color:#966746}
 .memory-photo-badges{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:3px;align-items:start}
 .memory-badge{display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
 .memory-badge img{width:100%;max-width:34px;height:33px;object-fit:contain;image-rendering:pixelated}
-.memory-badge span{font:4px/1.4 'Press Start 2P',monospace;color:#7f5d48;overflow-wrap:anywhere}
-.memory-photo-footer{font:6px/1.7 'Press Start 2P',monospace;color:#9d3e38;border-top:2px solid #c29d70;padding-top:8px}
+.memory-badge span{font:4px/1.4 "Press Start 2P",monospace;color:#7f5d48;overflow-wrap:anywhere}
+.memory-photo-footer{font:6px/1.7 "Press Start 2P",monospace;color:#9d3e38;border-top:2px solid #c29d70;padding-top:8px}
 .photo-back{min-height:31px;flex:none;width:min(230px,80%);padding:6px 12px}
 
 @media(max-width:760px){
@@ -1376,7 +1376,7 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 }
 /* Under-HP feedback for buffs, debuffs and ailments. */
 .battle-conditions{display:flex;align-items:center;flex-wrap:wrap;gap:3px;min-height:12px;margin-top:3px;max-height:37px;overflow-y:auto}
-.condition-chip {font:6px/1.25 'Press Start 2P',monospace;padding:3px 4px;border-radius:3px;border:1px solid #9c8b64;color:#283348;background:#dfe1d4;white-space:nowrap;}
+.condition-chip {font:6px/1.25 "Press Start 2P",monospace;padding:3px 4px;border-radius:3px;border:1px solid #9c8b64;color:#283348;background:#dfe1d4;white-space:nowrap;}
 .condition-chip.boost{background:#dbf6cd;border-color:#3c9655;color:#19602d}
 .condition-chip.nerf{background:#ffdfcd;border-color:#df8172;color:#9b322e}
 .condition-chip.status-chip{background:#f6d774;border-color:#ac6320;color:#713215}
@@ -1477,17 +1477,17 @@ body::after { content:""; position:fixed; inset:0; z-index:-1;
 body{flex-direction:column!important;justify-content:center;gap:0;}
 .poke-site-footer{position:relative;z-index:9;display:flex;justify-content:center;align-items:center;gap:20px;flex-wrap:wrap;
   margin:12px auto 8px;padding:9px 16px;border:1px solid #385671;border-radius:10px;
-  background:rgba(9,20,40,.84);color:#f4f0dc;font:7px/1.8 'Press Start 2P',monospace;max-width:min(95vw,880px);}
+  background:rgba(9,20,40,.84);color:#f4f0dc;font:7px/1.8 "Press Start 2P",monospace;max-width:min(95vw,880px);}
 .poke-site-footer a{color:#84cfff;text-decoration:none}.poke-site-footer a:hover,.poke-site-footer a:focus-visible{text-decoration:underline;color:white}
 .poke-site-footer small{color:#73b3c5}.poke-site-footer strong{color:#ffcf75}
-#main-menu-overlay{background:linear-gradient(160deg,rgba(9,24,48,.75),rgba(4,13,30,.93)),url('assets/battle/forest.svg') center /cover!important;isolation:isolate;overflow:hidden;}
-#main-menu-overlay:before{content:'';position:absolute;inset:12px;pointer-events:none;opacity:.24;
+#main-menu-overlay{background:linear-gradient(160deg,rgba(9,24,48,.75),rgba(4,13,30,.93)),url("assets/battle/neutral-bg/woodland.webp") center /cover!important;isolation:isolate;overflow:hidden;}
+#main-menu-overlay:before{content:"";position:absolute;inset:12px;pointer-events:none;opacity:.24;
  background:radial-gradient(circle at 18% 35%,#58cbbf 0 8px,transparent 10px),radial-gradient(circle at 78% 63%,#e7ba56 0 6px,transparent 8px),repeating-linear-gradient(125deg,transparent 0 23px,#6bddab1a 24px 25px,transparent 27px 48px);}
 #main-menu-overlay>*{position:relative;z-index:1;}
 #main-menu-overlay .logo-title{font-size:clamp(15px,4vw,24px);color:#ffe79e;text-shadow:3px 3px #284578,0 0 14px #28749b;letter-spacing:1px}
 #main-menu-overlay .menu-card{max-width:95%;width:min(350px,94%);padding:22px 17px;background:#09152dd9;box-shadow:0 0 0 4px #77d1ff22,0 12px 30px #0008}
 #main-menu-overlay #btn-start-game{padding:15px 18px!important;font-size:9px!important;min-height:52px;}
-.party-intro{font:6px/1.65 'Press Start 2P',monospace;text-align:center;color:#8daec3;margin:8px 0}
+.party-intro{font:6px/1.65 "Press Start 2P",monospace;text-align:center;color:#8daec3;margin:8px 0}
 .rotom-wing-left:has(.team-slot:not(.empty)) .party-intro{display:none}
 .rotom-wing-left .wing-screen{background:radial-gradient(ellipse at 49% 40%,#172b3e 0%,#101b30 70%)!important}
 #dungeon-grid-board .grid-cell .player-avatar.red-local-sprite{
@@ -1500,9 +1500,9 @@ body{flex-direction:column!important;justify-content:center;gap:0;}
 #item-target-prompt.hidden{display:none!important}
 .item-target-box{max-width:min(96%,460px);padding:13px 12px;background:#fff6df;border:3px solid #8b532e;border-radius:12px;
  box-shadow:0 4px #35231f,0 0 0 4px #f7d7a3;color:#233653;text-align:center;pointer-events:none;}
-#item-target-message{font:8px/1.7 'Press Start 2P',monospace}
-.item-target-help{font:6px/1.5 'Press Start 2P',monospace;margin:9px 0;color:#3d5164}
-#item-target-cancel{pointer-events:auto;padding:9px;border:2px solid #8b6437;background:#233a4b;color:#fff7d7;font:7px 'Press Start 2P',monospace;border-radius:5px;cursor:pointer}
+#item-target-message{font:8px/1.7 "Press Start 2P",monospace}
+.item-target-help{font:6px/1.5 "Press Start 2P",monospace;margin:9px 0;color:#3d5164}
+#item-target-cancel{pointer-events:auto;padding:9px;border:2px solid #8b6437;background:#233a4b;color:#fff7d7;font:7px "Press Start 2P",monospace;border-radius:5px;cursor:pointer}
 #team-grid .team-slot.item-target-valid{border-color:#f1c96b!important;box-shadow:0 0 9px #f6ca63!important;cursor:pointer}
 #team-grid .team-slot.item-target-invalid{opacity:.5}
 @media(max-width:1279px){
@@ -1571,11 +1571,11 @@ body{flex-direction:column!important;justify-content:center;gap:0;}
 .rotom-wing-left .wing-screen{position:relative}
 .party-action-menu{display:grid;gap:6px;position:relative;margin:8px 0;padding:9px;background:#1b3046;border:2px solid #e4b36c;border-radius:9px;z-index:20;box-shadow:0 4px 12px #0007}
 .party-action-menu.hidden{display:none!important}
-.party-action-title{text-align:center;color:#ffdc91;font:7px/1.5 'Press Start 2P',monospace;margin:1px 0 5px}
-.party-action-menu button{padding:10px 5px;border:2px solid #7bb9d9;border-radius:6px;background:#203f60;color:white;cursor:pointer;font:6px/1.5 'Press Start 2P',monospace;min-height:36px}
+.party-action-title{text-align:center;color:#ffdc91;font:7px/1.5 "Press Start 2P",monospace;margin:1px 0 5px}
+.party-action-menu button{padding:10px 5px;border:2px solid #7bb9d9;border-radius:6px;background:#203f60;color:white;cursor:pointer;font:6px/1.5 "Press Start 2P",monospace;min-height:36px}
 .party-action-menu button:hover,.party-action-menu button:focus-visible{background:#346b98;border-color:#fff0b1}
 .party-action-menu button.hidden{display:none!important}
-#party-move-hint{color:#ffdf96;text-align:center;font:6px/1.7 'Press Start 2P',monospace}
+#party-move-hint{color:#ffdf96;text-align:center;font:6px/1.7 "Press Start 2P",monospace}
 #party-move-hint.hidden{display:none!important}
 #team-grid .team-slot.swap-choice{border-color:#fbbf24!important;box-shadow:0 0 0 3px #fbbf24aa!important}
 #team-grid .team-slot.move-destination{border-color:#7be5ff!important}
@@ -1583,21 +1583,21 @@ body{flex-direction:column!important;justify-content:center;gap:0;}
 #pokemon-info-overlay.hidden{display:none!important}
 .pokemon-info-card{width:min(100%,480px);max-height:100%;overflow:auto;padding:15px 13px;background:linear-gradient(145deg,#fdf1d5,#e9d4a9);border:4px solid #985e3b;border-radius:12px;color:#1d3443;box-shadow:0 7px #322332}
 .pokemon-info-header{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.pokemon-info-header h2{font:10px/1.5 'Press Start 2P',monospace;margin:0;color:#133c59}
+.pokemon-info-header h2{font:10px/1.5 "Press Start 2P",monospace;margin:0;color:#133c59}
 #pokemon-info-close{min-width:32px;min-height:32px;border:2px solid #8a4b39;border-radius:8px;background:#fff7e9;cursor:pointer;font-size:16px}
 .pokemon-info-hero{display:flex;align-items:center;gap:16px;background:radial-gradient(circle at center,#c2eab8 0%,#94bd9e 42%,#537f8b 100%);border:2px solid #547a84;border-radius:12px;padding:9px;margin:10px 0}
 .pokemon-info-hero img{width:105px;height:105px;object-fit:contain;image-rendering:pixelated;filter:drop-shadow(0 4px 2px #1c482d88)}
 .pokemon-info-hero>div{display:grid;gap:8px;min-width:0}
-.pokemon-info-hero strong{font:10px 'Press Start 2P',monospace}
-.pokemon-info-hero span{font:7px/1.6 'Press Start 2P',monospace}
-.pokemon-info-card h3{font:8px 'Press Start 2P',monospace;color:#855029;margin:12px 0 7px}
+.pokemon-info-hero strong{font:10px "Press Start 2P",monospace}
+.pokemon-info-hero span{font:7px/1.6 "Press Start 2P",monospace}
+.pokemon-info-card h3{font:8px "Press Start 2P",monospace;color:#855029;margin:12px 0 7px}
 .pokemon-info-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px 8px}
-.pokemon-info-stat{background:#fff9e5;border:1px solid #d9b68f;border-radius:5px;padding:7px 5px;display:flex;justify-content:space-between;gap:6px;font:7px/1.5 'Press Start 2P',monospace}
+.pokemon-info-stat{background:#fff9e5;border:1px solid #d9b68f;border-radius:5px;padding:7px 5px;display:flex;justify-content:space-between;gap:6px;font:7px/1.5 "Press Start 2P",monospace}
 .pokemon-info-stat em{font-style:normal;color:#0a618f}.pokemon-info-stat em.raised{color:#16915a}.pokemon-info-stat em.lowered{color:#c34f3b}
 .pokemon-info-moves{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
-.pokemon-info-moves>div{border:1px solid #bf9e78;border-radius:5px;padding:8px 6px;background:#fdf9ec;display:grid;gap:4px;font:6px/1.5 'Press Start 2P',monospace}
+.pokemon-info-moves>div{border:1px solid #bf9e78;border-radius:5px;padding:8px 6px;background:#fdf9ec;display:grid;gap:4px;font:6px/1.5 "Press Start 2P",monospace}
 .pokemon-info-moves small{font-size:6px;color:#5d6268}
-.pokemon-info-footnote{margin-top:12px;color:#45606b;font:6px/1.7 'Press Start 2P',monospace}
+.pokemon-info-footnote{margin-top:12px;color:#45606b;font:6px/1.7 "Press Start 2P",monospace}
 @media(max-width:620px){#pokemon-info-overlay{inset:0;padding:4px}.pokemon-info-card{padding:10px 8px}.pokemon-info-hero img{width:72px;height:72px}.pokemon-info-header h2{font-size:8px}.pokemon-info-hero span{font-size:6px}.pokemon-info-stats{gap:4px}.pokemon-info-stat{font-size:6px}}
 
 @media(max-width:1279px){
@@ -1608,7 +1608,7 @@ body{flex-direction:column!important;justify-content:center;gap:0;}
 @media(max-width:1279px){
  .item-target-box{pointer-events:auto}
  .item-target-mobile-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin:8px 0}
- .item-target-mobile-pokemon{padding:8px 3px;background:#fce5b9;border:2px solid #916539;border-radius:5px;color:#233b4c;font:6px/1.7 'Press Start 2P',monospace;min-height:42px;cursor:pointer}
+ .item-target-mobile-pokemon{padding:8px 3px;background:#fce5b9;border:2px solid #916539;border-radius:5px;color:#233b4c;font:6px/1.7 "Press Start 2P",monospace;min-height:42px;cursor:pointer}
  .item-target-mobile-pokemon:disabled{opacity:.4}
  #item-target-prompt{top:12%;}
  #item-target-message{font-size:7px}
@@ -1647,7 +1647,7 @@ body{flex-direction:column!important;justify-content:center;gap:0;}
 
 /* V7.7 — Controllo discreto per musica locale (YouTube rimosso). */
 .music-controls{display:flex;align-items:center;justify-content:center;gap:8px;
-  padding-left:12px;border-left:1px solid #355779;font:6px/1.6 'Press Start 2P',monospace;}
+  padding-left:12px;border-left:1px solid #355779;font:6px/1.6 "Press Start 2P",monospace;}
 .music-controls label,.music-controls output{color:#aedcec;font-size:6px;white-space:nowrap;}
 .music-controls input[type="range"]{width:110px;max-width:32vw;min-height:28px;accent-color:#4bc5f5;cursor:pointer;touch-action:auto;}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;
@@ -1668,27 +1668,27 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
 .gba-dialog-overlay.hidden {display:none!important;}
 .gba-dialog-card {width:min(94%,415px);background:var(--gba-paper);color:var(--gba-ink);
  border:5px solid var(--gba-border);box-shadow:inset 0 0 0 3px #f8eacb, 0 0 0 3px #dcae66, 0 10px 0 #08172d;
- padding:16px 13px;font:8px/1.85 'Press Start 2P',monospace;text-align:center;}
+ padding:16px 13px;font:8px/1.85 "Press Start 2P",monospace;text-align:center;}
 .gba-dialog-card h2{font-size:10px;margin-bottom:13px;color:#225578;}
 .gba-dialog-card p{font-size:8px;line-height:1.8;}
 .gba-dialog-actions{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:20px;}
 .gba-dialog-actions .btn-nav {min-height:42px;min-width:125px;max-width:100%;padding:10px;
- font:7px 'Press Start 2P',monospace!important;border-radius:4px!important;
+ font:7px "Press Start 2P",monospace!important;border-radius:4px!important;
  border:3px solid #355772;background:#d4e4ed;color:#173049;box-shadow:0 3px 0 #263c55;}
 #gym-entry-no {background:#f8e7ce;border-color:#9d704f;}
 .trainer-choice {display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:center;
- color:#f9edcf;font:6px/1.6 'Press Start 2P',monospace;margin:5px auto 8px;z-index:16;}
+ color:#f9edcf;font:6px/1.6 "Press Start 2P",monospace;margin:5px auto 8px;z-index:16;}
 .trainer-choice span {display:block;width:100%;text-align:center;font-size:6px;}
 .trainer-choice button {background:#edf1e9;color:#28415a;border:3px solid #748da1;
- font:7px/1.4 'Press Start 2P',monospace;min-height:32px;padding:7px 10px;cursor:pointer;}
+ font:7px/1.4 "Press Start 2P",monospace;min-height:32px;padding:7px 10px;cursor:pointer;}
 .trainer-choice button.selected,.trainer-choice button[aria-pressed="true"]{background:#ffdc83;
  border-color:#d87c45;box-shadow:0 3px 0 #8e5431;}
 .developer-panel{background:#151f28;border:2px dashed #ffb24d;padding:7px;margin-top:8px;
  display:flex;flex-direction:column;gap:5px;}
 .developer-panel.hidden{display:none!important;}
-.developer-panel h3{font:7px/1.5 'Press Start 2P',monospace;color:#ffde83;}
+.developer-panel h3{font:7px/1.5 "Press Start 2P",monospace;color:#ffde83;}
 .developer-panel button{padding:8px 4px;border:2px solid #d69c48;background:#363b33;color:#fff3bf;
- font:6px/1.5 'Press Start 2P',monospace;cursor:pointer;}
+ font:6px/1.5 "Press Start 2P",monospace;cursor:pointer;}
 /* The sprite animates across the tile only when a valid logical step occurred.
    The terrain stays grid-aligned; interpolated sprite doesn't change collisions. */
 @keyframes player-tile-arrive{
@@ -1721,7 +1721,7 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
 #team-grid .team-slot.locked {opacity:.56;filter:grayscale(.7);background:#26334a!important;}
 #team-grid .team-slot.locked .slot-top {font-size:6px!important;letter-spacing:0;line-height:1.4;}
 #party-progression-status {padding:7px 4px!important;margin:1px 0 6px;
- color:#ffecba!important;background:#213a52;border:2px solid #7da5bb;font:7px/1.5 'Press Start 2P',monospace!important;}
+ color:#ffecba!important;background:#213a52;border:2px solid #7da5bb;font:7px/1.5 "Press Start 2P",monospace!important;}
 .rotom-wing-right .bag-item{border-radius:4px!important;border-color:#876b48;
  background:#f3e6c4!important;color:#263b55!important;box-shadow:inset 0 0 0 2px #fff8e8;}
 .rotom-wing-right .bag-item:disabled{background:#d7c9a8!important;opacity:.7;}
@@ -1740,9 +1740,9 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
  background:repeating-linear-gradient(90deg,#bf9468 0 34px,#c9a174 35px 38px);
  border:5px solid #865936;z-index:0;pointer-events:none;opacity:.9;}
 #pokemart-overlay>*{position:relative;z-index:1;}
-#pokemart-overlay>div:nth-child(2){background:#fff4d5!important;border:4px solid #8c5d3c!important;
+#pokemart-overlay>.mart-shop-card{background:#fff4d5!important;border:4px solid #8c5d3c!important;
  border-radius:5px!important;box-shadow:inset 0 0 0 3px #f7dcb0,0 6px 0 #4c362c;}
-#pokemart-overlay>div:nth-child(2)>div:first-child{color:#324b5e!important;}
+#pokemart-overlay>.mart-shop-card>div:first-child{color:#324b5e!important;}
 #pokemart-overlay .btn-nav{border-radius:3px!important;font-size:7px!important;min-height:36px;
  border:2px solid #654b3e;box-shadow:inset 1px 1px 0 #fff8cfaa,0 3px 0 #48362e!important;}
 /* Battle: rectangular FRLG-style HUD and reliable pixel-art clipping. */
@@ -1765,7 +1765,7 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
  .gba-dialog-card h2{font-size:9px;}
  .gba-dialog-card p{font-size:7px;}
  .gba-dialog-actions .btn-nav{min-height:42px;font-size:7px!important;}
- #pokemart-overlay>div:nth-child(2){max-height:82dvh;overflow:auto;}
+ #pokemart-overlay>.mart-shop-card{max-height:82dvh;overflow:auto;}
  #team-grid .team-slot{min-height:47px;}
  #discovery-notice{font-size:7px!important;}
 }
@@ -1835,12 +1835,12 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
 .rotom-wing-left .team-slot .slot-top span:last-child,
 .rotom-wing-left .team-slot .team-hp-text {font-size:7px!important;line-height:1.3!important;}
 #pokemart-overlay .btn-nav {font-size:8px!important;line-height:1.55!important;}
-#pokemart-overlay>div:nth-child(2)>div:first-child {font-size:8px!important;line-height:1.5!important;}
+#pokemart-overlay>.mart-shop-card>div:first-child {font-size:8px!important;line-height:1.5!important;}
 
 /* R2.2: fixed Dev Mode access and accessible PIN overlay. */
 #dev-mode-trigger{position:fixed;top:12px;right:14px;z-index:1100;
  min-height:40px;padding:9px 13px;border:2px solid #64dfdd;border-radius:7px;
- background:#153c4b;color:#edffff;font:700 10px/1.35 'Press Start 2P',monospace;
+ background:#153c4b;color:#edffff;font:700 10px/1.35 "Press Start 2P",monospace;
  box-shadow:0 3px 0 #0b2630;cursor:pointer;letter-spacing:.2px;}
 #dev-mode-trigger[aria-pressed="true"]{background:#2d5a38;border-color:#87df91;color:#effff0;}
 #dev-mode-trigger:hover{filter:brightness(1.14)}
@@ -1852,7 +1852,7 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
 .dev-code-card{background:#15293d;border:4px solid #f3c567;box-shadow:0 8px 0 #9f6031,0 16px 45px #0009;
  border-radius:12px;padding:clamp(18px,4vw,30px);width:min(440px,100%);color:#f0f9ff;
  display:flex;flex-direction:column;gap:15px;text-align:center;}
-.dev-code-card h2{color:#ffe39b;font:14px/1.6 'Press Start 2P',monospace;}
+.dev-code-card h2{color:#ffe39b;font:14px/1.6 "Press Start 2P",monospace;}
 .dev-code-card p,.dev-code-card label{font:12px/1.7 system-ui,Arial,sans-serif;}
 .dev-code-card label{font-weight:800;letter-spacing:.12em}
 #dev-access-code{width:180px;max-width:100%;align-self:center;padding:11px 12px;
@@ -1904,10 +1904,10 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
 #pokemart-overlay .mart-clerk-hair{position:absolute;left:12px;top:8px;width:29px;height:23px;background:#493127;border:3px solid #332317;border-radius:7px 7px 2px 2px}
 #pokemart-overlay .mart-clerk-face{position:absolute;left:16px;top:21px;width:22px;height:21px;background:#e6af77;border:3px solid #a86a45;border-radius:3px}
 #pokemart-overlay .mart-clerk-uniform{position:absolute;left:8px;bottom:0;width:37px;height:15px;background:#5c90c1;border:3px solid #334e77}
-#pokemart-overlay .mart-clerk-dialogue{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;color:#38474b;text-align:left;font:6px/1.8 'Press Start 2P',monospace}
+#pokemart-overlay .mart-clerk-dialogue{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1;color:#38474b;text-align:left;font:6px/1.8 "Press Start 2P",monospace}
 #pokemart-overlay .mart-clerk-dialogue strong{color:#8b422e}
 #pokemart-overlay .mart-kecleon{width:65px;height:65px;object-fit:contain;image-rendering:pixelated;flex:none}
-#pokemart-overlay .mart-clerk-scene.kecleon-offline::after{content:'KECLEON';font:7px/1.5 'Press Start 2P',monospace;color:#347052;padding:7px}
+#pokemart-overlay .mart-clerk-scene.kecleon-offline::after{content:"KECLEON";font:7px/1.5 "Press Start 2P",monospace;color:#347052;padding:7px}
 @media(max-width:460px){#pokemart-overlay .mart-clerk-portrait{flex-basis:42px;height:52px}#pokemart-overlay .mart-kecleon{width:50px;height:50px}#pokemart-overlay .mart-clerk-dialogue{font-size:5px}}
 /* Town buildings must not be cut to one tile when avatars move nearby. */
 #dungeon-grid-board{isolation:isolate}
@@ -1916,7 +1916,7 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
 
 /* R2.5 — accessible quick controls; speed affects CSS and JS animation timelines. */
 #game-quick-settings{position:fixed;right:13px;top:58px;z-index:1099;display:flex;gap:6px;align-items:center}
-#game-quick-settings button{background:#123149;color:#f3f4fb;border:2px solid #5cb9d8;border-radius:6px;padding:8px 9px;min-height:35px;cursor:pointer;font:7px/1.5 'Press Start 2P',monospace}
+#game-quick-settings button{background:#123149;color:#f3f4fb;border:2px solid #5cb9d8;border-radius:6px;padding:8px 9px;min-height:35px;cursor:pointer;font:7px/1.5 "Press Start 2P",monospace}
 #game-quick-settings button[aria-pressed="true"]{background:#346c38;border-color:#aadf75}
 #game-quick-settings button:focus-visible{outline:3px solid #f5dc67;outline-offset:2px}
 /* Explanations are real text, not hidden tooltips, to support phones. */
@@ -1954,7 +1954,7 @@ button:focus-visible, [role="button"]:focus-visible {outline:3px solid #ffdf7d!i
 /* Mobile party drawer must portal outside transformed wing to remain in viewport. */
 body>.party-action-menu.is-portal{position:fixed!important;inset:auto 8px 12px 8px!important;width:calc(100% - 16px)!important;max-width:390px!important;max-height:min(66dvh,460px)!important;overflow:auto!important;margin:0 auto!important;display:grid!important;gap:8px!important;padding:15px!important;background:linear-gradient(145deg,#891b38,#cb393a)!important;border:5px solid #eb5262!important;border-radius:16px!important;box-shadow:0 8px 0 #68162b,0 20px 40px #000c!important;color:#fff9d5!important;z-index:20000!important;animation:portal-slide .28s ease-out both}
 body>.party-action-menu.is-portal.hidden{display:none!important}
-body>.party-action-menu.is-portal button{background:#244e70!important;color:white!important;border:2px solid #8bcae8!important;min-height:42px!important;font:8px/1.4 'Press Start 2P',monospace}
+body>.party-action-menu.is-portal button{background:#244e70!important;color:white!important;border:2px solid #8bcae8!important;min-height:42px!important;font:8px/1.4 "Press Start 2P",monospace}
 @keyframes portal-slide{from{translate:-120% 0;opacity:.3}to{translate:0 0;opacity:1}}
 @media(prefers-reduced-motion:reduce){body>.party-action-menu.is-portal{animation:none}}
 
@@ -1987,11 +1987,8 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 #dungeon-grid-board .grid-cell .gate-police img{width:85%;height:96%;object-fit:contain;image-rendering:pixelated}
 #dungeon-grid-board .grid-cell .exit-arrow{display:grid;place-items:center;width:90%;height:70%;background:#265b76;border:2px solid #fefefe;border-radius:4px;color:#fff;font:900 clamp(18px,3vw,34px)/1 system-ui;filter:drop-shadow(1px 2px 0 #0a222f);text-shadow:1px 1px #243b56}
 .mart-item-icon{width:22px;height:22px;image-rendering:pixelated;object-fit:contain;vertical-align:middle;margin-right:7px;pointer-events:none}
-.language-flags{display:flex;align-items:center;gap:5px}
-.language-flags button{font-size:22px!important;line-height:1!important;padding:3px 7px!important;min-width:40px}
-.language-flags button[aria-pressed="true"]{border-color:#ffe08b!important;background:#25643c!important;box-shadow:0 0 0 2px #b8e79e}
 #game-quick-settings{top:58px}
-.poke-site-footer #speed-toggle{border:2px solid #63bfd6;background:#153a57;color:#f4fbff;padding:8px;min-height:34px;border-radius:6px;font:7px/1.4 'Press Start 2P',monospace;cursor:pointer}
+.poke-site-footer #speed-toggle{border:2px solid #63bfd6;background:#153a57;color:#f4fbff;padding:8px;min-height:34px;border-radius:6px;font:7px/1.4 "Press Start 2P",monospace;cursor:pointer}
 .poke-site-footer #speed-toggle[aria-pressed="true"]{background:#316334;border-color:#a1dc7d}
 #btn-scan-radar{display:block!important;visibility:visible!important;min-height:38px!important;flex-shrink:0!important;margin-top:6px!important}
 #radar-charge-count{flex-shrink:0!important}
@@ -2017,7 +2014,7 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 #dungeon-grid-board .grid-cell .map-building {pointer-events:none;}
 
 #npc-dialog-overlay{backdrop-filter:blur(1px);}
-#npc-dialog-overlay::before{content:'';position:absolute;inset:0;background:rgba(1,9,25,.18);pointer-events:none;}
+#npc-dialog-overlay::before{content:"";position:absolute;inset:0;background:rgba(1,9,25,.18);pointer-events:none;}
 #npc-dialog-overlay>*{position:relative;z-index:1;}
 
 #pokemart-overlay .mart-display-props{display:flex!important;gap:18px;align-items:flex-end;justify-content:center;padding:0 10px;}
@@ -2076,13 +2073,8 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 #game-quick-settings #quick-settings-panel{position:absolute;top:52px;right:0;width:200px;padding:12px;display:flex;flex-direction:column;gap:9px;
  background:#132b3c;border:3px solid #8feaf0;border-radius:9px;box-shadow:0 6px 0 #091a27,0 11px 22px #0009;color:#fff7de;}
 #game-quick-settings #quick-settings-panel.hidden{display:none!important}
-.quick-settings-heading{font:9px/1.6 'Press Start 2P',monospace;color:#ffe5a0;text-align:center}
-.quick-settings-label{font:7px/1.6 'Press Start 2P',monospace;border-top:1px solid #51718a;padding-top:7px;color:#bcd4ea}
-#game-quick-settings .language-flags{display:flex;justify-content:center;gap:16px}
-#game-quick-settings .language-flags button{width:57px;height:51px;min-height:0!important;padding:5px!important;display:grid;place-items:center;
- background:#233a50;border:2px solid #82bcd2;border-radius:8px}
-#game-quick-settings .language-flags button[aria-pressed="true"]{background:#265c44!important;border-color:#ffe6a4!important;box-shadow:0 0 0 2px #c2e4af!important}
-#game-quick-settings .language-flags img{width:38px;height:38px;object-fit:contain;display:block;pointer-events:none}
+.quick-settings-heading{font:9px/1.6 "Press Start 2P",monospace;color:#ffe5a0;text-align:center}
+.quick-settings-label{font:7px/1.6 "Press Start 2P",monospace;border-top:1px solid #51718a;padding-top:7px;color:#bcd4ea}
 #game-quick-settings #dev-mode-trigger{position:static!important;top:auto!important;right:auto!important;min-height:38px;width:100%;font-size:8px;
  padding:8px 6px;margin:0;}
 #game-quick-settings button:focus-visible{outline:3px solid #fff19c!important;outline-offset:3px}
@@ -2092,8 +2084,8 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 #dungeon-grid-board .grid-cell .exit-arrow{background:none!important;border:0!important;border-radius:0!important;
  width:100%!important;height:100%!important;position:absolute!important;inset:0!important;display:grid!important;place-items:center!important;
  font-size:0!important;line-height:1!important;filter:none!important;text-shadow:none!important;pointer-events:none;z-index:15}
-#dungeon-grid-board .grid-cell .exit-arrow::after{content:'';display:block;width:27px;height:20px;
- background:url('assets/ui/exit-pixel-arrow.svg') center/contain no-repeat;image-rendering:pixelated;
+#dungeon-grid-board .grid-cell .exit-arrow::after{content:"";display:block;width:27px;height:20px;
+ background:url("assets/sprites/ui/exit-pixel-arrow.svg") center/contain no-repeat;image-rendering:pixelated;
  filter:drop-shadow(2px 3px 0 #1a2c3d9e);}
 
 /* R2.10 / TASK 01: no intermediate battle frames while fetching Pokémon. */
@@ -2272,10 +2264,10 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 #dungeon-grid-board.celestial-cave{background:#031023!important;border:4px solid #1b4e68!important;
   box-shadow:0 0 0 3px #0b2334,0 0 28px #2ea1cf55,inset 0 0 40px #000!important;}
 #dungeon-grid-board.celestial-cave .grid-cell.water{
- background:#063254 url('assets/cave/water-tile.svg') center/100% 100% no-repeat!important;
+ background:#063254 url("assets/cave/water-tile.svg") center/100% 100% no-repeat!important;
  border:none!important;box-shadow:inset 0 0 8px #061b3a!important;}
 #dungeon-grid-board.celestial-cave .grid-cell.cave-stone{
- background:#48576e url('assets/cave/slate-tile.svg') center/100% 100% no-repeat!important;
+ background:#48576e url("assets/cave/slate-tile.svg") center/100% 100% no-repeat!important;
  border:none!important;box-shadow:inset 0 0 5px #18263b!important;}
 #dungeon-grid-board.celestial-cave .grid-cell.cave-stone:nth-child(3n){filter:brightness(1.08)}
 #dungeon-grid-board.celestial-cave .grid-cell.cave-stone:has(.celestial-cave-exit){
@@ -2290,7 +2282,7 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 #dungeon-grid-board.celestial-cave .celestial-mewtwo-sprite{height:125%;width:125%;max-width:none;object-fit:contain;}
 /* Mewtwo reveal: stage spotlight instead of the crude local polygon. */
 .celestial-cinematic{background:radial-gradient(circle at 50% 45%,#55238a 0,#211340 37%,#071629 71%,#030714 100%)!important}
-.celestial-cinematic:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.55;
+.celestial-cinematic:before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.55;
  background:repeating-conic-gradient(from 5deg at 50% 47%,#9674e81c 0 12deg,transparent 12deg 27deg);}
 .celestial-cinematic-mon{width:170px!important;height:170px!important;object-fit:contain!important;
  filter:drop-shadow(0 0 7px #c7a5ff) drop-shadow(0 0 32px #b17df0)!important;}
@@ -2331,7 +2323,7 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 #game-quick-settings #quick-settings-panel{width:clamp(224px,23vw,255px)}
 #game-quick-settings .dev-shortcuts-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%;align-items:stretch}
 #game-quick-settings .dev-shortcuts-row button{position:static!important;min-width:0;min-height:43px!important;width:100%!important;
- margin:0!important;padding:8px 4px!important;border-radius:6px;font:700 8px/1.5 'Press Start 2P',monospace;cursor:pointer}
+ margin:0!important;padding:8px 4px!important;border-radius:6px;font:700 8px/1.5 "Press Start 2P",monospace;cursor:pointer}
 #game-quick-settings #floor-jump-trigger{background:#302851;color:#f3eaff;border:2px solid #b49bfa;box-shadow:0 3px 0 #171130}
 #game-quick-settings #floor-jump-trigger:hover{filter:brightness(1.17)}
 #game-quick-settings #floor-jump-trigger:focus-visible,#floor-jump-overlay button:focus-visible,#floor-jump-code:focus-visible{outline:3px solid #ffdf84;outline-offset:3px}
@@ -2360,10 +2352,10 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
   background:radial-gradient(circle at 39% 35%,#ffffff 0%,#ffffff 20%,#f2ebff 39%,#c3a6ff 58%,#8344db 83%,#531583 100%);
   box-shadow:inset -5px -7px 9px #4b157b7a,inset 3px 3px 7px #fff,0 0 9px #f2e8ff,0 0 22px #a975ff;
   animation:celestialOrbPhase 4.8s ease-in-out infinite alternate;}
-#dungeon-grid-board.celestial-cave .celestial-aura-orb:before{content:'';position:absolute;inset:-22%;border-radius:50%;
+#dungeon-grid-board.celestial-cave .celestial-aura-orb:before{content:"";position:absolute;inset:-22%;border-radius:50%;
   border:1px solid #e2c5ff99;box-shadow:0 0 9px #d0b2ff, inset 0 0 9px #bd8bff88;
   animation:celestialOrbRing 3.2s ease-in-out infinite;}
-#dungeon-grid-board.celestial-cave .celestial-aura-orb:after{content:'';position:absolute;left:22%;top:15%;width:30%;height:20%;
+#dungeon-grid-board.celestial-cave .celestial-aura-orb:after{content:"";position:absolute;left:22%;top:15%;width:30%;height:20%;
   border-radius:50%;background:#fff8;filter:blur(2px)}
 @keyframes celestialOrbPhase{0%{filter:brightness(1.35) saturate(.45);transform:scale(.87)}
   48%{filter:brightness(1.08) saturate(1.05);transform:scale(1.03)}
@@ -2376,7 +2368,7 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
  #dungeon-grid-board.celestial-cave .celestial-mewtwo-aura{animation:none!important;}}
 /* Never let legacy CSS !important override the chosen capture ball. */
 #battle-stage #capture-ball.compositor-ball{
-  background-image:var(--capture-ball-image,url('assets/items/pokeball-game.png'))!important;
+  background-image:var(--capture-ball-image,url("assets/sprites/items/pokeball-game.png"))!important;
   background-size:contain!important;background-repeat:no-repeat!important;background-position:center!important;}
 #floor-jump-overlay #floor-jump-level{width:175px;max-width:100%;align-self:center;padding:11px 12px;
   background:#f7f1df;border:3px solid #7956aa;border-radius:6px;color:#1b2737;
@@ -2394,13 +2386,13 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 .rotom-wing-left #btn-badge-case.badge-case-trigger{
  width:100%;min-height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;
  background:linear-gradient(135deg,#22456d,#101e35);border:2px solid #67b8eb;border-radius:9px;
- color:#d4efff;font:8px/1.6 'Press Start 2P',monospace;cursor:pointer;
+ color:#d4efff;font:8px/1.6 "Press Start 2P",monospace;cursor:pointer;
  box-shadow:inset 0 0 0 2px #07182d,0 3px 0 #030d1d;margin-top:12px;
 }
 .rotom-wing-left #btn-badge-case:hover,.rotom-wing-left #btn-badge-case:focus-visible{filter:brightness(1.15);outline:2px solid #ffe399;outline-offset:2px}
 #badges-container.badge-case-sidebar-count{display:block!important;width:auto!important;min-height:0!important;height:auto!important;
  margin:0!important;border:0!important;padding:0!important;box-shadow:none!important;background:none!important;
- font:6px 'Press Start 2P',monospace;color:#94c9e9;}
+ font:6px "Press Start 2P",monospace;color:#94c9e9;}
 #badge-case-overlay{position:absolute;inset:1%;z-index:184;display:flex;align-items:center;justify-content:center;
  background:radial-gradient(ellipse at 50% 35%,#173757ef,#030b1bf5 82%);padding:9px;overflow:auto;}
 #badge-case-overlay.hidden{display:none!important}
@@ -2409,11 +2401,11 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
  background:linear-gradient(160deg,#112e51,#0b1d37 55%,#091429);color:#e8f6ff;
  box-shadow:0 0 0 3px #050d1e,0 12px 30px #000c,inset 0 0 25px #245e9766;}
 .badge-case-header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.badge-case-overline{font:6px/1.7 'Press Start 2P',monospace;color:#76c7ee}
-.badge-case-header h2{margin:7px 0 0;font:clamp(11px,2vw,17px)/1.45 'Press Start 2P',monospace;color:#f7df9b;text-shadow:0 2px #132137}
+.badge-case-overline{font:6px/1.7 "Press Start 2P",monospace;color:#76c7ee}
+.badge-case-header h2{margin:7px 0 0;font:clamp(11px,2vw,17px)/1.45 "Press Start 2P",monospace;color:#f7df9b;text-shadow:0 2px #132137}
 #badge-case-close{min-width:35px;min-height:35px;border:2px solid #8cdaff;background:#102742;color:#e4f7ff;
  border-radius:8px;font-size:20px;cursor:pointer}
-.badge-case-description{text-align:center;color:#abd0e7;font:7px/1.8 'Press Start 2P',monospace;margin:17px 0}
+.badge-case-description{text-align:center;color:#abd0e7;font:7px/1.8 "Press Start 2P",monospace;margin:17px 0}
 .badge-case-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(5px,1.2vw,12px)}
 .badge-case-slot{box-sizing:border-box;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
  padding:9px 3px 8px;min-height:115px;border:2px solid #345e83;border-radius:9px;
@@ -2424,11 +2416,11 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 .badge-case-image{width:clamp(40px,5.8vw,74px);height:clamp(40px,5.8vw,74px);max-width:90%;object-fit:contain;
  image-rendering:pixelated;filter:drop-shadow(0 3px 3px #0008);}
 .badge-case-slot.locked .badge-case-image{filter:grayscale(1) brightness(.40);opacity:.55}
-.badge-case-slot strong{font:clamp(6px,.65vw,8px)/1.5 'Press Start 2P',monospace;text-align:center;color:#e5eefa}
-.badge-case-slot small{font:5px/1.6 'Press Start 2P',monospace;text-align:center;color:#8fb2cc}
+.badge-case-slot strong{font:clamp(6px,.65vw,8px)/1.5 "Press Start 2P",monospace;text-align:center;color:#e5eefa}
+.badge-case-slot small{font:5px/1.6 "Press Start 2P",monospace;text-align:center;color:#8fb2cc}
 .badge-case-slot.earned small{color:#f6d77f}
 .badge-case-progress{text-align:center;border-top:1px solid #41749a;margin-top:17px;padding-top:12px;
- color:#8ddaff;font:7px/1.7 'Press Start 2P',monospace}
+ color:#8ddaff;font:7px/1.7 "Press Start 2P",monospace}
 @media(max-width:550px){.badge-case-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
  .badge-case-slot{min-height:102px}.badge-case-image{width:57px;height:57px}.badge-case-panel{max-height:99%;}}
 
@@ -2478,11 +2470,11 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
  0 0 10px 4px #f6e0ffeb,0 0 30px 10px #9d52f5bb,0 0 60px 14px #691ad58c;
  animation:celestialOrbSoul 3.6s ease-in-out infinite alternate!important;}
 #dungeon-grid-board.celestial-cave .celestial-portal-v2 .celestial-aura-orb:before{
- content:'';position:absolute;inset:-32%;border:2px solid #d4a8ff99;border-radius:50%;
+ content:"";position:absolute;inset:-32%;border:2px solid #d4a8ff99;border-radius:50%;
  box-shadow:0 0 13px #b17dffae,inset 0 0 10px #bc83ff70;
  transform:rotate(-25deg) scaleX(1.16) scaleY(.48);animation:celestialRingPrecession 3.8s ease-in-out infinite alternate;}
 #dungeon-grid-board.celestial-cave .celestial-portal-v2 .celestial-aura-orb:after{
- content:'';position:absolute;inset:8%;border-radius:50%;width:auto;height:auto;left:8%;top:8%;
+ content:"";position:absolute;inset:8%;border-radius:50%;width:auto;height:auto;left:8%;top:8%;
  background:radial-gradient(circle at 48% 46%,#ffffffda 0 7%,#fff6 22%,transparent 61%);filter:blur(3px);}
 #dungeon-grid-board.celestial-cave .celestial-portal-v2 .aura-inner-core{position:absolute;inset:22%;border-radius:50%;
  background:radial-gradient(circle,#fff 0 15%,#fbf0ffbb 39%,transparent 78%);
@@ -2544,7 +2536,7 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
  display:inline-block;position:static;min-height:0;width:auto;max-width:95%;
  margin:0;padding:2px 7px;border-radius:8px;
  background:#072744;border:1px solid #62bde2;color:#c9f4ff;
- font:7px/1.35 'Press Start 2P',monospace;letter-spacing:.1px;
+ font:7px/1.35 "Press Start 2P",monospace;letter-spacing:.1px;
  white-space:nowrap;text-align:center;flex:none;
 }
 #btn-scan-radar.radar-empty #radar-charge-count{background:#49222b;border-color:#ffa4a8;color:#ffe3e1;}
@@ -2557,7 +2549,7 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
  background:linear-gradient(165deg,#173b60,#102841 63%,#0a1b31);
  box-shadow:inset 0 2px 0 #a5e3ff25,0 3px 0 #050f21;
 }
-#badge-case-overlay .badge-case-slot::before{content:'';position:absolute;pointer-events:none;
+#badge-case-overlay .badge-case-slot::before{content:"";position:absolute;pointer-events:none;
  width:78%;aspect-ratio:1;border-radius:50%;top:6%;left:11%;z-index:-1;
  background:radial-gradient(circle at 43% 32%,#7da9bc24,#42658a15 48%,transparent 71%);
  border:1px solid #9dc7dd19;
@@ -2590,4 +2582,1092 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
  width:68px!important;height:84px!important;max-width:100%!important;max-height:100%!important;
  object-fit:contain!important;object-position:center center!important;image-rendering:pixelated!important;
  filter:drop-shadow(0 3px 2px #021226b0)!important;
+}
+
+/* R2.21: recover interrupted multi-opponent Raids without leaving the battle. */
+#raid-api-error{position:absolute;inset:0;z-index:300;display:flex;align-items:center;justify-content:center;padding:14px;background:rgba(3,10,27,.92)}
+#raid-api-error.hidden{display:none!important}
+#raid-api-error .raid-error-box{width:min(390px,95%);background:#f8eedb;border:4px solid #9d5d4d;border-radius:12px;padding:16px;color:#26313b;text-align:center;font:8px/1.9 "Press Start 2P",monospace}
+#raid-api-error .raid-error-box h3{font-size:11px;margin:0 0 12px}
+#raid-api-error .raid-error-box p{margin:0 0 16px}
+#btn-raid-api-retry{white-space:normal;width:100%;min-height:40px;cursor:pointer}
+#btn-raid-api-retry:focus-visible{outline:3px solid #38bdf8;outline-offset:3px}
+
+/* R2.21 RC2.1: DEV controls live in Options, not in the left Rotom wing.
+   Keep the same IDs and listeners; no gameplay logic or unlock changes. */
+#game-quick-settings #quick-settings-panel {max-height:calc(100dvh - 76px);overflow-y:auto;scrollbar-width:thin}
+#game-quick-settings #developer-panel {background:transparent;border:0;border-radius:0;box-shadow:none;padding:0;margin:0;gap:7px}
+#game-quick-settings #developer-panel h3 {color:#bcd4ea;border-top:1px solid #51718a;padding-top:9px;font-size:7px}
+#game-quick-settings #developer-panel .dev-status-text {font-size:7px;line-height:1.55;color:#c4d7e6;margin:0}
+#game-quick-settings #developer-panel button {background:#173a50;color:#e7f6ff;border:2px solid #5cb9d8;border-radius:6px;min-height:36px;box-shadow:none;font:7px/1.4 "Press Start 2P",monospace;padding:8px 5px}
+
+/* R2.22: targeted accessibility refinements; original RotomDex geometry retained. */
+:where(button, [role="button"], input, select):focus-visible {
+  outline: 3px solid #fef08a !important;
+  outline-offset: 3px;
+}
+:where(button, [role="button"]):active:not(:disabled) {filter:brightness(.92);}
+#battle-stage .hud-card-gba {box-sizing:border-box;max-width:calc(100% - 20px);}
+#battle-stage .hud-mon-header-gba {gap:6px;min-width:0;}
+#battle-stage .hud-mon-header-gba > span:first-child {
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+#battle-stage .hud-lv-tag {flex-shrink:0;}
+#battle-stage .hud-hp-num-gba {font-size:max(7px, .55rem);}
+#battle-controls .act-btn {overflow-wrap:anywhere;}
+#bag-list {overscroll-behavior:contain;scrollbar-width:thin;}
+.team-slot {position:relative;}
+@media(max-width:760px){
+  #bag-list {max-height:min(27dvh,235px);overflow-y:auto;min-height:90px!important;}
+  #battle-stage .hud-card-gba{padding:5px 7px;max-width:calc(100% - 12px);}
+  #battle-stage .hud-mon-header-gba{font-size:7px;}
+  #battle-controls .act-btn{min-height:42px;}
+  #game-quick-settings {max-width:calc(100vw - 16px);}
+  .full-overlay[role="dialog"], .battle-modal, #starter-scene-overlay{
+     padding-bottom:max(12px,env(safe-area-inset-bottom));
+  }
+}
+@media(max-width:420px){
+  #battle-stage .hud-card-gba{width:min(52%,195px);}
+}
+@media(prefers-reduced-motion:reduce){
+  :where(button, [role="button"]){transition-duration:.01ms!important;}
+  .rotom-face .rotom-eye-ball.rotom-expression{animation:none!important;}
+}
+
+/* ===== R2.22 RC3.1 — Batch A (T01/T02): party appearance and usable left wing =====
+   The coloured .active slot border is the original lead indicator. No badge overlay.
+   Six slots, Radar and Badge Case must remain simultaneously available. */
+.rotom-wing-left .wing-screen {
+  gap:7px!important;
+  padding:10px 11px!important;
+}
+.rotom-wing-left #team-grid.team-grid-2x3 {
+  height:302px!important;
+  flex:0 0 302px!important;
+  gap:4px!important;
+  grid-template-columns:minmax(0,1fr)!important;
+  grid-template-rows:repeat(6,minmax(0,1fr))!important;
+}
+.rotom-wing-left #team-grid .team-slot {
+  grid-template-columns:46px minmax(0,1fr);
+  grid-template-rows:16px 8px 10px;
+  gap:1px 5px;
+  padding:3px 6px!important;
+}
+.rotom-wing-left #team-grid .team-slot .team-slot-img {
+  width:43px!important;height:43px!important;
+}
+.rotom-wing-left #team-grid .team-slot .slot-top {font-size:7px;}
+.rotom-wing-left #party-progression-status {margin:0!important;padding:5px 3px!important;}
+.rotom-wing-left #btn-scan-radar {
+  min-height:43px!important;height:auto!important;
+  gap:3px!important;padding:5px 4px!important;
+  margin:1px 0!important;
+}
+.rotom-wing-left #btn-scan-radar .radar-button-label {font-size:7px;line-height:1.3;}
+.rotom-wing-left #btn-scan-radar #radar-charge-count.radar-button-charges {
+  font-size:6px;line-height:1.25;padding:2px 6px;
+}
+.rotom-wing-left #btn-badge-case.badge-case-trigger {
+  min-height:51px;gap:4px;margin-top:3px;padding:6px 3px;
+}
+/* At ordinary desktop heights there is enough space: no nested scrollbar.
+   On short screens keep scrolling rather than clipping Badge Case / Radar. */
+@media(min-width:1280px) and (min-height:740px) {
+  .rotom-wing-left .wing-screen {overflow-y:hidden!important;}
+}
+@media(min-width:1280px) and (max-height:739px) {
+  .rotom-wing-left .wing-screen {overflow-y:auto!important;}
+}
+/* Wings are part of page flow below 1280px: let the page scroll,
+   never create a second scrolling region inside the left wing. */
+@media(max-width:1279px) {
+  .rotom-wing-left .wing-screen {overflow-x:visible!important;overflow-y:visible!important;}
+}
+@media(max-width:620px) {
+  .rotom-wing-left #team-grid.team-grid-2x3 {height:294px!important;flex-basis:294px!important;}
+  .rotom-wing-left #btn-scan-radar {min-height:43px!important;}
+}
+
+/* R2.23 — approved B/C/F: smaller panels, intact Rotom frame and controls. */
+.rotom-face .rotom-mouth{display:none!important}
+.rotom-location-label{display:block;position:relative;z-index:4;flex:1;min-width:0;padding:4px 3px;
+  font:clamp(5px,.8vw,7px)/1.7 "Press Start 2P",monospace!important;text-align:center;
+  letter-spacing:0!important;transform:none!important;color:#96ecff!important;text-wrap:balance;overflow-wrap:anywhere}
+.trainer-profile{display:flex;align-items:center;gap:9px;background:#1a3043;border:1px solid #466a7b;
+  padding:8px;border-radius:8px;min-width:0;color:#eaf8ff}
+.trainer-profile img{flex:0 0 35px;border:2px solid #5fc7ee;border-radius:7px;image-rendering:pixelated}
+.trainer-profile-details{display:grid;gap:6px;min-width:0;font:clamp(7px,.8vw,9px)/1.6 "Press Start 2P",monospace}
+.trainer-profile-details strong{min-width:0;overflow-wrap:anywhere;color:#f8e7a4}
+.rotom-wing-right .wing-screen{font-size:clamp(7px,.85vw,10px)!important;line-height:1.65}
+.rotom-wing-right #bag-tabs button{font-size:clamp(6px,.75vw,8px)!important;line-height:1.55;min-height:36px}
+.rotom-wing-right .bag-item.bag-key-item{display:flex;align-items:center;gap:7px;min-height:45px;
+  padding:7px;font-size:clamp(7px,.85vw,9px)!important;text-align:left}
+.bag-key-item img{object-fit:contain;image-rendering:pixelated;flex-shrink:0}
+.bag-key-item[disabled]{opacity:.57;cursor:default}
+.bag-key-item.owned[disabled]{opacity:1}
+.bag-key-item .key-item-indicator{margin-left:auto;color:#48d68c;font-size:12px}
+.bag-key-item.owned.enabled{box-shadow:inset 0 0 0 1px #58dca1}
+.pokemon-info-card{width:min(100%,500px);padding:11px!important}
+.pokemon-info-hero{gap:10px!important;margin:7px 0!important;padding:7px!important}
+.pokemon-info-hero img{width:90px!important;height:90px!important}
+.pokemon-info-hero>div{gap:4px!important}
+.pokemon-info-stats{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+.pokemon-info-stat{font-size:6px!important;overflow-wrap:anywhere;min-width:0}
+.pokemon-info-moves>div{padding:7px!important;align-content:start}
+.pokemon-move-details{font:6px/1.65 "Press Start 2P",monospace;color:#374552;min-width:0}
+.pokemon-move-details summary{cursor:pointer;color:#195b7b;text-decoration:underline;text-underline-offset:3px;list-style-position:inside}
+.pokemon-move-details small{display:block;margin-top:6px;font-size:6px;line-height:1.7}
+.main-menu-actions{display:grid!important;gap:8px!important;padding:15px!important}
+.main-menu-actions .btn-nav{min-height:43px!important;font-size:clamp(6px,.85vw,8px)!important;padding:10px 8px!important}
+.main-menu-actions .btn-nav[disabled]{opacity:.48;cursor:not-allowed}
+.menu-subdialog{position:absolute;z-index:60;inset:20% 6%;border:3px solid #75d5ff;border-radius:12px;
+  background:#07162ceE;color:#f4f8ff;padding:24px 12px;text-align:center;display:flex;flex-direction:column;justify-content:center;gap:18px;
+  font:8px/1.9 "Press Start 2P",monospace}
+.menu-message-buttons{display:flex;justify-content:center;gap:9px}
+.menu-message-buttons .btn-nav{width:auto!important;min-width:65px;font-size:8px!important}
+@media(max-width:620px){.rotom-location-label{font-size:5px!important;line-height:1.5}.pokemon-info-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+  .pokemon-info-hero img{width:70px!important;height:70px!important}.trainer-profile-details{font-size:7px!important}}
+
+
+/* R2.23 RC4.1: distinct GBA-inspired Pokémon record, no gameplay changes. */
+.rotom-face-glint{display:block;flex:1;align-self:center;max-width:68px;height:8px;pointer-events:none;
+  border-radius:5px;background:linear-gradient(90deg,transparent,#246d83 35%,#9fe5e8 50%,#246d83 65%,transparent);opacity:.54}
+.route-location-panel{display:flex;flex-direction:column;align-items:flex-start;gap:6px;
+  padding:9px 11px;margin:6px 0 8px;border-radius:9px;
+  border:2px solid #5db6dc;background:linear-gradient(130deg,#163550,#0d243c 70%);
+  box-shadow:inset 0 -3px #061629,0 3px 0 #16252b;color:#f4f7f1;min-width:0}
+.route-location-eyebrow{color:#7ce5f9;font:clamp(6px,.75vw,8px)/1.5 'Press Start 2P',monospace;letter-spacing:.5px}
+#route-location-label{font:clamp(7px,.83vw,9px)/1.55 'Press Start 2P',monospace;
+  overflow-wrap:anywhere;color:#ffe8a0;letter-spacing:0}
+.pokemon-info-card{--record-navy:#142b42;width:min(100%,520px)!important;max-height:100%;overflow:auto;
+  background:#f7e7c7!important;border:4px solid #9b653d!important;padding:0!important;
+  box-shadow:0 0 0 3px #302a32,0 8px 0 #27233c!important;color:#203247}
+.pokemon-info-header{padding:10px 12px!important;background:#183953;border-bottom:3px solid #e5af5d;
+  color:#ffeec0;gap:9px}
+.pokemon-info-header h2{font-size:clamp(9px,1.3vw,13px)!important;flex:1;color:#fff2cb!important;
+  letter-spacing:.5px;overflow-wrap:anywhere;text-shadow:1px 2px #081f2b}
+.pokemon-info-head-icon{display:grid;place-items:center;flex:0 0 26px;height:26px;border-radius:50%;
+  color:#fff0bf;background:#bc4c4e;border:3px solid #f4d78a;box-shadow:inset 0 -3px #852b34;font-size:16px}
+#pokemon-info-close{flex:0 0 30px;min-width:30px;min-height:30px;background:#fff0d1!important}
+.pokemon-info-hero{--type-glow:#98c8a2;position:relative;overflow:hidden;display:grid!important;
+  grid-template-columns:100px minmax(0,1fr);align-items:center;gap:10px!important;
+  margin:7px 11px 8px!important;padding:6px!important;border:2px solid #678c88!important;
+  border-radius:9px!important;background:linear-gradient(135deg,#bddcbd,#719c9f 70%,#527a89)!important;
+  box-shadow:inset 0 3px #ffffff55,0 3px 0 #b39572}
+.pokemon-info-hero:before{content:'';position:absolute;inset:0;pointer-events:none;
+  background:repeating-linear-gradient(135deg,transparent 0 14px,#ffffff14 14px 17px);}
+.pokemon-info-hero.type-fire{--type-glow:#ff9e62}.pokemon-info-hero.type-water{--type-glow:#8ac9fc}
+.pokemon-info-hero.type-grass{--type-glow:#83cb85}.pokemon-info-hero.type-electric{--type-glow:#f7d76b}
+.pokemon-info-sprite-stage{position:relative;display:grid;place-items:center;width:100px;height:98px;
+  border-radius:8px;border:2px solid #d7e4c5;background:radial-gradient(ellipse,#e9f7d1 0%,var(--type-glow) 60%,#71908e 100%);
+  box-shadow:inset 0 -7px #385f6490,0 0 0 2px #517e7f}
+.pokemon-info-sprite-stage:after{content:'';position:absolute;bottom:8px;left:17%;width:66%;height:11px;
+  background:#25444c63;border-radius:50%;filter:blur(3px)}
+.pokemon-info-sprite-stage img{position:relative;z-index:2;width:94px!important;height:94px!important;
+  image-rendering:pixelated;filter:drop-shadow(2px 4px #315c634a)}
+.pokemon-info-identity{position:relative;z-index:2;display:grid!important;gap:5px!important;min-width:0;
+  color:#0d3442;padding:3px 0}
+.pokemon-info-identity>strong{font:10px/1.5 'Press Start 2P',monospace!important;color:#154059;
+  border-bottom:1px solid #436c6c99;padding-bottom:4px}
+.pokemon-info-identity>span{font:clamp(6px,.75vw,8px)/1.55 'Press Start 2P',monospace!important;
+  overflow-wrap:anywhere}
+.pokemon-type-chips{display:flex;flex-wrap:wrap;gap:4px;padding:1px 0 3px}
+.pokemon-type-chip{font:7px/1.5 'Press Start 2P',monospace;color:#fff9e7;background:#546977;
+  border:1px solid #ffffff95;border-radius:4px;padding:3px 5px;text-shadow:1px 1px #1b3546}
+.pokemon-type-chip.type-fire{background:#c96236}.pokemon-type-chip.type-water{background:#337abc}
+.pokemon-type-chip.type-grass{background:#418e5b}.pokemon-type-chip.type-electric{background:#b48a29}
+.pokemon-type-chip.type-poison{background:#9561a6}.pokemon-type-chip.type-flying{background:#708abd}
+.pokemon-ability-details{color:#173f51;min-width:0;font:6px/1.65 'Press Start 2P',monospace}
+.pokemon-ability-details summary{cursor:pointer;width:max-content;max-width:100%;padding:2px 0;color:#074967;
+  text-underline-offset:3px;text-decoration:underline}
+.pokemon-ability-details p{margin:5px 0 0!important;padding:7px;background:#fdf2d5f0;border-left:3px solid #406f87;
+  color:#203d48;font:7px/1.55 system-ui,sans-serif;max-width:100%!important}
+.pokemon-info-card h3{display:flex;align-items:center;gap:8px;margin:7px 12px 5px!important;
+  font:8px/1.5 'Press Start 2P',monospace;color:#173c54!important}
+.pokemon-info-card h3:before{content:'';width:5px;height:15px;background:#e7a44b;box-shadow:2px 0 #305f6f}
+.pokemon-info-stats{margin:0 11px;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important}
+.pokemon-info-stat{position:relative;display:grid!important;grid-template-columns:1fr auto;
+  gap:5px 4px!important;align-content:start;padding:5px 6px!important;
+  background:#fffaec!important;border:2px solid #d6b688!important;border-radius:5px!important;
+  font:6px/1.4 'Press Start 2P',monospace!important;min-width:0}
+.pokemon-info-stat span:first-child{overflow-wrap:anywhere}
+.pokemon-info-stat em{font:7px/1.5 'Press Start 2P',monospace;color:#1a5d80}
+.pokemon-stat-meter{grid-column:1/-1;height:6px;background:#d4e0d2;border:1px solid #9aae9f;
+  border-radius:4px;overflow:hidden}
+.pokemon-stat-meter-fill{display:block;height:100%;background:linear-gradient(90deg,#267c9e,#4cc5d6);
+  box-shadow:inset 0 -2px #145575}
+.pokemon-info-stat:has(em.raised) .pokemon-stat-meter-fill{background:linear-gradient(90deg,#2a9863,#6ad795)}
+.pokemon-info-stat:has(em.lowered) .pokemon-stat-meter-fill{background:linear-gradient(90deg,#bd6349,#f0a477)}
+.pokemon-info-moves{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;
+  gap:7px!important;margin:0 11px}
+.pokemon-info-moves>div{--move-accent:#7a99a8;position:relative;display:grid!important;
+  padding:6px 7px 6px 9px!important;min-height:62px!important;
+  border:2px solid #cdb18c!important;border-left:5px solid var(--move-accent)!important;
+  border-radius:6px!important;background:#fff9ea!important;box-shadow:inset 0 2px #ffffff,0 2px #d1b18b}
+.pokemon-info-moves>div.type-fire{--move-accent:#e47c43}.pokemon-info-moves>div.type-water{--move-accent:#468bd1}
+.pokemon-info-moves>div.type-grass{--move-accent:#55a568}.pokemon-info-moves>div.type-electric{--move-accent:#c8a133}
+.pokemon-info-moves>div.type-poison{--move-accent:#9673bc}.pokemon-info-moves>div.type-psychic{--move-accent:#b86e9d}
+.pokemon-info-moves>div.type-dragon{--move-accent:#7c75cf}
+.pokemon-move-name{font:clamp(6px,.75vw,8px)/1.65 'Press Start 2P',monospace;
+  color:#193e55;overflow-wrap:anywhere}
+.pokemon-info-moves small{color:#52606a!important;line-height:1.6!important}
+.pokemon-move-details summary{color:#26647c!important;min-height:12px}
+.pokemon-info-footnote{margin:7px 12px 7px!important;padding-top:4px;border-top:1px dashed #b59671;
+  color:#6a5d4a!important;font:6px/1.6 'Press Start 2P',monospace!important}
+@media(max-width:620px){
+  .pokemon-info-hero{grid-template-columns:78px minmax(0,1fr);gap:8px!important;margin:6px 7px!important;padding:6px!important}
+  .pokemon-info-sprite-stage{width:78px;height:88px}.pokemon-info-sprite-stage img{width:76px!important;height:76px!important}
+  .pokemon-info-identity>strong{font-size:8px!important}
+  .pokemon-info-identity>span{font-size:6px!important}
+  .pokemon-info-stats{grid-template-columns:repeat(2,minmax(0,1fr))!important;margin:0 7px}
+  .pokemon-info-moves{margin:0 7px!important;gap:5px!important}
+  .pokemon-info-moves>div{padding:6px!important}
+  .pokemon-info-card h3{margin-left:8px!important;margin-right:8px!important}
+  .route-location-panel{padding:8px;margin:5px 0}
+}
+@media(prefers-reduced-motion:reduce){.pokemon-info-hero,.pokemon-info-sprite-stage img{animation:none!important}}
+
+/* R2.24: isolated UI corrections - do not alter encounter/combat rules. */
+.rotom-face .rotom-mouth { display:block!important;bottom:6px!important;left:50%!important;width:48px!important;height:14px!important;z-index:3; }
+.rotom-face .rotom-mouth span { height:7px; }
+#pokemart-overlay { padding:12px 10px 16px!important;overflow:hidden!important;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-start;gap:6px; }
+#pokemart-overlay.hidden { display:none!important; }
+#pokemart-overlay > div:nth-child(3) {display:flex!important;flex-direction:column;flex:1 1 auto;min-height:0;max-height:none!important;overflow:hidden!important;width:min(100%,420px);padding:10px!important;gap:7px!important;}
+#pokemart-overlay > div:nth-child(3) > div:first-child {flex:none;}
+#pokemart-overlay .mart-clerk-scene {flex:none;min-height:66px!important;padding:6px!important;}
+#pokemart-overlay .mart-clerk-portrait {height:53px!important;flex-basis:46px!important;}
+#pokemart-overlay .mart-kecleon{width:48px!important;height:48px!important;}
+#pokemart-overlay .mart-catalogue { flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;display:grid;gap:5px;padding:4px 2px;scrollbar-width:thin;}
+#pokemart-overlay .mart-catalogue .btn-nav { min-height:40px!important;display:flex;align-items:center;gap:7px;text-align:left;padding:8px!important;font-size:7px!important;letter-spacing:0; }
+#pokemart-overlay .mart-catalogue .mart-item-icon { margin-right:5px!important; }
+#pokemart-overlay #close-market-btn {flex:none!important;position:relative!important;z-index:7!important;width:100%;min-height:43px!important;margin-top:4px!important;background:#36597b!important;color:#fff!important;}
+#pokemart-overlay .mart-close-x{position:absolute;right:10px;top:8px;z-index:20;background:#fff2d1;color:#713d24;border:3px solid #8d5f38;font:bold 19px system-ui;border-radius:6px;width:38px;height:38px;cursor:pointer;}
+#pokemart-overlay .mart-close-x:focus-visible,#pokemart-overlay #close-market-btn:focus-visible{outline:3px solid #43d8fa;outline-offset:2px;}
+.rotom-wing-right .dpad-container,.rotom-wing-right .sidebar-movement-label{display:none!important;}
+.rotom-wing-right #bag-list { min-height:220px!important;max-height:none!important;flex:1 1 235px;overflow-y:auto!important;}
+.rotom-wing-right .wing-screen {display:flex;flex-direction:column;min-height:0;}
+#login-gate {position:absolute;inset:0;z-index:220;display:grid;place-items:center;background:#071324ed;padding:12px;}
+#login-gate.hidden{display:none!important;}
+.login-gate-card{border:4px solid #53c8f5;background:#132a45;padding:24px 16px;max-width:410px;text-align:center;color:#e6f8ff;border-radius:12px;box-shadow:0 8px 0 #071322;}
+.login-gate-card h2{font:16px/1.7 'Press Start 2P',monospace;color:#ffe6a2;}
+.login-gate-card p{font:9px/1.8 'Press Start 2P',monospace;}
+.login-gate-card a{color:#9be9ff;font-size:10px;}
+@media(max-width:1279px){.rotom-wing-right #bag-list{min-height:215px!important;max-height:360px!important;}}
+@media(max-width:620px){#pokemart-overlay{padding:8px!important;}#pokemart-overlay .mart-clerk-scene{min-height:56px!important;}#pokemart-overlay .mart-catalogue .btn-nav{min-height:44px!important;}#pokemart-overlay > div:nth-child(3){max-height:100%!important;}#dungeon-grid-board .grid-cell .sprite-frame{transform:translate(-50%,-55%) scale(1.05)!important;overflow:hidden!important;}#dungeon-grid-board .grid-cell .player-avatar.girl-local-sprite{transform:translate(-50%,-59%) scale(1.02)!important;}#dungeon-grid-board .grid-cell .player-avatar.red-local-sprite{transform:translate(-50%,-59%) scale(1.02)!important;}#mobile-dpad{z-index:13!important;}}
+
+#pokemart-overlay .mart-shop-card{background:#fff4d5!important;border:4px solid #8c5d3c!important;border-radius:8px!important;box-shadow:inset 0 0 0 3px #f8e9be,2px 4px 0 #694b32!important;}
+#pokemart-overlay .mart-shop-card > div:first-child{color:#324b5e!important;font-size:8px!important;line-height:1.6!important;}
+
+/* R2.24: preserve controls inside game viewport only on touch-sized displays. */
+@media(min-width:761px){#mobile-dpad{display:none!important;}}
+@media(max-width:760px){.rotom-wing-right #bag-list{flex:none;min-height:200px!important;max-height:300px!important;}#dungeon-grid-board .grid-cell img{image-rendering:pixelated;object-fit:contain;}}
+.save-status{font:7px/1.6 'Press Start 2P',monospace;color:#92d9f1;margin:0 0 4px;min-height:11px}
+
+/* Store catalogue: distinct paper cards with a narrow type accent (GBA style). */
+#pokemart-overlay .mart-catalogue .btn-nav{
+ --accent:#bb5545;position:relative;background:linear-gradient(#fff4d9,#f0dfba)!important;
+ color:#25364e!important;border:2px solid #98744a!important;border-left:7px solid var(--accent)!important;
+ box-shadow:inset 0 0 0 1px #fff8e8,0 3px 0 #76583d!important;border-radius:4px!important;
+ text-shadow:none!important;display:flex!important;gap:9px!important;
+}
+#pokemart-overlay .mart-catalogue .btn-nav:hover:not(:disabled),#pokemart-overlay .mart-catalogue .btn-nav:focus-visible{
+ background:#fff8e8!important;transform:translateY(-1px);outline:2px solid #33b8dd;
+}
+#pokemart-overlay .mart-catalogue .btn-nav:nth-child(2){--accent:#3ea56a;}
+#pokemart-overlay .mart-catalogue .btn-nav:nth-child(3){--accent:#5b91dc;}
+#pokemart-overlay .mart-catalogue .btn-nav:nth-child(4){--accent:#d47db1;}
+#pokemart-overlay .mart-catalogue .btn-nav:nth-child(5){--accent:#9371b9;}
+#pokemart-overlay .mart-catalogue .btn-nav:nth-child(6){--accent:#3dbacb;}
+#pokemart-overlay .mart-product-name{font-size:clamp(6px,.65vw,8px);font-family:'Press Start 2P',monospace;flex:1 1 auto;text-align:left;line-height:1.7;}
+#pokemart-overlay .mart-product-price{margin-left:auto;padding:6px 7px;background:#173c52;color:#fff1be;border:2px solid #456c7d;border-radius:3px;white-space:nowrap;font:7px/1.4 'Press Start 2P',monospace;}
+#pokemart-overlay .mart-catalogue .mart-item-icon{width:28px!important;height:28px!important;flex-shrink:0;}
+@media(max-width:420px){#pokemart-overlay .mart-product-price{padding:4px;font-size:6px;}#pokemart-overlay .mart-product-name{font-size:6px;}}
+/* Discord account action (visible only when authenticated). */
+#logout-discord-btn:not(.hidden){
+  display:block;width:100%;margin:8px 0;padding:9px 8px;
+  color:#e5f4ff;background:#182d48;border:2px solid #5f95c2;
+  border-radius:6px;font:8px/1.5 'Press Start 2P',monospace;
+  cursor:pointer;
+}
+#logout-discord-btn:hover,#logout-discord-btn:focus-visible{border-color:#ffe18e;outline-offset:2px;}
+
+/* ========================================================================
+   V7.7 · R2.24 RC5.3 — ADVENTURE DIORAMA / TERRAIN ALIGNMENT
+   All anchors are defined once here instead of diverging legacy overrides.
+   Sprites, trainer entrances and throw targets stay tied to their platform.
+   ======================================================================== */
+#battle-stage.battle-bg-gba, #battle-stage[data-biome="meadow"] {
+  --pad-width:min(42%,236px);
+  --pad-height:56px;
+  --enemy-pad-y:57%;
+  --enemy-pad-right:5%;
+  --player-pad-bottom:7%;
+  --player-pad-left:5%;
+  --battle-mon-size:clamp(113px,28vw,157px);
+  isolation:isolate;
+  background:#8fca7f url("assets/battle/diorama/meadow.png") center center/cover no-repeat!important;
+  image-rendering:pixelated;
+}
+#battle-stage[data-biome="forest"]{background-image:url("assets/battle/diorama/forest.png")!important}
+#battle-stage[data-biome="coast"]{background-image:url("assets/battle/diorama/coast.png")!important}
+#battle-stage[data-biome="cavern"]{background-color:#25394b!important;background-image:url("assets/battle/diorama/cavern.png")!important}
+#battle-stage[data-biome="city"]{background-image:url("assets/battle/diorama/city.png")!important}
+#battle-stage[data-biome="celestial"]{background-color:#222345!important;background-image:url("assets/battle/diorama/celestial.png")!important}
+#battle-stage[data-biome="raid"]{background-color:#302044!important;background-image:url("assets/battle/diorama/raid.png")!important}
+#battle-stage::before{opacity:0!important;background:none!important}
+#battle-stage::after{height:9%!important;background:linear-gradient(transparent,rgba(13,31,19,.11))!important}
+#battle-stage:is([data-biome="cavern"],[data-biome="celestial"],[data-biome="raid"])::after{background:linear-gradient(transparent,rgba(6,10,26,.17))!important}
+#battle-stage .battle-platform-gba {
+  width:var(--pad-width)!important;
+  max-width:none!important;
+  height:var(--pad-height)!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent url("assets/battle/diorama/platform-grass.png") center/100% 100% no-repeat!important;
+  box-shadow:none!important;
+  filter:none!important;
+  transform:none!important;
+  image-rendering:pixelated;
+  pointer-events:none;
+  z-index:5;
+}
+#battle-stage[data-biome="forest"] .battle-platform-gba{background-image:url("assets/battle/diorama/platform-woodland.png")!important}
+#battle-stage[data-biome="coast"] .battle-platform-gba{background-image:url("assets/battle/diorama/platform-sand.png")!important}
+#battle-stage[data-biome="cavern"] .battle-platform-gba{background-image:url("assets/battle/diorama/platform-rock.png")!important}
+#battle-stage[data-biome="city"] .battle-platform-gba{background-image:url("assets/battle/diorama/platform-arcade.png")!important}
+#battle-stage:is([data-biome="celestial"],[data-biome="raid"]) .battle-platform-gba{
+  background-image:url("assets/battle/diorama/platform-arcane.png")!important;
+  filter:drop-shadow(0 0 4px rgba(184,121,242,.20))!important;
+}
+#battle-stage .enemy-platform-gba {
+  top:var(--enemy-pad-y)!important;
+  right:var(--enemy-pad-right)!important;
+  left:auto!important;
+  bottom:auto!important;
+}
+#battle-stage .player-platform-gba {
+  bottom:var(--player-pad-bottom)!important;
+  left:var(--player-pad-left)!important;
+  top:auto!important;
+  right:auto!important;
+}
+#battle-stage .poke-sprite-gba {
+  width:var(--battle-mon-size)!important;
+  height:var(--battle-mon-size)!important;
+  object-fit:contain;
+  image-rendering:pixelated;
+  filter:drop-shadow(0 5px 2px rgba(18,40,32,.26))!important;
+}
+#battle-stage #enemy-sprite,
+#battle-stage #enemy-trainer-sprite {
+  top:calc(var(--enemy-pad-y) + var(--pad-height) * .42 - var(--battle-mon-size) * .84)!important;
+  right:calc(var(--enemy-pad-right) + (var(--pad-width) - var(--battle-mon-size)) / 2)!important;
+  left:auto!important;
+  bottom:auto!important;
+}
+#battle-stage #player-sprite {
+  bottom:calc(var(--player-pad-bottom) + var(--pad-height) * .40)!important;
+  left:calc(var(--player-pad-left) + (var(--pad-width) - var(--battle-mon-size)) / 2)!important;
+  right:auto!important;
+  top:auto!important;
+}
+#battle-stage #player-trainer-sprite:not(.hidden){
+  left:calc(var(--player-pad-left) + (var(--pad-width) - var(--battle-mon-size)) / 2)!important;
+}
+@media(max-width:760px){
+  #battle-stage.battle-bg-gba,#battle-stage[data-biome]{
+    --pad-height:42px;
+    --pad-width:44%;
+    --battle-mon-size:105px;
+    background-size:cover!important;
+  }
+  #battle-stage[data-biome="forest"]{background-position:62% center!important}
+  #battle-stage[data-biome="coast"]{background-position:60% center!important}
+}
+@media(max-width:420px){
+  #battle-stage.battle-bg-gba,#battle-stage[data-biome]{--pad-height:38px;--battle-mon-size:105px;}
+}
+
+/* RC5.4 — Pokémon info: a single bounded scrolling region, fixed tabs/identity. */
+#pokemon-info-overlay{overflow:hidden!important;align-items:center!important;overscroll-behavior:contain}
+#pokemon-info-overlay .pokemon-info-card{display:flex!important;flex-direction:column!important;
+  overflow:hidden!important;max-height:min(98%,760px)!important;min-height:0;}
+#pokemon-info-overlay .pokemon-info-header,#pokemon-info-overlay .pokemon-info-hero,
+#pokemon-info-overlay .pokemon-info-tabs{flex-shrink:0}
+.pokemon-info-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:3px 12px 9px}
+.pokemon-info-tab{background:#e2c18f;color:#234055;border:2px solid #996b44;border-radius:6px;
+  padding:9px 4px;min-width:0;cursor:pointer;font:7px/1.5 'Press Start 2P',monospace}
+.pokemon-info-tab.active,.pokemon-info-tab[aria-selected="true"]{background:#164d67;color:#fff2ca;
+  border-color:#eab85e;box-shadow:inset 0 -3px #0c2d44}
+.pokemon-info-tab:focus-visible{outline:3px solid #fbbf24;outline-offset:2px}
+.pokemon-info-content{min-height:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+  scrollbar-gutter:stable;flex:1 1 auto;padding:0 2px 10px}
+.pokemon-info-content>[hidden],.pokemon-info-content>.hidden{display:none!important}
+#pokemon-panel-stats,#pokemon-panel-moves{min-width:0}
+/* The team hint's back button is never allowed to inherit full-width action button rules. */
+#battle-controls #panel-team-actions,#battle-controls #panel-bag-actions{position:relative!important;
+  min-height:44px;padding:10px 8px 10px 40px!important;display:flex;align-items:center;
+  justify-content:center;text-align:center;box-sizing:border-box}
+#battle-controls #panel-team-actions.hidden,#battle-controls #panel-bag-actions.hidden{display:none!important}
+#battle-controls #battle-team-back,#battle-controls #battle-bag-back{
+  position:absolute!important;top:50%!important;left:9px!important;right:auto!important;bottom:auto!important;
+  transform:translateY(-50%)!important;flex:0 0 26px!important;display:grid!important;place-items:center!important;
+  width:26px!important;height:26px!important;min-width:26px!important;max-width:26px!important;
+  min-height:26px!important;max-height:26px!important;aspect-ratio:1!important;margin:0!important;
+  padding:0!important;border-radius:50%!important;line-height:1!important;box-sizing:border-box!important}
+@media(max-width:620px){.pokemon-info-tabs{padding:3px 7px 7px}.pokemon-info-tab{font-size:6px}
+  #pokemon-info-overlay .pokemon-info-card{max-height:calc(100% - 4px)!important}}
+#evolution-choice-overlay{position:absolute;inset:0;z-index:180;display:grid;place-items:center;
+  background:#061127e6;padding:15px}
+#evolution-choice-overlay.hidden{display:none!important}
+.evolution-choice-card{width:min(440px,100%);background:#f4dfb8;border:4px solid #9b653d;
+  box-shadow:0 0 0 3px #26304d,0 12px 30px #0008;border-radius:12px;padding:16px;
+  display:grid;gap:13px;max-height:100%;overflow-y:auto}
+.evolution-choice-card h3{color:#153851;font:10px/1.7 'Press Start 2P',monospace;text-align:center}
+.evolution-choice-options{display:grid;gap:9px}
+.evolution-choice-options button{display:flex;align-items:center;gap:10px;padding:10px;
+  border:2px solid #86613f;border-radius:8px;background:#fff6df;color:#17344d;
+  font:8px/1.5 'Press Start 2P',monospace;cursor:pointer}
+.evolution-choice-options img{width:64px;height:64px;image-rendering:pixelated;object-fit:contain}
+.evolution-choice-card #evolution-choice-later{max-width:100%;width:100%;font-size:7px}
+
+/* RC5.6: both evolution dialogs are children of the RotomDex display,
+   NOT fixed viewport overlays. They must work inside battle AND with DEV candy. */
+
+/* RC5.5: guest/Utente entry, scoped to the auth gate. */
+#login-gate .login-gate-card{width:min(100%,410px);box-sizing:border-box;max-height:100%;overflow-y:auto;overscroll-behavior:contain;}
+#login-gate .login-guest-btn{margin-top:10px;background:linear-gradient(#526780,#293d55);border-color:#9db8d2;color:#f4faff;box-shadow:0 3px 0 #102333;}
+#login-gate .login-guest-btn:hover{filter:brightness(1.1);}
+#login-gate .login-guest-note{margin:12px 2px 4px;color:#c9d8e7;font-size:8px;line-height:1.7;}
+
+/* Legacy data-scene cinematic backgrounds removed: the engine now always uses data-platform-theme. */
+/* ===============================================================
+   R2.24 RC5.6 — EVOLUTION CARD constrained to inner RotomDex screen
+   Neither the root dialog nor the choice overlay escapes the display.
+   =============================================================== */
+#pokenav-screen-root{position:relative;isolation:isolate;}
+#pokenav-screen-root #evolution-overlay{
+  position:absolute!important;
+  inset:0!important;
+  z-index:181!important;
+  box-sizing:border-box;
+  width:100%;height:100%;max-height:none!important;
+  display:grid!important;
+  place-items:center;
+  overflow:hidden!important;
+  background:rgba(4,12,30,.82)!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  padding:clamp(8px,3%,18px)!important;
+  gap:0!important;
+  transform:none!important;
+}
+#pokenav-screen-root #evolution-overlay.hidden{display:none!important}
+#evolution-overlay .evolution-card{
+  box-sizing:border-box;
+  width:min(330px,100%);
+  max-height:100%;min-height:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:clamp(7px,2.2vh,13px);
+  padding:clamp(10px,3%,18px);
+  overflow-y:auto;
+  overflow-x:hidden;
+  overscroll-behavior:contain;
+  border:5px double #ffd984;
+  border-radius:13px;
+  background:radial-gradient(ellipse at center,#4b6b9c 0%,#1b2e57 58%,#0c1533 100%);
+  box-shadow:0 10px 24px #0009;
+  text-align:center;
+}
+#evolution-overlay .evolution-card h3{
+  font-size:clamp(8px,1.4vw,12px);
+  line-height:1.7;
+  margin:0;
+}
+#evolution-overlay .evolution-card .evolution-sprites{
+  flex:0 1 auto;
+  height:clamp(66px,24vh,132px);
+  min-height:66px;
+  max-height:132px;
+  width:100%;
+}
+#evolution-overlay .evolution-sprites img{
+  width:min(118px,50%);
+  height:100%;
+  max-height:118px;
+  object-fit:contain;
+}
+#evolution-overlay .evolution-sprites::before{
+  width:min(140px,100%);
+  height:min(140px,100%);
+}
+#evolution-overlay .evolution-card p{
+  font-size:clamp(7px,1.2vw,9px);
+  line-height:1.8;
+  margin:0;
+  overflow-wrap:anywhere;
+}
+#evolution-overlay .evolution-card button{
+  flex-shrink:0;
+  width:min(260px,100%);
+  max-width:100%;
+  min-height:35px;
+  padding:8px 7px;
+  font-size:clamp(6px,1vw,8px);
+}
+#pokenav-screen-root #evolution-choice-overlay{
+  position:absolute!important;
+  inset:0!important;
+  z-index:182!important;
+  max-width:100%;max-height:100%;
+  box-sizing:border-box;
+  overflow:hidden;
+  padding:clamp(8px,3%,16px);
+}
+#pokenav-screen-root .evolution-choice-card{
+  box-sizing:border-box;
+  width:min(350px,100%);
+  max-height:100%;
+  padding:clamp(9px,3%,15px);
+  gap:clamp(7px,2vh,12px);
+}
+#pokenav-screen-root .evolution-choice-options button{min-width:0;overflow-wrap:anywhere}
+@media(max-height:580px){
+  #evolution-overlay .evolution-card .evolution-sprites{height:76px;min-height:60px}
+  #evolution-overlay .evolution-card{gap:5px;padding:8px}
+  #evolution-overlay .evolution-card h3{font-size:8px}
+  #evolution-overlay .evolution-card p{font-size:7px;line-height:1.4}
+}
+
+
+/* ===========================================================================
+   V7.7 · R2.24 RC5.7 — NEUTRAL BATTLE STUDIO / CONTEXTUAL PIXEL PLATFORMS
+   One neutral image for ALL battles. Only transparent platforms depend on the
+   data-platform-theme assigned by GameEngine.battlePlatformTheme(). The
+   previous biome/diorama/HD selectors are intentionally never selected via
+   data-scene; these scoped final overrides win over their old CSS fallbacks.
+   Never style the HUD, controls or the actual combat state from here.
+   =========================================================================== */
+#battle-stage[data-platform-theme]{
+  --enemy-pad-width:36.5%;
+  --player-pad-width:44.5%;
+  --enemy-pad-height:62px;
+  --player-pad-height:74px;
+  --enemy-pad-y:40.5%;
+  --enemy-pad-right:4.5%;
+  --player-pad-bottom:7%;
+  --player-pad-left:3.25%;
+  --battle-mon-size:clamp(112px,28vw,148px);
+  --enemy-sprite-anchor:.79;
+  --player-sprite-rise:.28;
+  --enemy-sprite-x:0px;
+  --player-sprite-x:0px;
+  --theme-platform-image:url("assets/battle/neutral/platform-meadow.png");
+  --theme-bg-image:url("assets/battle/neutral-bg/meadow.webp");
+  background:#eef0e8 var(--theme-bg-image) center center/cover no-repeat!important;
+  image-rendering:auto!important;
+  isolation:isolate;
+}
+/* RC5.8 — abstract patterned backdrops inspired by the user's mockups.
+   The stage keeps separate platform layers so battle logic / hit tests stay intact. */
+#battle-stage[data-platform-theme]::before,
+#battle-stage[data-platform-theme]::after{
+  content:none!important;
+  display:none!important;
+  background:none!important;
+  box-shadow:none!important;
+}
+#battle-stage[data-platform-theme="meadow"]{--theme-platform-image:url("assets/battle/neutral/platform-meadow.png");--theme-bg-image:url("assets/battle/neutral-bg/meadow.webp")}
+#battle-stage[data-platform-theme="woodland"]{--theme-platform-image:url("assets/battle/neutral/platform-woodland.png");--theme-bg-image:url("assets/battle/neutral-bg/woodland.webp")}
+#battle-stage[data-platform-theme="sand"]{--theme-platform-image:url("assets/battle/neutral/platform-sand.png");--theme-bg-image:url("assets/battle/neutral-bg/sand.webp")}
+#battle-stage[data-platform-theme="town"]{--theme-platform-image:url("assets/battle/neutral/platform-town.png");--theme-bg-image:url("assets/battle/neutral-bg/town.webp")}
+#battle-stage[data-platform-theme="arena"]{--theme-platform-image:url("assets/battle/neutral/platform-arena.png");--theme-bg-image:url("assets/battle/neutral-bg/arena.webp")}
+#battle-stage[data-platform-theme="cave"]{--theme-platform-image:url("assets/battle/neutral/platform-cave.png");--theme-bg-image:url("assets/battle/neutral-bg/cave.webp")}
+#battle-stage[data-platform-theme="celestial"]{--theme-platform-image:url("assets/battle/neutral/platform-celestial.png");--theme-bg-image:url("assets/battle/neutral-bg/celestial.webp")}
+#battle-stage[data-platform-theme="raid"]{--theme-platform-image:url("assets/battle/neutral/platform-raid.png");--theme-bg-image:url("assets/battle/neutral-bg/raid.webp")}
+/* Platform boxes must remain visible and measurable: ball throws and captures
+   use their bounding rects, even while Pokémon sprites are hidden. */
+#battle-stage[data-platform-theme] .battle-platform-gba{
+  visibility:visible!important;
+  display:block!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  filter:none!important;
+  outline:none!important;
+  background:transparent var(--theme-platform-image) center center/100% 100% no-repeat!important;
+  image-rendering:pixelated!important;
+  pointer-events:none!important;
+  transform:none!important;
+  max-width:none!important;
+  z-index:5;
+}
+#battle-stage[data-platform-theme] .enemy-platform-gba{
+  width:var(--enemy-pad-width)!important;
+  height:var(--enemy-pad-height)!important;
+  top:var(--enemy-pad-y)!important;
+  right:var(--enemy-pad-right)!important;
+  bottom:auto!important;
+  left:auto!important;
+}
+#battle-stage[data-platform-theme] .player-platform-gba{
+  width:var(--player-pad-width)!important;
+  height:var(--player-pad-height)!important;
+  bottom:var(--player-pad-bottom)!important;
+  left:var(--player-pad-left)!important;
+  top:auto!important;
+  right:auto!important;
+}
+#battle-stage[data-platform-theme] .poke-sprite-gba{
+  width:var(--battle-mon-size)!important;
+  height:var(--battle-mon-size)!important;
+  object-fit:contain!important;
+  image-rendering:pixelated!important;
+  filter:drop-shadow(0 4px 2px rgba(41,48,57,.24))!important;
+}
+#battle-stage[data-platform-theme] #enemy-sprite,
+#battle-stage[data-platform-theme] #enemy-trainer-sprite{
+  top:calc(var(--enemy-pad-y) + var(--enemy-pad-height) * .52 - var(--battle-mon-size) * var(--enemy-sprite-anchor))!important;
+  right:calc(var(--enemy-pad-right) + (var(--enemy-pad-width) - var(--battle-mon-size)) / 2 + var(--enemy-sprite-x))!important;
+  left:auto!important;
+  bottom:auto!important;
+}
+#battle-stage[data-platform-theme] #player-sprite{
+  bottom:calc(var(--player-pad-bottom) + var(--player-pad-height) * var(--player-sprite-rise))!important;
+  left:calc(var(--player-pad-left) + (var(--player-pad-width) - var(--battle-mon-size)) / 2 + var(--player-sprite-x))!important;
+  top:auto!important;
+  right:auto!important;
+}
+#battle-stage[data-platform-theme] #player-trainer-sprite:not(.hidden){
+  bottom:calc(var(--player-pad-bottom) + var(--player-pad-height) * var(--player-sprite-rise))!important;
+  left:calc(var(--player-pad-left) + (var(--player-pad-width) - var(--battle-mon-size)) / 2 + var(--player-sprite-x))!important;
+  top:auto!important;
+}
+@media(max-width:760px){
+  #battle-stage[data-platform-theme]{
+    --enemy-pad-width:38%;
+    --player-pad-width:46%;
+    --enemy-pad-height:42px;
+    --player-pad-height:50px;
+    --enemy-pad-y:41.5%;
+    --enemy-pad-right:3%;
+    --player-pad-bottom:6.75%;
+    --player-pad-left:2.5%;
+    --battle-mon-size:104px;
+    --enemy-sprite-anchor:.77;
+    --player-sprite-rise:.24;
+    background-position:center center!important;
+    background-size:cover!important;
+  }
+}
+@media(max-width:420px){
+  #battle-stage[data-platform-theme]{
+    --enemy-pad-height:39px;
+    --player-pad-height:46px;
+    --battle-mon-size:98px;
+  }
+}
+
+/* RC5.10 TASK-008 — LEADER-BASED PALETTE, never used for non-gym battles.
+   Recolored PNGs derive from the SAME RC5.8 arena.png texture; only the
+   --theme-bg-image custom property is overridden. All platforms are unchanged. */
+#battle-stage[data-platform-theme="arena"][data-gym-palette="brock"]    {--theme-bg-image:url("assets/battle/gym-palettes/brock.webp")}
+#battle-stage[data-platform-theme="arena"][data-gym-palette="misty"]    {--theme-bg-image:url("assets/battle/gym-palettes/misty.webp")}
+#battle-stage[data-platform-theme="arena"][data-gym-palette="surge"]    {--theme-bg-image:url("assets/battle/gym-palettes/surge.webp")}
+#battle-stage[data-platform-theme="arena"][data-gym-palette="erika"]    {--theme-bg-image:url("assets/battle/gym-palettes/erika.webp")}
+#battle-stage[data-platform-theme="arena"][data-gym-palette="koga"]     {--theme-bg-image:url("assets/battle/gym-palettes/koga.webp")}
+#battle-stage[data-platform-theme="arena"][data-gym-palette="sabrina"]  {--theme-bg-image:url("assets/battle/gym-palettes/sabrina.webp")}
+#battle-stage[data-platform-theme="arena"][data-gym-palette="blaine"]   {--theme-bg-image:url("assets/battle/gym-palettes/blaine.webp")}
+#battle-stage[data-platform-theme="arena"][data-gym-palette="giovanni"] {--theme-bg-image:url("assets/battle/gym-palettes/giovanni.webp")}
+
+/* RC5.10.1 — Full RotomDex login screen (layout only; auth handlers unchanged). */
+#pokenav-screen-root #login-gate:not(.hidden){
+  position:absolute;inset:0;z-index:220;display:block!important;
+  padding:0!important;margin:0;overflow:hidden;background:#08172a!important;
+}
+#login-gate .login-gate-card{
+  position:relative;display:flex;flex-direction:column;justify-content:space-between;
+  gap:clamp(5px,1.7vh,12px);height:100%;width:100%;max-width:none;max-height:none;
+  min-width:0;min-height:0;box-sizing:border-box;
+  padding:clamp(12px,3.5%,23px)!important;margin:0;
+  border:0!important;border-radius:0!important;box-shadow:none!important;
+  text-align:center;color:#e7f5ff;overflow-x:hidden;overflow-y:auto;
+  overscroll-behavior:contain;scrollbar-width:thin;
+  background:radial-gradient(ellipse 90% 70% at 50% 24%,#164369 0%,#102841 47%,#08192f 100%)!important;
+}
+#login-gate .login-gate-card::before{
+  content:"";position:absolute;pointer-events:none;inset:9px;
+  border:2px solid #39779d70;border-radius:9px;
+}
+#login-gate .login-gate-card > *{position:relative;z-index:1}
+#login-gate .login-gate-topline{
+  display:flex;align-items:center;justify-content:center;gap:9px;
+  padding:7px 10px;border-bottom:2px solid #3c7998;
+  font:clamp(6px,.8vw,8px)/1.6 'Press Start 2P',monospace;
+  color:#9fdafa;letter-spacing:.2px;
+}
+#login-gate .login-gate-led{width:7px;height:7px;flex:none;background:#4ad9b4;box-shadow:0 0 0 2px #153949,0 0 9px #27cfa5}
+#login-gate .login-gate-topline-dot{color:#f4d18f;font-size:8px}
+#login-gate .login-gate-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:clamp(5px,1.3vh,10px);min-height:0;flex:0 1 auto;}
+#login-gate .login-gate-ball{display:block;position:relative;width:clamp(25px,5vh,43px);height:clamp(25px,5vh,43px);border:3px solid #0c1521;border-radius:50%;background:linear-gradient(#ed584f 0 43%,#172437 43% 56%,#f6f3dd 56% 100%);box-shadow:0 3px 0 #08121f,0 0 14px #5aaedf55}
+#login-gate .login-gate-ball::after{content:"";position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:28%;height:28%;background:#eff7ff;border:3px solid #152337;border-radius:50%;}
+#login-gate .login-gate-brand h2{font:clamp(12px,2.6vw,19px)/1.45 'Press Start 2P',monospace!important;margin:0;color:#ffe6a2;text-shadow:2px 3px 0 #61453d;letter-spacing:.3px}
+#login-gate .login-gate-brand-sub{font:clamp(5px,.72vw,7px)/1.6 'Press Start 2P',monospace;color:#73dce8}
+#login-gate .login-gate-actions{display:flex;flex-direction:column;align-items:stretch;gap:clamp(6px,1.6vh,12px);padding:clamp(9px,2.5%,15px);border:3px solid #448eae;border-radius:9px;background:#071a30b8;box-shadow:inset 0 0 0 2px #142e48,0 5px 0 #071322;}
+#login-gate #login-gate-description{font:clamp(7px,.95vw,9px)/1.8 'Press Start 2P',monospace;margin:0;color:#dceafa}
+#login-gate #login-discord-btn,#login-gate #login-guest-btn{
+  box-sizing:border-box;width:100%;max-width:none;min-width:0;min-height:clamp(34px,5.5vh,48px);
+  margin:0!important;border:2px solid #8bdfff!important;border-radius:5px;
+  padding:10px 7px!important;font:clamp(7px,.9vw,9px)/1.55 'Press Start 2P',monospace!important;
+  text-align:center;cursor:pointer;transition:filter .12s,transform .12s;
+}
+#login-gate #login-discord-btn{background:linear-gradient(#3cbbec,#176caa)!important;color:#fff!important;box-shadow:0 3px 0 #08446c!important}
+#login-gate #login-guest-btn{background:linear-gradient(#536b83,#2d455d)!important;border-color:#779cb6!important;color:#fff!important;box-shadow:0 3px 0 #14273c!important}
+#login-gate #login-discord-btn:hover:not(:disabled),#login-gate #login-guest-btn:hover:not(:disabled){filter:brightness(1.15)}
+#login-gate #login-discord-btn:active:not(:disabled),#login-gate #login-guest-btn:active:not(:disabled){transform:translateY(2px)}
+#login-gate .login-gate-separator{height:12px;display:flex;align-items:center;gap:10px;color:#8eb9cc;font:6px/1 'Press Start 2P',monospace}
+#login-gate .login-gate-separator::before,#login-gate .login-gate-separator::after{content:"";height:1px;background:#43647e;flex:1}
+#login-gate .login-guest-note{font:clamp(6px,.75vw,7px)/1.7 'Press Start 2P',monospace!important;color:#c1d2e1;margin:0!important}
+#login-gate .login-gate-footer{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:0;}
+#login-gate #login-gate-status{font:clamp(6px,.75vw,7px)/1.6 'Press Start 2P',monospace!important;color:#f7d89a;margin:0;max-width:100%;overflow-wrap:anywhere;}
+#login-gate #login-gate-status:empty{display:none}
+#login-gate .login-gate-footer a{font:clamp(7px,.9vw,9px)/1.5 'Press Start 2P',monospace;color:#a5e8fa;text-underline-offset:3px}
+#login-gate #login-gate-error-details{width:100%;max-width:100%;color:#bcd2df;font:7px/1.5 monospace;text-align:left;}
+#login-gate #login-gate-error-details summary{cursor:pointer;color:#84b6ce;font-size:7px}
+#login-gate #login-gate-error-code{overflow-wrap:anywhere;line-height:1.6;font:7px/1.5 monospace;margin:5px 0 0;color:#d9e6f1}
+#login-gate #login-discord-btn:focus-visible,#login-gate #login-guest-btn:focus-visible,#login-gate a:focus-visible{outline:3px solid #ffe29b;outline-offset:3px}
+@media(max-height:560px){
+  #login-gate .login-gate-card{gap:5px;padding:9px 12px!important}
+  #login-gate .login-gate-brand{gap:4px}
+  #login-gate .login-gate-ball{width:24px;height:24px}
+  #login-gate .login-gate-actions{gap:6px;padding:8px}
+  #login-gate #login-discord-btn,#login-gate #login-guest-btn{min-height:33px;padding:7px!important}
+}
+
+/* RC5.10.1 — Battle scene loading and 350 ms reveal, scoped to battle UI.
+   Hide the ENTIRE battle during preparation so no blue rectangle or empty
+   platform can appear. Other overlays, sprite animations and gameplay remain. */
+#overlay-battle.battle-preparing{display:none!important;opacity:0!important;pointer-events:none!important;}
+#pokenav-screen-root:has(#overlay-battle.battle-preparing) #battle-controls{opacity:0!important;pointer-events:none!important;}
+@keyframes pokex-battle-fade{from{opacity:0}to{opacity:1}}
+#overlay-battle.battle-revealing{animation:pokex-battle-fade 350ms ease-out both!important;}
+#pokenav-screen-root:has(#overlay-battle.battle-revealing) #battle-controls{animation:pokex-battle-fade 350ms ease-out both!important;}
+@media(prefers-reduced-motion:reduce){
+  #overlay-battle.battle-revealing,
+  #pokenav-screen-root:has(#overlay-battle.battle-revealing) #battle-controls{animation:none!important;}
+}
+
+/* TASK-010 — Launch sprites: back-facing trainer above the battle-message edge.
+   Frame containers use a width-derived aspect ratio so their upper body is
+   visible at both wide and narrow viewports, without resizing any Pokémon. */
+#battle-stage:has(#player-trainer-sprite:not(.hidden)) {
+  overflow:visible!important;
+  z-index:65;
+}
+#battle-stage[data-platform-theme] #player-trainer-sprite:not(.hidden){
+  position:absolute!important;
+  top:auto!important;
+  right:auto!important;
+  left:clamp(3px,1.2%,11px)!important;
+  bottom:-35px!important;
+  width:clamp(125px,31%,178px)!important;
+  height:auto!important;
+  aspect-ratio:68 / 82;
+  max-width:none!important;
+  background-repeat:no-repeat!important;
+  background-position:center bottom!important;
+  background-size:contain!important;
+  z-index:88!important;
+  filter:drop-shadow(0 3px 1px rgba(10,30,36,.25))!important;
+  clip-path:inset(0 0 17% 0);
+  pointer-events:none!important;
+  transform-origin:50% 80%;
+}
+/* User-provided female back-view sequence: pose-by-pose, same entry position. */
+#battle-stage[data-platform-theme] #player-trainer-sprite.female-trainer:not(.hidden){
+  width:clamp(138px,33%,189px)!important;
+  aspect-ratio:174 / 160;
+  clip-path:inset(0 0 18% 0);
+}
+@media(max-width:760px){
+  #battle-stage[data-platform-theme] #player-trainer-sprite:not(.hidden){
+    left:0!important;
+    bottom:-26px!important;
+    width:clamp(122px,36%,147px)!important;
+    clip-path:inset(0 0 16% 0);
+  }
+  #battle-stage[data-platform-theme] #player-trainer-sprite.female-trainer:not(.hidden){
+    width:clamp(132px,39%,161px)!important;
+    clip-path:inset(0 0 17% 0);
+  }
+}
+@media(max-width:420px){
+  #battle-stage[data-platform-theme] #player-trainer-sprite:not(.hidden){
+    bottom:-24px!important;
+    width:clamp(113px,36%,136px)!important;
+  }
+  #battle-stage[data-platform-theme] #player-trainer-sprite.female-trainer:not(.hidden){
+    width:clamp(121px,39%,147px)!important;
+  }
+}
+
+/* Nurse Joy portrait stays in the normal NPC conversation window. */
+#npc-portrait-img.npc-portrait-nurse {display:flex!important;align-items:center;justify-content:center;overflow:visible!important}
+#npc-portrait-img .npc-portrait-nurse-image {height:100%;width:auto;max-width:100%;object-fit:contain;image-rendering:pixelated}
+
+/* Pokéxplorer Beta — fixed overworld scale and accurate native-pixel trainers.
+   Keep the existing sprite elements, movement and collision code untouched. */
+#dungeon-grid-board .grid-cell .player-avatar.red-local-sprite:not(.local-fishing-sprite),
+#dungeon-grid-board .grid-cell .player-avatar.girl-local-sprite:not(.local-fishing-sprite){
+  width:32px!important;
+  height:32px!important;
+  transform:translate(-50%,-55%)!important;
+  background-size:32px 32px!important;
+  background-position:center bottom!important;
+  image-rendering:pixelated!important;
+  image-rendering:pixelated!important;
+  filter:drop-shadow(0 1px 0 #142e4266)!important;
+}
+#dungeon-grid-board .grid-cell .player-avatar.girl-local-sprite:not(.local-fishing-sprite){
+  height:40px!important;
+  background-size:32px 40px!important;
+  transform:translate(-50%,-57%)!important;
+}
+/* Frames are unscaled 84x67 native pixels; the CSS 2x integer scale makes crisp edges.
+   Separate back view from the Pokémon sprite: only the trainer is modified. */
+#battle-stage[data-platform-theme] #player-trainer-sprite:not(.hidden):not(.female-trainer){
+  width:168px!important;
+  height:134px!important;
+  aspect-ratio:84 / 67!important;
+  background-size:168px 134px!important;
+  background-position:center bottom!important;
+  image-rendering:pixelated!important;
+  filter:none!important;
+  left:clamp(3px,1.2%,11px)!important;
+  bottom:-23px!important;
+  clip-path:inset(0 0 13% 0)!important;
+}
+#battle-stage[data-platform-theme] #player-trainer-sprite.female-trainer:not(.hidden){
+  image-rendering:pixelated!important;
+  filter:none!important;
+}
+@media(max-width:420px){
+  #battle-stage[data-platform-theme] #player-trainer-sprite:not(.hidden):not(.female-trainer){
+    width:126px!important;
+    height:100.5px!important;
+    background-size:126px 100.5px!important;
+    bottom:-19px!important;
+  }
+}
+.beta-version-label{margin-top:5px;color:#77e0d7;font:7px/1.5 "Press Start 2P",monospace;letter-spacing:2px;text-align:center}
+
+
+
+
+#dungeon-grid-board>.map-building-overlay{
+  object-fit:contain!important;image-rendering:pixelated!important;
+  /* Preserve architecture collision anchor and foreground layer. */
+}
+/* BUG-002: prevent duplicate CSS animation speed overrides and keep tile interpolation linear. */
+#dungeon-grid-board .grid-cell .player-avatar.walk-arrival{
+  animation-name:player-tile-arrive!important;
+  animation-duration:var(--walk-duration,210ms)!important;
+  animation-timing-function:linear!important;
+  animation-fill-mode:both!important;
+  will-change:translate!important;
+}
+@media (prefers-reduced-motion:reduce){
+  #dungeon-grid-board .grid-cell .player-avatar.walk-arrival{animation:none!important;}
+}
+
+/* RC5.9.1 regression guard — MUST remain the final targeted display rule. */
+#pokemart-overlay.hidden,
+#pokemart-overlay[hidden] {
+ display:none!important;visibility:hidden!important;pointer-events:none!important;
+}
+
+/* ---------- Pokéxplorer Hybrid Pokédex 1.0 ---------- */
+#btn-open-pokedex{margin-top:4px;border-color:#66b8db;background:linear-gradient(125deg,#183750,#0b203c);}
+#dex-sidebar-count.badge-case-sidebar-count{font-size:6px;color:#f9d88c;border:0;background:none;box-shadow:none;padding:0;min-height:0;height:auto;}
+#pokedex-overlay{position:absolute;inset:0;z-index:190;display:flex;align-items:center;justify-content:center;padding:6px;
+  background:radial-gradient(ellipse at 45% 30%,#1c4973ee,#040c1df9 87%);color:#edf5ff;}
+#pokedex-overlay.hidden{display:none!important;}
+.dex-panel{display:flex;flex-direction:column;min-width:0;width:100%;height:100%;max-height:100%;background:linear-gradient(135deg,#123451,#07182d 70%);
+  border:2px solid #6ac6eb;border-radius:12px;box-shadow:inset 0 0 20px #17456d,0 8px 28px #000c;overflow:hidden;}
+.dex-header{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:2px solid #315e7d;padding:11px 13px;background:#0b2037;flex-shrink:0;}
+.dex-header small{display:block;color:#77c8e9;font:6px/1.6 "Press Start 2P",monospace;letter-spacing:.2px;}
+.dex-header h2{font:16px/1.4 "Press Start 2P",monospace;color:#f6dc9d;margin:3px 0;}
+.dex-header span{font:6px/1.6 "Press Start 2P",monospace;color:#9bded6;}
+#dex-close{width:33px;height:33px;flex-shrink:0;border:2px solid #65bfec;background:#112941;color:#fff;border-radius:7px;font:18px Arial,sans-serif;cursor:pointer;}
+.dex-body{display:grid;grid-template-columns:minmax(165px,42%) minmax(0,1fr);min-height:0;flex:1;gap:7px;padding:7px;}
+.dex-browser,.dex-detail{display:flex;flex-direction:column;min-width:0;min-height:0;border:1px solid #315a74;border-radius:8px;background:#0b2039;overflow:hidden;}
+.dex-browser{padding:7px;gap:7px;}
+.dex-browser input,.dex-browser select{background:#142f49;border:1px solid #5b9dbe;color:#f0f7ff;border-radius:5px;min-width:0;padding:8px 5px;
+  font:7px/1.5 "Press Start 2P",monospace;outline-offset:2px;user-select:text;}
+.dex-browser input{width:100%;}
+.dex-filters{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;}
+.dex-filters select{font-size:6px;max-width:100%;padding:7px 3px;}
+.dex-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
+.dex-species-list{display:flex;flex-direction:column;min-height:0;overflow-y:auto;gap:3px;scrollbar-color:#447e9d #0b2039;}
+.dex-list-entry{display:grid;grid-template-columns:36px 1fr 18px;align-items:center;gap:3px;padding:7px 5px;min-height:30px;
+  font:6px/1.6 "Press Start 2P",monospace;border:1px solid transparent;border-radius:5px;background:#112b44;color:#deecf8;cursor:pointer;text-align:left;}
+.dex-list-entry:hover,.dex-list-entry:focus-visible{border-color:#8edcf9;}
+.dex-list-entry.active{border-color:#5cc6e8;background:#205472;}
+.dex-list-entry.caught .dex-list-state{color:#80e4a7;}
+.dex-list-number{color:#8db7cc;}
+.dex-list-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.dex-list-state{color:#85d7ff;text-align:center;}
+.dex-detail{padding:9px;gap:9px;overflow-y:auto;}
+.dex-hero{display:flex;align-items:center;gap:9px;min-height:113px;}
+.dex-sprite-stage{height:108px;width:108px;flex:0 0 108px;border:1px solid #477f9f;border-radius:10px;
+  background:radial-gradient(circle at 50% 50%,#1c5677,#0a2138 75%);display:flex;align-items:center;justify-content:center;}
+.dex-sprite-stage img{width:97px;height:97px;object-fit:contain;image-rendering:pixelated;}
+.dex-identity{display:flex;flex-direction:column;gap:7px;min-width:0;}
+#dex-detail-num{font:7px "Press Start 2P",monospace;color:#82c9e7;}
+#dex-detail-name{font:clamp(9px,1.1vw,13px)/1.5 "Press Start 2P",monospace;overflow-wrap:anywhere;color:#fff1bd;}
+#dex-detail-state{font:7px/1.5 "Press Start 2P",monospace;color:#9be2c1;}
+#dex-detail-types{display:flex;flex-wrap:wrap;gap:4px;}
+.dex-type{font:6px/1.5 "Press Start 2P",monospace;border-radius:5px;padding:4px 6px;border:1px solid #ffffff78;background:#546977;color:#fff9e7;text-shadow:1px 1px #1b3546;box-shadow:inset 0 1px #ffffff1f;}
+.dex-type.type-normal{background:#6f8494;}
+.dex-type.type-fire{background:#e47c43;}
+.dex-type.type-water{background:#468bd1;}
+.dex-type.type-grass{background:#55a568;}
+.dex-type.type-electric{background:#c8a133;color:#18212b;text-shadow:none;}
+.dex-type.type-poison{background:#9673bc;}
+.dex-type.type-psychic{background:#b86e9d;}
+.dex-type.type-dragon{background:#7c75cf;}
+.dex-type.type-flying{background:#708abd;}
+.dex-type.type-ground{background:#b38d57;color:#18212b;text-shadow:none;}
+.dex-type.type-rock{background:#9e8a63;color:#18212b;text-shadow:none;}
+.dex-type.type-bug{background:#7ea04b;color:#18212b;text-shadow:none;}
+.dex-type.type-ghost{background:#6d62a6;}
+.dex-type.type-ice{background:#69b7d6;color:#163244;text-shadow:none;}
+.dex-type.type-fighting{background:#c66a4d;}
+.dex-type.type-dark{background:#5a5c72;}
+.dex-type.type-steel{background:#7f9aa8;color:#142b39;text-shadow:none;}
+.dex-type.type-fairy{background:#d88cb8;color:#3d1731;text-shadow:none;}
+.dex-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;border-bottom:1px solid #3b6785;padding-bottom:7px;}
+.dex-tabs button{font:clamp(5px,.68vw,7px)/1.5 "Press Start 2P",monospace;min-height:29px;padding:5px 1px;
+ border:1px solid #3d789b;color:#a4cce5;background:#122a43;border-radius:5px;cursor:pointer;}
+.dex-tabs button.active{background:#236084;color:#fff4c6;border-color:#78d5ef;}
+.dex-tab-content{flex:1;min-height:80px;font:8px/1.75 "Press Start 2P",monospace;color:#d9edfc;overflow-y:auto;user-select:text;}
+.dex-tab-content p,.dex-tab-content small{line-height:1.8;}
+.dex-muted{color:#9bbfd6;font-size:7px;}
+.dex-facts{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:10px;}
+.dex-facts>div{display:flex;flex-direction:column;gap:5px;padding:7px;border:1px solid #365e7d;background:#17344d;border-radius:6px;}
+.dex-facts span{font-size:6px;color:#96c2dd;}
+.dex-facts strong{font-size:9px;color:#f6e8bb;}
+.dex-flavor{font-size:7px;line-height:1.9;border-top:1px solid #315e7d;padding:10px 1px;}
+.dex-stat-list{display:grid;gap:5px;}
+.dex-stat-list>div{display:flex;justify-content:space-between;gap:8px;align-items:center;border-bottom:1px solid #264967;padding-bottom:4px;font-size:6px;}
+.dex-stat-list strong{color:#f9d98f;font-size:8px;}
+.dex-variants{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;}
+.dex-variant{border:1px solid #457b9d;border-radius:7px;background:linear-gradient(#1b4461,#112d49);padding:7px 2px;
+  display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;min-width:0;}
+.dex-variant-img{width:80px;height:80px;image-rendering:pixelated;object-fit:contain;}
+.dex-variant strong{font:7px/1.7 "Press Start 2P",monospace;color:#f5dc99;}
+.dex-variant small{font:6px/1.7 "Press Start 2P",monospace;color:#8ae4b0;}
+.dex-journal-item{display:flex;flex-direction:column;gap:5px;border-left:3px solid #6fc8ec;padding:7px 10px;margin-bottom:9px;background:#173752;}
+.dex-journal-item strong{color:#e8db99;}.dex-journal-item small{font-size:6px;color:#9bbcd3;}.dex-journal-item p{font-size:7px;}
+.dex-footer{display:flex;flex-wrap:wrap;gap:5px;justify-content:space-between;padding:9px 12px;background:#0a1a2f;border-top:1px solid #335b79;
+ font:6px/1.6 "Press Start 2P",monospace;color:#82c7d9;flex-shrink:0;}
+#dex-cloud-status{color:#f3d990;}
+@media(max-width:640px){
+  #pokedex-overlay{padding:3px;}
+  .dex-panel{border-radius:6px;}
+  .dex-header{padding:7px;}.dex-header h2{font-size:12px;}
+  .dex-header small,.dex-header span,.dex-footer{font-size:5px;}
+  .dex-body{gap:3px;padding:4px;grid-template-columns:minmax(110px,38%) minmax(0,1fr);}
+  .dex-browser,.dex-detail{padding:4px;gap:5px;}
+  .dex-list-entry{grid-template-columns:24px 1fr 11px;padding:5px 3px;font-size:5px;}
+  .dex-list-number{font-size:5px;}
+  .dex-filters{grid-template-columns:1fr;}
+  .dex-browser input,.dex-browser select{font-size:5px;padding:6px 2px;}
+  .dex-hero{gap:5px;min-height:75px;}
+  .dex-sprite-stage{width:70px;height:72px;flex-basis:70px;}
+  .dex-sprite-stage img{width:65px;height:65px;}
+  #dex-detail-name{font-size:8px;}
+  .dex-identity{gap:4px;}
+  .dex-tabs button{font-size:4px;min-height:24px;}
+  .dex-variants{grid-template-columns:1fr 1fr;gap:3px;}
+  .dex-variant-img{height:55px;width:55px;}
+  .dex-variant strong,.dex-variant small{font-size:5px;}
+}
+@media(prefers-reduced-motion:reduce){#pokedex-overlay *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+/* Match the Portamedaglie trigger instead of inheriting browser button defaults. */
+.rotom-wing-left #btn-open-pokedex.dex-sidebar-trigger{
+ width:100%;min-height:55px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+ background:linear-gradient(135deg,#18526c,#10243b);border:2px solid #67c6e5;border-radius:9px;
+ color:#e8f6ff;font:8px/1.6 "Press Start 2P",monospace;cursor:pointer;
+ box-shadow:inset 0 0 0 2px #07182d,0 3px 0 #030d1d;margin-top:4px;
+}
+.rotom-wing-left #btn-open-pokedex.dex-sidebar-trigger:hover,.rotom-wing-left #btn-open-pokedex.dex-sidebar-trigger:focus-visible{
+ filter:brightness(1.15);outline:2px solid #ffe399;outline-offset:2px;
+}
+/* Non-blocking discovery toast; shown only after battle overlays close. */
+.dex-discovery-toast{position:absolute;z-index:189;bottom:24px;left:50%;transform:translateX(-50%);width:max-content;max-width:94%;
+ border:2px solid #67cce3;background:linear-gradient(130deg,#1a4665,#0a223d);color:#e8f5ff;border-radius:10px;
+ box-shadow:0 5px 23px #000b,inset 0 0 15px #467fb03b;padding:13px 17px;text-align:center;
+ font:8px/1.8 "Press Start 2P",monospace;pointer-events:none;animation:dex-discovery-enter .35s ease-out both;}
+.dex-discovery-toast.shiny{border-color:#f9df8b;color:#ffe8aa;box-shadow:0 0 20px #ffcd654d,0 5px 23px #000b;}
+@keyframes dex-discovery-enter{from{opacity:0;transform:translate(-50%,12px) scale(.95)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.dex-discovery-toast{animation:none}}
+.dex-evo-title{color:#e9d799;font:7px/1.6 "Press Start 2P",monospace;margin:12px 0 7px;}
+.dex-evolution-line{display:flex;gap:4px;flex-wrap:wrap;}
+.dex-evo-entry{font:6px/1.5 "Press Start 2P",monospace;border:1px solid #72b7d6;border-radius:5px;
+ background:#173a53;color:#d7eafa;padding:7px;cursor:pointer;}
+.dex-evo-entry:hover,.dex-evo-entry:focus-visible{border-color:#f5d99b;color:#f5d99b;}
+
+/* Pokéxplorer 1.1 — keyboard focus and battle-only side-panel exits. */
+#battle-controls .act-btn:focus-visible,
+#bag-tabs button:focus-visible,#bag-list button:focus-visible,
+#team-grid .team-slot:focus-visible,#party-action-menu button:focus-visible,
+.battle-wing-close:focus-visible,#battle-confirm button:focus-visible,
+#item-target-cancel:focus-visible{outline:3px solid #ffef83!important;outline-offset:2px!important;box-shadow:0 0 0 4px #1b385c,0 0 12px #ffe18c!important;}
+#battle-controls #btn-act-bag{background:linear-gradient(180deg,#d3a54d,#946a29)!important;color:#fff8e0!important;}
+#battle-controls #btn-act-switch{background:linear-gradient(180deg,#61a17d,#2b7354)!important;}
+.battle-wing-close{display:block;cursor:pointer;width:100%;min-height:31px;margin:6px 0 8px;padding:6px 3px;border:2px solid #f4d28c;border-radius:6px;background:linear-gradient(180deg,#594734,#2b3041);color:#fff2c4;font:clamp(6px,.7vw,8px)/1.5 'Press Start 2P',monospace;}
+.battle-wing-close.hidden{display:none!important;}
+
+/* Ability Capsule / retained user-supplied 32px item sprite. */
+#ability-capsule-overlay{position:fixed;inset:0;z-index:9998;display:grid;place-items:center;padding:14px;background:#061429dc;}
+#ability-capsule-overlay.hidden{display:none!important;}
+.ability-capsule-card{box-sizing:border-box;width:min(100%,430px);max-height:85vh;overflow-y:auto;background:linear-gradient(#1d4566,#0b2138);color:#e5f4ff;border:3px solid #7dcfe8;border-radius:12px;padding:16px;box-shadow:0 0 30px #030814ee;font:8px/1.85 'Press Start 2P',monospace;}
+.ability-capsule-card header{display:flex;align-items:center;gap:10px;}.ability-capsule-card header img{image-rendering:pixelated;}
+.ability-capsule-card h2{margin:0;color:#ffe7a5;font:11px/1.6 'Press Start 2P',monospace;}
+#ability-capsule-options{display:grid;gap:8px;margin:12px 0;}
+#ability-capsule-options button,#ability-capsule-cancel{background:#164d71;color:#f3f9ff;border:2px solid #80d6e9;border-radius:6px;padding:12px 8px;font:8px/1.5 'Press Start 2P',monospace;cursor:pointer;}
+#ability-capsule-options button:hover,#ability-capsule-options button:focus-visible,#ability-capsule-cancel:focus-visible{background:#247ba0;outline:2px solid #ffde86;outline-offset:2px;}
+#ability-capsule-cancel{width:100%;background:#56334e;border-color:#caa2c4;}
+#ability-capsule-feedback{color:#ffd5a3;min-height:1em;}
+
+/* R1.3: textual English language flag replaces removed image asset. */
+
+/* Beta 1.3: the elderly gentleman uses a full trainer portrait, not a sheet frame. */
+#npc-dialog-overlay .npc-portrait-elder{display:block;max-width:100%;max-height:100%;object-fit:contain;image-rendering:pixelated;}
+
+/* Beta 1.4 — home menu independent of battle backgrounds. */
+#main-menu-overlay{background:radial-gradient(ellipse at 50% 32%,#204767 0%,#0c213a 55%,#041224 100%)!important;}
+#main-menu-overlay::before{display:none!important;content:none!important;}
+/* Overworld: crop the first 16x32 frame from the ORIGINAL map spritesheet.
+   Approved OW-01..OW-18 images are displayed only in dialogue/encounter UI. */
+#dungeon-grid-board .grid-cell .sprite-frame.pokex-single-frame{width:16px!important;height:32px!important;overflow:hidden!important;transform:translate(-50%,-50%) scale(1.26)!important;}
+#dungeon-grid-board .grid-cell .sprite-frame.pokex-single-frame .overworld-frame-img{width:16px!important;height:32px!important;object-fit:contain!important;max-width:16px!important;}
+#npc-dialog-overlay #npc-portrait-img .pokex-portrait{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;object-fit:contain!important;object-position:center bottom!important;image-rendering:pixelated!important;}
+#pokemart-overlay .mart-shop-portrait{width:56px;height:64px;object-fit:contain;image-rendering:pixelated;flex:none;}
+#pokemart-overlay .mart-clerk-scene{display:flex!important;align-items:center;gap:8px;}
+#pokemart-overlay .mart-clerk-dialogue{flex:1;text-align:left;min-width:0;}
+#pokemart-overlay .mart-clerk-portrait,#pokemart-overlay .mart-kecleon{display:none!important;}
+#pokemart-overlay .mart-catalogue{scroll-padding:20px;}
+
+/* Beta 1.4.2: higher-specificity PokéMarket rule must never expose locked items.
+   The earlier catalogue rule uses display:flex!important and overrode .hidden. */
+#pokemart-overlay .mart-catalogue .btn-nav.hidden,
+#pokemart-overlay .mart-catalogue .btn-nav[hidden] {
+  display:none!important;
+  visibility:hidden!important;
+  pointer-events:none!important;
 }

@@ -1,0 +1,182 @@
+[
+  {
+    "id": "OW-01",
+    "type": "youngster",
+    "name": "Giovane",
+    "portrait": "assets/sprites/npc/ritratti/OW-01.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/youngster.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-02",
+    "type": "lass",
+    "name": "Ragazza",
+    "portrait": "assets/sprites/npc/ritratti/OW-02.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/lass.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-03",
+    "type": "balding_man",
+    "name": "Anziano",
+    "portrait": "assets/sprites/npc/ritratti/OW-03.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/balding_man.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-04",
+    "type": "old_woman",
+    "name": "Donna anziana",
+    "portrait": "assets/sprites/npc/ritratti/OW-04.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/old_woman.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-05",
+    "type": "cooltrainer_m",
+    "name": "Fantallenatore",
+    "portrait": "assets/sprites/npc/ritratti/OW-05.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/cooltrainer_m.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-06",
+    "type": "cooltrainer_f",
+    "name": "Fantallenatrice",
+    "portrait": "assets/sprites/npc/ritratti/OW-06.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/cooltrainer_f.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-07",
+    "type": "picnicker",
+    "name": "Picnic Girl",
+    "portrait": "assets/sprites/npc/ritratti/OW-07.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/picnicker.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-08",
+    "type": "camper",
+    "name": "Campeggiatore",
+    "portrait": "assets/sprites/npc/ritratti/OW-08.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/camper.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-09",
+    "type": "nurse",
+    "name": "Infermiera Joy",
+    "portrait": "assets/sprites/npc/ritratti/OW-09.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/nurse.png",
+    "source": "user-selected (existing Nurse Joy)",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-10",
+    "type": "policeman",
+    "name": "Poliziotto",
+    "portrait": "assets/sprites/npc/ritratti/OW-10.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/policeman.png",
+    "source": "user-selected (approved upscale)",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-11",
+    "type": "hiker",
+    "name": "Montanaro",
+    "portrait": "assets/sprites/npc/ritratti/OW-11.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/hiker.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-12",
+    "type": "scientist",
+    "name": "Scienziato",
+    "portrait": "assets/sprites/npc/ritratti/OW-12.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/scientist.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-13",
+    "type": "rich_boy",
+    "name": "Ragazzo ricco",
+    "portrait": "assets/sprites/npc/ritratti/OW-13.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/rich_boy.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-14",
+    "type": "sailor",
+    "name": "Marinaio",
+    "portrait": "assets/sprites/npc/ritratti/OW-14.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/sailor.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-15",
+    "type": "gentleman",
+    "name": "Gentiluomo",
+    "portrait": "assets/sprites/npc/ritratti/OW-15.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/gentleman.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-16",
+    "type": "clerk",
+    "name": "Commesso PokéMarket",
+    "portrait": "assets/sprites/npc/ritratti/OW-16.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/clerk.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-17",
+    "type": "bug_catcher",
+    "name": "Pigliamosche",
+    "portrait": "assets/sprites/npc/ritratti/OW-17.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/bug_catcher.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  },
+  {
+    "id": "OW-18",
+    "type": "fisher",
+    "name": "Pescatore",
+    "portrait": "assets/sprites/npc/ritratti/OW-18.png",
+    "map": "https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/fisher.png",
+    "source": "user-selected",
+    "map_source": "original FireRed overworld horizontal spritesheet, not derived from portrait",
+    "portrait_source": "approved user-selected dialogue portrait"
+  }
+]

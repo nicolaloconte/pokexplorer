@@ -13,7 +13,7 @@
   const clamp=(n,a,b)=>Math.max(a,Math.min(b,n));
   class LocalBackgroundMusic{
     constructor(doc=document){
-      this.doc=doc;this.audio=doc.getElementById('pokexplorer-background-music');
+      this.doc=doc;this.effectAudios=new Map();this.audio=doc.getElementById('pokexplorer-background-music');
       this.slider=doc.getElementById('music-volume');
       this.output=doc.getElementById('music-volume-value');
       this.status=doc.getElementById('music-status');
@@ -36,10 +36,24 @@
       this.tryStart();
     }
     renderVolume(){if(this.slider)this.slider.value=String(this.volume);if(this.output)this.output.textContent=`${this.volume}%`;}
+    // All in-game audio effects share the site's master MUSIC volume.
+    // Effects remain separate from the looping soundtrack; no scene changes.
+    registerEffect(audio,gain=1){
+      if(!audio)return;
+      this.effectAudios.set(audio,clamp(Number(gain)||0,0,1));
+      this.updateEffectVolumes();
+    }
+    updateEffectVolumes(){
+      for(const [audio,gain] of this.effectAudios){
+        audio.volume=clamp((this.volume/100)*gain,0,1);
+      }
+    }
     setVolume(raw){
       this.volume=clamp(Number.isFinite(raw)?raw:10,0,100);
       this.renderVolume();
-      try{localStorage.setItem(STORAGE_KEY,String(this.volume))}catch(_){}
+      this.updateEffectVolumes();
+      // User mode never persists preferences, including audio volume.
+      if(!window.PokexCheckpoints?.isGuestMode?.())try{localStorage.setItem(STORAGE_KEY,String(this.volume))}catch(_){}
       if(!this.transitionFrame)this.audio.volume=this.volume/100;
     }
     setStatus(text){if(this.status)this.status.textContent=text;}

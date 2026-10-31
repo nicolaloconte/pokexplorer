@@ -1,175 +1,4 @@
-// FireRed / LeafGreen overworld sprites from pret/pokefirered.
-// Each source image is a horizontal spritesheet (16x32 per frame).
-// Attribution / asset origin: https://github.com/pret/pokefirered
-const FIRERED_OVERWORLD_BASE = 'https://raw.githubusercontent.com/pret/pokefirered/master/graphics/object_events/pics/people/';
-const FIRERED_NPC_NAMES = ['youngster', 'lass', 'balding_man', 'old_woman', 'cooltrainer_m', 'cooltrainer_f', 'picnicker', 'camper', 'nurse', 'policeman', 'hiker', 'scientist', 'rich_boy', 'sailor', 'gentleman', 'clerk'];
-const TRAINER_PORTRAIT_BASE = 'https://play.pokemonshowdown.com/sprites/trainers/';
-// Red's five battle throwing frames and overworld poses are bundled locally.
-// Balancing knobs in one place: progression is intentionally slower than V7.
-const GAME_BALANCE = Object.freeze({wildEncounterChance: .20,
-  earlyWildMaxLevel:3, earlyTrainerMaxLevel:5, earlyFloors:5,
-  levelPerFloor:.52, expTrainerMultiplier:1.25, expGymMultiplier:1.45});
-const HEALING_TIERS=Object.freeze([
-  {floor:1,id:'potion',label:'POZIONE',heal:20,price:150},
-  {floor:21,id:'superPotion',label:'SUPERPOZIONE',heal:50,price:600},
-  {floor:51,id:'hyperPotion',label:'IPERPOZIONE',heal:200,price:1000}
-]);
-function healingTier(floor){return [...HEALING_TIERS].reverse().find(t=>floor>=t.floor)||HEALING_TIERS[0];}
-const BAG_LIMITS=Object.freeze({potion:10,superPotion:10,hyperPotion:10,elixir:10,pokeball:20,masterball:1,fishingRod:1});
-// Item icons are independent of NPC/trainer sprites.
-const ITEM_IMAGES=Object.freeze({
-  pokeball:'pokeball-game.png',potion:'potion-user.png',superPotion:'super-potion-user.png',hyperPotion:'hyper-potion-user.png',elixir:'elixir-user.png',
-  radar:'radar-user.png',rareCandy:'rare-candy-user.png',goldCandy:'gold-candy-user.png',
-  fishingRod:'old-rod-user.png',expShare:'exp-share-user.png',masterball:'master-ball.svg'
-});
-function itemImage(id){return `assets/items/${ITEM_IMAGES[id] || ITEM_IMAGES.pokeball}`;}
-// Progression tables: 0–8 unique Kanto badges. Keep team and XP rules in sync.
-const BADGE_LEVEL_CAPS=Object.freeze([14,21,24,29,35,43,47,50,100]);
-const BADGE_TEAM_SLOTS=Object.freeze([2,3,3,4,4,5,5,6,6]);
-// All multi-turn damaging moves available from the main-series move catalog.
-// Multi-turn traps such as Wrap/Bind are NOT charge moves; they already have
-// separate residual-damage logic. Outrage/Thrash/Petal Dance are handled via
-// their own forced-repeat state below.
-const CHARGE_MOVES=new Set([
-  'solar-beam','solar-blade','fly','dig','dive','bounce','sky-attack',
-  'skull-bash','razor-wind','shadow-force','phantom-force','geomancy',
-  'freeze-shock','ice-burn','meteor-beam','electro-shot','sky-drop'
-]);
-const RECHARGE_MOVES=new Set([
-  'hyper-beam','giga-impact','blast-burn','hydro-cannon','frenzy-plant',
-  'rock-wrecker','roar-of-time','prismatic-laser','eternabeam'
-]);
-const RAMPAGE_MOVES=new Set(['outrage','thrash','petal-dance']);
-const ROLLOUT_MOVES=new Set(['rollout','ice-ball']);
-// Gen III: 2/3 hits 3/8 each, 4/5 hits 1/8 each.
-function rollMultiHitCount(move,random=Math.random){
-  const min=Math.max(1,move.minHits||1),max=Math.max(min,move.maxHits||min);
-  if(min===max)return min;
-  const n=Math.min(.99999999,Math.max(0,random()));
-  if(min===2 && max===5)return n<.375?2:n<.75?3:n<.875?4:5;
-  return min+Math.floor(n*(max-min+1));
-}
-function getConfusionDamage(mon,random=Math.random){
-  // Typeless 40-power physical self-hit; unaffected by STAB or typing.
-  const attack=mon.attack*statMultiplier(mon.statStages?.attack);
-  const defense=Math.max(1,mon.defense*statMultiplier(mon.statStages?.defense));
-  return Math.max(1,Math.floor(((2*mon.level/5+2)*40*attack/defense/50+2)*(.85+random()*.15)));
-}
-const FORCED_RECHARGE_ACTION=Object.freeze({id:'recharge',name:'Ricarica',priority:0,currentPp:1});
-const CHARGE_MESSAGES=Object.freeze({
-  'solar-beam':'assorbe luce solare', 'solar-blade':'assorbe luce solare',
-  fly:'si alza in volo',dig:'si nasconde sottoterra',dive:'si immerge',
-  bounce:'balza in aria','sky-attack':'prepara Aeroattacco',
-  'skull-bash':'ritrae la testa', 'razor-wind':'prepara un turbine',
-  'shadow-force':'svanisce nell’ombra','phantom-force':'svanisce nell’ombra',
-  geomancy:'accumula energia','freeze-shock':'accumula energia gelida',
-  'ice-burn':'accumula energia ardente','meteor-beam':'assorbe energia cosmica',
-  'electro-shot':'assorbe energia elettrica','sky-drop':'si alza in volo'
-});
-const CHARGE_UNTOUCHABLE=Object.freeze({
-  fly:['gust','twister','thunder','hurricane','sky-uppercut','smack-down'],
-  bounce:['gust','twister','thunder','hurricane','sky-uppercut','smack-down'],
-  dig:['earthquake','magnitude','fissure'],
-  dive:['surf','whirlpool'],
-  'phantom-force':[], 'shadow-force':[], 'sky-drop':[]
-});
-const MAGNITUDE_ROLLS=Object.freeze([
-  {level:4,power:10,chance:5},{level:5,power:30,chance:10},
-  {level:6,power:50,chance:20},{level:7,power:70,chance:30},
-  {level:8,power:90,chance:20},{level:9,power:110,chance:10},
-  {level:10,power:150,chance:5}
-]);
-function rollMagnitude(random=Math.random){
-  const n=Math.max(0,Math.min(99.999,Number(random())*100));
-  let cumulative=0;
-  for(const outcome of MAGNITUDE_ROLLS){cumulative+=outcome.chance;if(n<cumulative)return outcome;}
-  return MAGNITUDE_ROLLS[MAGNITUDE_ROLLS.length-1];
-}
-/** Level-scaled experience inspired by the main-series scaled EXP system. */
-function scaledBattleExperience(baseYield, defeatedLevel, recipientLevel, trainerMultiplier=1){
-  const base=Math.max(20,Number(baseYield)||60), enemy=Math.max(1,defeatedLevel), player=Math.max(1,recipientLevel);
-  const levelRatio=Math.pow((2*enemy+10)/(enemy+player+10),2.5);
-  // No artificial beginner XP multiplier: the species-specific growth curve
-  // now determines how quickly low-level Pokémon gain levels.
-  return Math.max(1,Math.floor((base*enemy/7)*levelRatio*trainerMultiplier*1.36));
-}
-
-
-// Complete non-legendary Kanto evolution families. The first entries are base
-// species; later entries are unlocked only at suitable encounter levels.
-// Stone/trade evolutions receive progression gates for procedurally spawned foes.
-const KANTO_FAMILIES=Object.freeze([
- [[1,1],[2,16],[3,32]],[[4,1],[5,16],[6,36]],[[7,1],[8,16],[9,36]],
- [[10,1],[11,7],[12,10]],[[13,1],[14,7],[15,10]],[[16,1],[17,18],[18,36]],
- [[19,1],[20,20]],[[21,1],[22,20]],[[23,1],[24,22]],[[25,1],[26,30]],
- [[27,1],[28,22]],[[29,1],[30,16],[31,34]],[[32,1],[33,16],[34,34]],
- [[35,1],[36,30]],[[37,1],[38,30]],[[39,1],[40,30]],[[41,1],[42,22]],
- [[43,1],[44,21],[45,34]],[[46,1],[47,24]],[[48,1],[49,31]],[[50,1],[51,26]],
- [[52,1],[53,28]],[[54,1],[55,33]],[[56,1],[57,28]],[[58,1],[59,35]],
- [[60,1],[61,25],[62,38]],[[63,1],[64,16],[65,36]],[[66,1],[67,28],[68,36]],
- [[69,1],[70,21],[71,36]],[[72,1],[73,30]],[[74,1],[75,25],[76,40]],
- [[77,1],[78,40]],[[79,1],[80,37]],[[81,1],[82,30]],[[83,1]],
- [[84,1],[85,31]],[[86,1],[87,34]],[[88,1],[89,38]],[[90,1],[91,32]],
- [[92,1],[93,25],[94,38]],[[95,1]],[[96,1],[97,26]],[[98,1],[99,28]],
- [[100,1],[101,30]],[[102,1],[103,32]],[[104,1],[105,28]],
- [[106,1]],[[107,1]],[[108,1]],[[109,1],[110,35]],[[111,1],[112,42]],
- [[113,1]],[[114,1]],[[115,1]],[[116,1],[117,32]],[[118,1],[119,33]],
- [[120,1],[121,34]],[[122,1]],[[123,1]],[[124,1]],[[125,1]],[[126,1]],
- [[127,1]],[[128,1]],[[129,1],[130,20]],[[131,1]],[[132,1]],
- [[133,1],[134,30]],[[133,1],[135,30]],[[133,1],[136,30]],
- [[137,1]],[[138,1],[139,40]],[[140,1],[141,40]],[[142,1]],[[143,1]],
- [[147,1],[148,30],[149,55]]
-]);
-const KANTO_FAMILY_BY_ID=new Map(KANTO_FAMILIES.flatMap(family=>family.map(([id])=>[id,family])));
-const KANTO_BASE_FAMILIES=KANTO_FAMILIES.filter((family,index)=>
-  KANTO_FAMILIES.findIndex(candidate=>candidate[0][0]===family[0][0])===index);
-const KANTO_RARE_BASE=new Set([1,4,7,95,106,107,113,115,122,123,124,125,126,127,128,131,132,133,137,138,140,142,143,147]);
-function evolvedEncounterId(id,level,random=Math.random){
-  const family=KANTO_FAMILY_BY_ID.get(Number(id));if(!family)return id;
-  const index=family.findIndex(([species])=>species===Number(id));
-  let result=id;
-  // Generated wild and trainer Pokémon use the stage appropriate to their level.
-  result=family[0][0];
-  for(let i=0;i<family.length;i++)if(level>=family[i][1])result=family[i][0];
-  return result;
-}
-function randomKantoSpecies(level,floor,random=Math.random){
-  // Early routes remain accessible to new players. Later floors cover every
-  // ordinary Kanto line, with rarer families starting on later routes.
-  const early=[19,16,10,13,52,39,21,43];
-  if(floor<=5)return evolvedEncounterId(early[Math.floor(random()*early.length)],level);
-  const pool=KANTO_BASE_FAMILIES.filter(family=>
-    (!KANTO_RARE_BASE.has(family[0][0])||floor>=25) &&
-    (level>=8||!new Set([95,102,113,115,123,124,125,126,127,128,131,132,137,138,140,142,143,147]).has(family[0][0])));
-  const picked=pool[Math.min(pool.length-1,Math.floor(random()*pool.length))];
-  if(picked[0][0]===133 && level>=30)return [134,135,136][Math.min(2,Math.floor(random()*3))];
-  return evolvedEncounterId(picked[0][0],level,random);
-}
-
-// Otto capipalestra di Kanto: composizioni dedicate (Misty secondo la richiesta: Squirtle + Starmie).
-const KANTO_GYMS = [
-  {name:'Brock', badge:'Sasso', badgeId:0, specialty:'ROCCIA', sprite:'brock-gen3', pokemon:[74,95], levels:[12,14]},
-  {name:'Misty', badge:'Cascata', badgeId:1, specialty:'ACQUA', sprite:'misty-gen3', pokemon:[7,121], levels:[18,21]},
-  {name:'Lt. Surge', badge:'Tuono', badgeId:2, specialty:'ELETTRO', sprite:'ltsurge-gen3', pokemon:[100,25,26], levels:[21,18,24]},
-  {name:'Erika', badge:'Arcobaleno', badgeId:3, specialty:'ERBA', sprite:'erika-gen3', pokemon:[114,70,45], levels:[24,29,29]},
-  {name:'Koga', badge:'Anima', badgeId:4, specialty:'VELENO', sprite:'koga-gen3', pokemon:[109,89,110], levels:[32,34,35]},
-  {name:'Sabrina', badge:'Palude', badgeId:5, specialty:'PSICO', sprite:'sabrina-gen3', pokemon:[64,122,65], levels:[38,37,43]},
-  {name:'Blaine', badge:'Vulcano', badgeId:6, specialty:'FUOCO', sprite:'blaine-gen3', pokemon:[58,77,78,59], levels:[42,40,42,47]},
-  {name:'Giovanni', badge:'Terra', badgeId:7, specialty:'TERRA', sprite:'giovanni-gen3', pokemon:[111,51,31,34], levels:[45,42,44,50]}
-];
-
-// Kanto gym preparatory trainers draw species matching the leader's specialty.
-const GYM_TRAINER_POOLS=Object.freeze([
-  [74,75,95,111],           // Brock: Rock
-  [60,61,72,90,118,120],   // Misty: Water
-  [25,81,82,100,101],      // Surge: Electric
-  [43,44,69,70,114],       // Erika: Grass
-  [23,24,41,42,109,110],  // Koga: Poison
-  [63,64,96,97,122],      // Sabrina: Psychic
-  [37,58,77,126],     // Blaine: Fire
-  [27,28,50,51,104,105,111] // Giovanni: Ground
-]);
-
+// Pokéxplorer game engine. Static tables and helpers: js/game-data.js.
 class GameEngine {
   constructor() {
     this.gridSize = 10;
@@ -178,13 +7,17 @@ class GameEngine {
     this.walkSequence=0;
     this.walkReadyAt=0;
     this.walkDurationMs=210;
+    // BUG-002: source-aware held inputs and a single scheduled repeat.
+    // Collision decisions continue to use integer tile coordinates.
+    this.walkInputs=new Map();
+    this.walkHoldTimer=null;
     // Keep references until the frame preloads complete; otherwise browsers
     // can discard orphaned Image elements and cancel their network requests.
     this.walkSpritePreloads=[];
     if(typeof Image!=='undefined')for(const gender of ['red','girl'])
       for(const direction of ['up','down','left','right'])
         for(let frame=0;frame<3;frame++){
-          const image=new Image();image.src=`assets/${gender}/walk/${direction}-${frame}.png`;
+          const image=new Image();image.src=`assets/sprites/player/${gender}/walk/${direction}-${frame}.png`;
           this.walkSpritePreloads.push(image);
         }
     this.floor = 1;
@@ -192,7 +25,7 @@ class GameEngine {
     this.team = [];
     this.activeMon = null;
     this.enemyMon = null;
-    this.items = { pokeball: 5, masterball:0, potion: 3, superPotion:0, hyperPotion:0, elixir: 1, fishingRod: false, rareCandy:0, goldCandy:0 };
+    this.items = { pokeball: 5, masterball:0, potion: 3, superPotion:0, hyperPotion:0, elixir: 1, abilityCapsule:0, fishingRod: false, rareCandy:0, goldCandy:0 };
     this.radarCharges=3; this.playerFacing='down'; this.playerStep=0; this.playerFishingFrame=null; this.playerIdleTimer=null; this.pendingItemTarget=null; this.pendingWildEncounterType=null; this.pendingLegendaryId=null;
     this.badges = [];
     // Available after Misty's badge; opt-out is available under Key Items.
@@ -219,16 +52,24 @@ class GameEngine {
     this.evolutionResolve = null;
     this.pokemonCache = new Map();
     this.abilityInfoCache=new Map();
+    this.abilityCapsuleCandidate=null;this.abilityCapsuleOpen=false;this.abilityCapsuleSerial=0;
 
     // Variabili per la gestione della catena Raid Pokémon (5 sfide consecutive)
     this.isRaidActive = false;
     this.raidQueueCount = 0;
+    // Diagnostic flag retained for compatibility; it no longer limits Raid rolls.
+    // Each collectible independently has a 10% chance to trigger a Raid.
+    this.raidTriggeredOnFloor = false;
+    this.raidPickupSourceCell = null;
+    this.raidBattleRetryPending = false;
+    this.raidLaunchNonce = 0;
+    this.raidVictoryResolutionToken = -1;
     this.fishingRodGiftClaimed = false;
     this.gymChallengePending = false;
     this.devMode = false; // Only the in-game DEV MODE button can unlock it.
     this.devUpgradeInProgress = false;
     this.speedMultiplier=1;
-    this.locale='it';
+    this.locale='it';document.documentElement.lang='it';
     this.pokemonInfoRequest=0;
     this.moveDescriptionCache=new Map();
     this.abilityDescriptionCache=new Map();
@@ -237,16 +78,17 @@ class GameEngine {
     this.activeDialogNpcCell=null;
     this.oakEventDismissed=false;this.isCelestialCave=false;this.celestialPhase='unvisited';
     this.celestialReturnState=null;this.celestialCutsceneActive=false;
+    // Direct Nurse Joy interaction outside the building; no separate interior.
+    this.pokemonCenterHealTimer=null;
+    this.pokemonCenterHealSequence=0;
+    this.pokemonCenterHealAudio=null;
 
-    this.trainerSprites = [
-      "https://play.pokemonshowdown.com/sprites/trainers/bugcatcher-gen3.png",
-      "https://play.pokemonshowdown.com/sprites/trainers/youngster-gen3.png",
-      "https://play.pokemonshowdown.com/sprites/trainers/lass-gen3.png"
-    ];
+    this.trainerSprites = ['bug_catcher','youngster','lass'].map(overworldPortraitUrl);
     // Named FireRed/LeafGreen NPC sheets: appearance is fixed, not generated.
-    this.npcSprites = FIRERED_NPC_NAMES.map(name => `${FIRERED_OVERWORLD_BASE}${name}.png`);
-    this.npcFallbacks = Array.from({length: 16}, (_, i) =>
-      `assets/characters/npc-${String(i + 1).padStart(2, '0')}.png`);
+    this.npcSprites = FIRERED_NPC_NAMES.map(overworldSpriteUrl);
+    // Remote overworld sheets remain primary; a neutral bundled avatar is the
+    // only local safety net when the image host is unreachable.
+    this.npcFallbacks = FIRERED_NPC_NAMES.map(() => 'assets/sprites/ui/trainer-avatar-fallback.svg');
     this.battleTrainerPreloaded = false;
     this.npcDialogues = [
       'Hai visto i fiori nuovi vicino alla fontana?',
@@ -266,10 +108,22 @@ class GameEngine {
     this.currentTrainerSprite = this.trainerSprites[0];
 
     // Sprite SVG locali: nessun link esterno fragile per le medaglie.
-    this.badgeSprites = KANTO_GYMS.map((_, i) => `assets/badges/kanto-clean-${i + 1}.png`);
+    this.badgeSprites = KANTO_GYMS.map((_, i) => `assets/sprites/badges/kanto-clean-${i + 1}.png`);
 
+    this.installPokemonSpriteFallbacks();
     this.bindEvents();
+    this.updateContinueButton();
     this.scheduleRotomExpression();
+  }
+
+  installPokemonSpriteFallbacks(){
+    const fallback='assets/sprites/ui/pokemon-placeholder.svg';
+    for(const id of ['starter-showcase-img','pokemon-info-sprite','enemy-sprite','player-sprite']){
+      const element=this.$id(id);
+      if(element)element.addEventListener('error',()=>{
+        if(!element.src.endsWith('/pokemon-placeholder.svg'))element.src=fallback;
+      });
+    }
   }
 
   scheduleRotomExpression(){
@@ -351,7 +205,7 @@ class GameEngine {
       const pokemon=this.team[i];
       const tile=document.createElement('div');tile.className='memory-mon'+(pokemon?'':' empty');
       if(pokemon){
-        const sprite=document.createElement('img');sprite.src=pokemon.spriteFront || '';
+        const sprite=document.createElement('img');sprite.src=resolvedSpritePath(pokemon.spriteFront || '');
         sprite.alt=pokemon.name;sprite.loading='eager';
         const name=document.createElement('strong');name.textContent=pokemon.name;
         const level=document.createElement('span');level.textContent=`Lv. ${pokemon.level}`;
@@ -386,7 +240,7 @@ class GameEngine {
     for(const id of ['gameover-overlay','starter-scene-overlay','overlay-battle',
       'battle-controls','gym-leader-intro','trainer-encounter-overlay',
       'wild-encounter-overlay','pokemart-overlay','gym-entry-confirm','box-pc-overlay',
-      'npc-dialog-overlay','celestial-dialog','celestial-cinematic','badge-case-overlay','learn-move-overlay','evolution-overlay','battle-confirm']){
+      'npc-dialog-overlay','celestial-dialog','celestial-cinematic','badge-case-overlay','pokedex-overlay','learn-move-overlay','evolution-overlay','battle-confirm']){
       this.$id(id)?.classList.add('hidden');
     }
     this.$id('rotom-body')?.classList.remove('battle-active');
@@ -398,13 +252,15 @@ class GameEngine {
     this.gymQueue=[];this.gymLeaderIndex=0;this.currentGym=null;
     this.battleParticipants.clear();this.battleBusy=false;
     this.pendingForcedSwitch=false;this.isRaidActive=false;this.raidQueueCount=0;
+    this.raidTriggeredOnFloor=false;this.clearRaidTransientState();
     this.battleMode=null;this.isLocked=false;this.battleConfirmAction=null;
-    this.items={pokeball:5,masterball:0,potion:3,superPotion:0,hyperPotion:0,elixir:1,fishingRod:false,
+    this.items={pokeball:5,masterball:0,potion:3,superPotion:0,hyperPotion:0,elixir:1,abilityCapsule:0,fishingRod:false,
       rareCandy:this.devMode?999:0,goldCandy:this.devMode?999:0};
     this.fishingRodGiftClaimed=false;this.playerGender='male';
     this.gymChallengePending=false;this.devGuaranteedCapture=this.devMode;this.pendingTrainerCell=null;
     this.caughtLegendarySpecies=new Set();
     this.activeDialogNpcCell=null;this.oakEventDismissed=false;this.isCelestialCave=false;
+    this.cancelPokemonCenterHealing();
     this.celestialPhase='unvisited';this.celestialReturnState=null;this.celestialCutsceneActive=false;
     this.$id('celestial-dialog')?.classList.add('hidden');
     this.$id('celestial-cinematic')?.classList.add('hidden');
@@ -418,6 +274,7 @@ class GameEngine {
       const button=this.$id(id);if(button){button.classList.toggle('selected',active);button.setAttribute('aria-pressed',String(active));}
     }
     this.radarCharges=3;this.playerFacing='down';this.playerStep=0;this.playerFishingFrame=null;clearTimeout(this.playerIdleTimer);
+    this.abilityCapsuleOpen=false;this.abilityCapsuleCandidate=null;this.$id('ability-capsule-overlay')?.classList.add('hidden');
     this.pendingItemTarget=null;this.pendingWildEncounterType=null;this.partyMenuPokemon=null;this.partyMoveSource=null;this.partyInfoPokemon=null;
     this.$id('item-target-prompt').classList.add('hidden');
     this.closePartyActions();this.closePokemonInfo();
@@ -435,7 +292,7 @@ class GameEngine {
       const img=new Image();img.decoding='async';img.src=src;
       return img;
     });
-    this.redThrowFrames=Array.from({length:5},(_,i)=>`assets/red/throw/${i}.png`);
+    this.redThrowFrames=Array.from({length:5},(_,i)=>`assets/sprites/player/red/throw/${i}.png`);
     this.preloadedTrainerImages.push(...this.redThrowFrames.map(src=>{const img=new Image();img.src=src;return img;}));
   }
 
@@ -453,43 +310,96 @@ class GameEngine {
     try{await animation.finished;}catch(e){ /* Battles may cancel animations on exit. */ }
   }
 
-  battleSpritePosition(side){
-    const stage=this.$id('battle-stage').getBoundingClientRect();
-    const sprite=this.$id(side==='enemy'?'enemy-sprite':'player-sprite').getBoundingClientRect();
-    // Used by capture effects only: the target must be a *visible* sprite.
-    return {x:sprite.left-stage.left+sprite.width*.50,
-      y:sprite.top-stage.top+sprite.height*.54};
-  }
-
-  battleThrowDestination(side){
-    // Pokémon sprites are display:none during the throw, so their bounds are
-    // ZERO. Read the always-visible platform instead; also works on mobile.
-    const stage=this.$id('battle-stage').getBoundingClientRect();
-    const platform=this.$id('battle-stage').querySelector(
-      side==='enemy'?'.enemy-platform-gba':'.player-platform-gba');
-    const bounds=platform.getBoundingClientRect();
-    // The ball opens just over the top of the platform where the Pokémon lands.
-    return {x:bounds.left-stage.left+bounds.width*.5,
-      y:bounds.top-stage.top+bounds.height*.28};
-  }
-
-  hpColorState(mon) {
-    const ratio=mon?.maxHp ? mon.currentHp/mon.maxHp : 0;
-    return ratio < .20 ? 'red' : ratio < .50 ? 'yellow' : 'green';
-  }
-
+  // battleSpritePosition moved to js/battle-helpers.js (R2.22 modularisation).
+  // battleThrowDestination moved to js/battle-helpers.js (R2.22 modularisation).
+  // hpColorState moved to js/battle-helpers.js (R2.22 modularisation).
   isTownFloor(){return this.floor % 5 === 0;}
-  isSolidTownCell(cell){
-    if(!this.isTownFloor() || !cell)return false;
-    return Boolean(cell.decoration) || ['pokecenter','pokemart','gym','house','npc'].includes(cell.entity);
-  }
+  // isSolidTownCell moved to js/map-helpers.js (R2.22 modularisation).
   setTrainerPortrait(element,src){
     if(!element)return;
-    // An invalid external image can no longer leave an empty/broken icon on screen.
-    element.onerror=()=>{element.onerror=null;element.src='assets/trainers/opponent-fallback.svg';};
-    element.src=src;
+    // Previously saved route trainer portraits still map to the approved OW assets.
+    const filename=String(src||'').split('/').at(-1);
+    const oldNames={'bugcatcher-gen3.png':'bug_catcher','youngster-gen3.png':'youngster',
+      'lass-gen3.png':'lass','acetrainer-gen3.png':'cooltrainer_m',
+      'pokemonranger-gen3.png':'cooltrainer_f','hiker-gen3.png':'hiker','camper-gen3.png':'camper'};
+    const local=oldNames[filename]?overworldPortraitUrl(oldNames[filename]):null;
+    element.onerror=()=>{element.onerror=null;element.src='assets/sprites/ui/trainer-avatar-fallback.svg';};
+    element.src=local||src;
   }
 
+  saveCheckpoint(){
+    if(typeof window!=='undefined'&&window.PokexCheckpoints?.isGuestMode?.())return false;
+    try {
+      const snapshot=window.PokexCheckpoints?.take(this);
+      if(snapshot){window.PokexCheckpoints.save(snapshot);this.updateContinueButton();
+        window.dispatchEvent?.(new Event('pokex:checkpoint')); 
+        // Cloud is opt-in via authenticated configured client; no auto-overwrite.
+      }
+      return !!snapshot;
+    }catch(error){console.warn('Checkpoint not saved:',error);return false;}
+  }
+  updateContinueButton(){
+    const button=this.$id('btn-continue-game');if(!button)return;
+    let exists=false;
+    try{exists=!!window.PokexCheckpoints?.load();}catch(_){exists=false;}
+    button.disabled=!exists;
+    const status=this.$id('save-status');
+    if(status)status.textContent=window.PokexCheckpoints?.isGuestMode?.()?('MODALITÀ UTENTE: PROGRESSI NON SALVATI'):exists?('CHECKPOINT LOCALE DISPONIBILE'):('NESSUNA RUN SALVATA');
+  }
+  continueAdventure(){
+    try{
+      const checkpoint=window.PokexCheckpoints?.load();if(!checkpoint)return false;
+      if(!window.PokexCheckpoints.restore(this,checkpoint))return false;
+      this.logMsg('Avventura ripresa dall’ultimo checkpoint sicuro.');
+      return true;
+    }catch(error){console.error('Resume failed:',error);window.alert('Checkpoint non valido o corrotto.');return false;}
+  }
+  savedProgressText(){
+
+    let data;try{data=window.PokexCheckpoints?.load();}catch(_){}
+    if(!data)return 'Nessun progresso salvato disponibile.';
+    const stats=window.PokexCheckpoints.progress(data);
+    return `Piano ${stats.floor}/80 · Medaglie ${stats.badges}/8 · Pokémon ${stats.pokemon} · PokéCoins $${stats.money}`;
+  }
+  openMenuMessage(type){
+    this.menuMessageType=type;
+    const dialog=this.$id('menu-message'),confirm=this.$id('menu-message-confirm');
+    const content=this.$id('menu-message-text'),cancel=this.$id('menu-message-cancel');
+
+    content.textContent=type==='support'?('Vuoi contattare l’assistenza?'):
+      this.savedProgressText();
+    confirm.classList.toggle('hidden',type!=='support');
+    confirm.textContent='SÌ';cancel.textContent=type==='support'?('NO'):('CHIUDI');
+    dialog.classList.remove('hidden');cancel.focus();
+  }
+  closeMenuMessage(){this.$id('menu-message')?.classList.add('hidden');this.$id('btn-contact-support')?.focus();}
+
+  openPokemartDialog(){
+    if(!this.isTownFloor()||this.isCelestialCave||this.isLocked)return false;
+    this.stopContinuousWalk();this.playerFacing='up';this.playerStep=0;
+    this.isLocked=true;
+    this.triggerNpcEvent({specialRole:'pokemart-clerk',npcName:'Commesso PokéMarket',
+      npcSprite:overworldSpriteUrl('clerk'),npcEvent:'dialogue'});
+    return true;
+  }
+  openPokemartShop(){
+    this.isLocked=true;
+    this.renderSidebar();
+    this.$id('pokemart-overlay')?.classList.remove('hidden');
+    const choice=[...this.$id('pokemart-overlay').querySelectorAll('.mart-catalogue button:not(.hidden):not(:disabled)')][0];
+    (choice||this.$id('close-market-btn'))?.focus();
+    this.logMsg('Hai aperto il PokéMarket.');
+    return true;
+  }
+  closePokemart(){
+    const market=this.$id('pokemart-overlay');
+    if(!market||market.classList.contains('hidden'))return false;
+    market.classList.add('hidden');
+    this.isLocked=true;
+    this.triggerNpcEvent({specialRole:'pokemart-farewell',npcName:'Commesso PokéMarket',
+      npcSprite:overworldSpriteUrl('clerk'),npcEvent:'dialogue'});
+    return true;
+  }
   bindEvents() {
     const safeOnClick = (id, callback) => {
       const el = document.getElementById(id);
@@ -502,11 +412,26 @@ class GameEngine {
     safeOnClick('choose-male',()=>this.selectPlayerGender('male'));
     safeOnClick('choose-female',()=>this.selectPlayerGender('female'));
     safeOnClick('btn-start-game', () => {
-      document.getElementById('main-menu-overlay').classList.add('hidden');
+      const previous=window.PokexCheckpoints?.load();
+      if(previous && !window.confirm('Una nuova avventura sostituirà il checkpoint precedente. Confermi?'))return;
+      // Keep previous checkpoint until starter selection finishes successfully.
+      this.runId='run-'+Date.now();
+      this.$id('main-menu-overlay').classList.add('hidden');
       this.startStarterScene();
     });
+    safeOnClick('btn-continue-game',()=>this.continueAdventure());
 
     safeOnClick('btn-return-main-menu', () => this.returnToMainMenu());
+    safeOnClick('btn-contact-support',()=>this.openMenuMessage('support'));
+    safeOnClick('btn-view-progress',()=>this.openMenuMessage('progress'));
+    safeOnClick('menu-message-cancel',()=>this.closeMenuMessage());
+    safeOnClick('menu-message-confirm',()=>{
+      if(this.menuMessageType!=='support')return;
+      // This URL is the user's exact official support invite; never navigate on NO.
+      window.open('https://discord.com/invite/qNGscTEYHM','_blank','noopener,noreferrer');
+      this.closeMenuMessage();
+    });
+    safeOnClick('btn-raid-api-retry', () => this.retryRaidBattle());
     safeOnClick('btn-victory-photo', () => this.showMemoryPhoto());
     safeOnClick('btn-victory-menu', () => this.returnToMainMenu());
     safeOnClick('btn-photo-back', () => this.returnToVictoryScreen());
@@ -523,11 +448,17 @@ class GameEngine {
     });
     safeOnClick('party-close-action',()=>this.closePartyActions());
     safeOnClick('pokemon-info-close',()=>this.closePokemonInfo());
+    safeOnClick('pokemon-tab-stats',()=>this.selectPokemonInfoTab('stats'));
+    safeOnClick('pokemon-tab-moves',()=>this.selectPokemonInfoTab('moves'));
     safeOnClick('btn-badge-case',()=>this.openBadgeCase());
+    // The Hybrid Pokédex is bound by pokedex-ui.js (sidebar and main menu).
     safeOnClick('badge-case-close',()=>this.closeBadgeCase());
     this.$id('badge-case-overlay')?.addEventListener('click',event=>{if(event.target===event.currentTarget)this.closeBadgeCase();});
 
     safeOnClick('btn-act-fight', () => this.showMoves());
+    safeOnClick('btn-act-bag', () => this.showBagMenu());
+    safeOnClick('battle-close-bag', () => this.showMainActions());
+    safeOnClick('battle-close-team', () => { if(!this.pendingForcedSwitch)this.showMainActions(); });
     safeOnClick('btn-move-back', () => this.showMainActions());
     safeOnClick('btn-act-switch',()=>this.showTeamMenu());
 
@@ -538,7 +469,7 @@ class GameEngine {
         return;
       }
       if (this.battleBusy || this.pendingForcedSwitch || this.hasForcedBattleAction()) return;
-      if(this.activeMon?.trappedTurns>0 && this.activeMon.ability!=='run-away'){
+      if((this.activeMon?.trappedTurns>0 || this.isOpponentTrapping(this.activeMon)) && this.activeMon.ability!=='run-away'){
         this.setBattleMsg(`${this.activeMon.name} non può fuggire: è intrappolato!`);return;
       }
       this.endBattle("Sei fuggito dalla battaglia!");
@@ -557,7 +488,7 @@ class GameEngine {
     safeOnClick('btn-start-gym-leader', () => {
       document.getElementById('gym-leader-intro').classList.add('hidden');
       this.gymLeaderIndex = 0;
-      this.startBattle('gym');
+      this.startBattle('gym',true);
     });
 
     safeOnClick('btn-start-wild-battle', () => {
@@ -581,6 +512,17 @@ class GameEngine {
     safeOnClick('buy-super-potion-btn',()=>this.purchaseItem('superPotion',600));
     safeOnClick('buy-hyper-potion-btn',()=>this.purchaseItem('hyperPotion',1000));
     safeOnClick('buy-elixir-btn', () => this.purchaseItem('elixir',400));
+    safeOnClick('buy-ability-capsule-btn',()=>this.purchaseItem('abilityCapsule',3000));
+    safeOnClick('ability-capsule-cancel',()=>this.closeAbilityCapsule());
+    this.$id('ability-capsule-overlay')?.addEventListener('keydown',event=>{
+      if(event.key==='Escape'){event.preventDefault();event.stopPropagation();this.closeAbilityCapsule();}
+      if(event.key==='Tab'){
+        const choices=[...this.$id('ability-capsule-overlay').querySelectorAll('button:not(:disabled)')];
+        if(!choices.length)return;const first=choices[0],last=choices.at(-1);
+        if(event.shiftKey && document.activeElement===first){event.preventDefault();last.focus();}
+        else if(!event.shiftKey && document.activeElement===last){event.preventDefault();first.focus();}
+      }
+    });
     safeOnClick('buy-radar-btn', () => this.purchaseRadar());
     safeOnClick('gym-entry-yes',()=>this.confirmGymChallenge());
     safeOnClick('gym-entry-no',()=>this.cancelGymChallenge());
@@ -607,8 +549,6 @@ class GameEngine {
       }
     });
     safeOnClick('speed-toggle',()=>this.setGameSpeed(this.speedMultiplier===1?2:1));
-    safeOnClick('language-it',()=>this.setGameLanguage('it'));
-    safeOnClick('language-en',()=>this.setGameLanguage('en'));
     safeOnClick('dev-code-cancel',()=>this.closeDevCode());
     this.$id('dev-code-form')?.addEventListener('submit',event=>{
       event.preventDefault();
@@ -628,16 +568,29 @@ class GameEngine {
     const devPanel=this.$id('developer-panel');
     if(devPanel)devPanel.classList.toggle('hidden',!this.devMode);
 
-    safeOnClick('close-market-btn', () => {
-      document.getElementById('pokemart-overlay').classList.add('hidden');
-      this.isLocked = false;
-      this.logMsg("Hai lasciato il Pokémarket.");
-    });
+    const closeMarket=()=>this.closePokemart();
+    safeOnClick('close-market-btn',closeMarket);
+    safeOnClick('mart-close-x',closeMarket);
+    document.addEventListener('keydown',event=>{
+      const shop=this.$id('pokemart-overlay');if(!shop||shop.classList.contains('hidden'))return;
+      const items=[...shop.querySelectorAll('button:not([disabled]):not(.hidden)')].filter(el=>el.getClientRects().length);
+      if(event.key==='Escape'){event.preventDefault();closeMarket();return;}
+      if(['w','a','s','d','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(event.key)){
+        event.preventDefault();event.stopPropagation();
+        const delta=['w','a','ArrowUp','ArrowLeft'].includes(event.key)?-1:1;
+        const ix=items.indexOf(document.activeElement);
+        items[(ix<0?(delta>0?0:items.length-1):(ix+delta+items.length)%items.length)]?.focus();return;
+      }
+      if((event.code==='Space'||event.key===' ')&&items.includes(document.activeElement)){
+        event.preventDefault();event.stopPropagation();document.activeElement.click();
+      }
+    },true);
 
     safeOnClick('close-box-btn', () => {
       document.getElementById('box-pc-overlay').classList.add('hidden');
       this.isLocked = false;
       this.logMsg("Squadra e PP curati al Centro Pokémon!");
+      this.saveCheckpoint();
     });
 
     safeOnClick('skip-new-move-btn', () => this.resolveMoveChoice(null));
@@ -659,6 +612,8 @@ class GameEngine {
     for(const tab of document.querySelectorAll('[data-bag-tab]')) {
       tab.addEventListener('click', () => {this.bagCategory=tab.dataset.bagTab;this.renderSidebar();});
     }
+
+    this.installBattleKeyboardNavigation();
 
     // All direction sources share one repeat controller. No timer survives
     // pointer cancellation, key release, document focus loss or a modal lock.
@@ -708,6 +663,7 @@ class GameEngine {
       if((this.$id('dev-code-overlay') && !this.$id('dev-code-overlay').classList.contains('hidden')) ||
          (this.$id('floor-jump-overlay') && !this.$id('floor-jump-overlay').classList.contains('hidden')) ||
          e.target?.closest?.('input,textarea,[contenteditable]') || e.ctrlKey || e.altKey || e.metaKey)return;
+      if(!this.$id('pokedex-overlay')?.classList.contains('hidden'))return;
       if(e.key==='Escape' && !this.$id('badge-case-overlay')?.classList.contains('hidden')){this.closeBadgeCase();return;}
       if(e.key==='Escape' && !this.$id('party-action-menu')?.classList.contains('hidden')){this.closePartyActions();return;}
       if(e.code==='Space' && !e.repeat){
@@ -726,6 +682,7 @@ class GameEngine {
       if(!dir)return;
       if(this.$id('pokemon-info-overlay')&&!this.$id('pokemon-info-overlay').classList.contains('hidden'))return;
       if(this.$id('badge-case-overlay')&&!this.$id('badge-case-overlay').classList.contains('hidden'))return;
+      if(this.$id('pokedex-overlay')&&!this.$id('pokedex-overlay').classList.contains('hidden'))return;
       e.preventDefault();
       this.startContinuousWalk(...directions[dir],`key:${dir}`);
     });
@@ -746,33 +703,58 @@ class GameEngine {
     return true;
   }
 
+  walkClock(){return typeof performance!=='undefined'?performance.now():Date.now();}
+
   startContinuousWalk(dx,dy,source){
     if(this.$id('pokemon-info-overlay') && !this.$id('pokemon-info-overlay').classList.contains('hidden'))return false;
     if(this.$id('badge-case-overlay') && !this.$id('badge-case-overlay').classList.contains('hidden'))return false;
+    if(this.$id('pokedex-overlay') && !this.$id('pokedex-overlay').classList.contains('hidden'))return false;
     if(this.$id('party-action-menu') && !this.$id('party-action-menu').classList.contains('hidden'))return false;
     if((this.$id('dev-code-overlay') && !this.$id('dev-code-overlay').classList.contains('hidden')) ||
        (this.$id('floor-jump-overlay') && !this.$id('floor-jump-overlay').classList.contains('hidden')) ||
        this.isLocked||this.adventureCompleted||this.pendingItemTarget||!this.gridMap?.length)return false;
-    if(this.heldWalk?.source===source)return true; // suppress OS key auto-repeat
-    this.stopContinuousWalk();
-    this.heldWalk={dx,dy,source,delay:null,interval:null};
-    this.movePlayer(dx,dy);
-    const holding=this.heldWalk;
-    holding.delay=setTimeout(()=>{
-      if(this.heldWalk!==holding)return;
-      holding.interval=setInterval(()=>{
-        if(this.heldWalk!==holding)return;
-        if(this.isLocked||this.pendingItemTarget||this.adventureCompleted){this.stopContinuousWalk();return;}
-        this.movePlayer(holding.dx,holding.dy);
-      },this.gameDelay(220));
-    },this.gameDelay(240));
+    // Keyboard auto-repeat never creates a second input or an overlapping timer.
+    if(this.walkInputs.has(source))return true;
+    this.walkInputs.set(source,{dx,dy});
+    this.heldWalk={dx,dy,source};
+    // Last pressed direction wins; releasing it resumes an earlier held direction.
+    // A new input during an active step is deferred until the animation ends.
+    this.queueContinuousWalk(true);
     return true;
   }
+
+  queueContinuousWalk(immediate=false){
+    clearTimeout(this.walkHoldTimer);
+    this.walkHoldTimer=null;
+    const input=Array.from(this.walkInputs.values()).at(-1);
+    if(!input)return;
+    if(this.isLocked||this.pendingItemTarget||this.adventureCompleted){this.stopContinuousWalk();return;}
+    const now=this.walkClock();
+    const remaining=Math.max(0,this.walkReadyAt-now);
+    if(immediate&&remaining<=0){
+      this.movePlayer(input.dx,input.dy);
+      this.walkHoldTimer=setTimeout(()=>this.queueContinuousWalk(),Math.max(this.gameDelay(220),this.walkReadyAt-this.walkClock()));
+      return;
+    }
+    const delay=immediate?Math.max(1,remaining):Math.max(this.gameDelay(220),remaining);
+    this.walkHoldTimer=setTimeout(()=>{
+      this.walkHoldTimer=null;
+      const active=Array.from(this.walkInputs.values()).at(-1);
+      if(!active)return;
+      if(this.isLocked||this.pendingItemTarget||this.adventureCompleted){this.stopContinuousWalk();return;}
+      if(this.walkClock()>=this.walkReadyAt-0.25)this.movePlayer(active.dx,active.dy);
+      this.queueContinuousWalk();
+    },delay);
+  }
+
   stopContinuousWalk(source){
-    const holding=this.heldWalk;
-    if(!holding || (source&&source!==holding.source))return;
-    clearTimeout(holding.delay);clearInterval(holding.interval);
-    this.heldWalk=null;
+    if(source)this.walkInputs.delete(source);
+    else this.walkInputs.clear();
+    clearTimeout(this.walkHoldTimer);this.walkHoldTimer=null;
+    const last=Array.from(this.walkInputs.entries()).at(-1);
+    if(!last){this.heldWalk=null;return;}
+    this.heldWalk={source:last[0],...last[1]};
+    this.queueContinuousWalk(true);
   }
 
   async startStarterScene() {
@@ -798,7 +780,9 @@ class GameEngine {
         wrapper.type='button';wrapper.className='pokeball-wrapper';
         wrapper.setAttribute('aria-label',`Seleziona ${data.name}`);
         wrapper.dataset.type=data.elemType;
-        wrapper.innerHTML=`<span class="ball-pad"></span><span class="ball-model" aria-hidden="true"><span class="pokeball-top"></span><span class="pokeball-button"></span><span class="pokeball-bottom"></span></span><span class="starter-name">${data.name.toUpperCase()}</span><span class="starter-kind">${data.elemLabel}</span>`;
+        wrapper.innerHTML='<span class="ball-pad"></span><span class="ball-model" aria-hidden="true"><span class="pokeball-top"></span><span class="pokeball-button"></span><span class="pokeball-bottom"></span></span><span class="starter-name"></span><span class="starter-kind"></span>';
+        wrapper.querySelector('.starter-name').textContent=data.name.toUpperCase();
+        wrapper.querySelector('.starter-kind').textContent=data.elemLabel;
         wrapper.onclick=()=>{
           container.querySelectorAll('.pokeball-wrapper').forEach(b=>b.classList.remove('open'));
           wrapper.classList.add('open');this.selectedStarterData=data;
@@ -813,7 +797,10 @@ class GameEngine {
       });
     }catch(error){
       console.error('Impossibile caricare gli starter',error);
-      container.textContent='Non riesco a caricare i Pokémon. Controlla la connessione e riapri la valigetta.';
+      container.textContent='Connessione ai dati Pokémon non riuscita. ';
+      const retry=document.createElement('button');retry.type='button';retry.className='btn-nav';
+      retry.textContent='RIPROVA';retry.onclick=()=>this.startStarterScene();
+      container.appendChild(retry);
     }
   }
 
@@ -830,11 +817,76 @@ class GameEngine {
     if (!this.selectedStarterData) return;
     this.team = [new Pokemon(this.selectedStarterData, 5)];
     this.activeMon = this.team[0];
+    window.PokexDex?.record(this.activeMon,'caught',`Starter · Piano ${this.floor}`);
     document.getElementById('starter-scene-overlay').classList.add('hidden');
     this.generateFloorDungeon();
+    this.saveCheckpoint();
+    window.dispatchEvent?.(new Event('pokex:dex-battle-ended'));
+  }
+
+  cancelPokemonCenterHealing(){
+    clearTimeout(this.pokemonCenterHealTimer);
+    this.pokemonCenterHealTimer=null;
+    this.pokemonCenterHealSequence=(this.pokemonCenterHealSequence||0)+1;
+  }
+
+  openPokemonCenterDialog(){
+    // Interact from directly in front of the building: keep the village/city
+    // map, floor, avatar position and checkpoint untouched until healing ends.
+    if(!this.isTownFloor()||this.isCelestialCave||this.isLocked)return false;
+    this.stopContinuousWalk();
+    this.isLocked=true;
+    this.playerFacing='up';this.playerStep=0;
+    this.triggerNpcEvent({
+      specialRole:'pokemon-center-nurse',npcName:'Infermiera Joy',
+      npcLine:'Mi prenderò cura dei tuoi Pokémon!',
+      npcSprite:overworldSpriteUrl('nurse'),npcEvent:'dialogue'
+    });
+    this.logMsg('Infermiera Joy: cura la tua squadra al Centro Pokémon.');
+    return true;
+  }
+
+  playPokemonCenterHealSound(){
+    if(typeof Audio==='undefined')return false;
+    try{
+      if(!this.pokemonCenterHealAudio){
+        this.pokemonCenterHealAudio=new Audio('assets/audio/pokeheal.mp3');
+        this.pokemonCenterHealAudio.preload='auto';
+      }
+      this.pokemonCenterHealAudio.pause();this.pokemonCenterHealAudio.currentTime=0;
+      // Separate channel but the same global MUSIC control as the soundtrack.
+      // Muting or moving the volume slider also affects an already-playing heal sound.
+      const manager=window.pokexplorerMusic;
+      if(manager?.registerEffect)manager.registerEffect(this.pokemonCenterHealAudio,.7);
+      else {
+        const sliderVolume=Number(this.$id('music-volume')?.value);
+        this.pokemonCenterHealAudio.volume=.7*Math.max(0,Math.min(100,Number.isFinite(sliderVolume)?sliderVolume:10))/100;
+      }
+      // Never pause, fade, or replace background music.
+      const playing=this.pokemonCenterHealAudio.play();
+      playing?.catch?.(error=>console.warn('Motivetto di cura non riproducibile:',error));
+      return true;
+    }catch(error){console.warn('Errore audio Centro Pokémon',error);return false;}
+  }
+
+  startPokemonCenterHealing(overlay,speech){
+    clearTimeout(this.pokemonCenterHealTimer);
+    const token=++this.pokemonCenterHealSequence;
+    speech.textContent='Mi prenderò cura dei tuoi Pokémon!';
+    this.pokemonCenterHealTimer=setTimeout(()=>{
+      this.pokemonCenterHealTimer=null;
+      if(token!==this.pokemonCenterHealSequence||this.activeDialogNpcCell?.specialRole!=='pokemon-center-nurse'||overlay.classList.contains('hidden'))return;
+      for(const pokemon of this.team)pokemon.healAll();
+      this.renderSidebar();
+      this.playPokemonCenterHealSound();
+      speech.textContent='La tua squadra è in perfetta forma, a presto';
+      this.logMsg('Centro Pokémon: squadra, PP e stati alterati ripristinati.');
+      this.waitForNpcClick(overlay);
+    },2000);
   }
 
 generateFloorDungeon() {
+    this.cancelPokemonCenterHealing();
     this.isCelestialCave=false;this.$id('dungeon-grid-board')?.classList.remove('celestial-cave');
     window.pokexplorerMusic?.setScene('exploration');
     this.gridMap = [];
@@ -842,9 +894,10 @@ generateFloorDungeon() {
     this.isLocked = false;
     this.isRaidActive = false;
     this.raidQueueCount = 0;
+    this.raidTriggeredOnFloor = false;
+    this.clearRaidTransientState();
     this.gymQueue = [];
     this.currentGym = null;
-    this.hiddenRaidPosition = null;
     this.pendingTrainerCell=null;
     this.gymChallengePending = false;
     this.battleMode = null;
@@ -934,7 +987,7 @@ generateFloorDungeon() {
         const c=candidates[i];c.entity='npc';c.decoration=null;
         const officialIndex=(spriteStart+i*5)%this.npcSprites.length;
         c.npcSprite=this.npcSprites[officialIndex];
-        c.npcName=FIRERED_NPC_NAMES[officialIndex].replaceAll('_',' ');
+        c.npcName=FIRERED_NPC_LABELS_IT[officialIndex];
         c.npcLine=this.npcDialogues[(this.floor+i*5)%this.npcDialogues.length];
         c.localSpriteFallback=this.npcFallbacks[officialIndex];
         // The encounter is generated ONCE per NPC, not rerolled each conversation.
@@ -945,21 +998,21 @@ generateFloorDungeon() {
         if(this.floor===5 && i===0){
           c.specialRole='fisherman';c.npcName='Pescatore';
           c.npcLine='Un buon viaggio comincia con una buona canna!';
-          c.npcSprite=`${FIRERED_OVERWORLD_BASE}fisher.png`;
-          c.localSpriteFallback='assets/characters/fisher-overworld-reference.png';
+          c.npcSprite=overworldSpriteUrl('fisher');
+          c.localSpriteFallback='assets/sprites/ui/trainer-avatar-fallback.svg';
         }
         if(this.floor===20 && i===0){
           c.specialRole='exp-share-gift';c.npcName='Assistente Pokémon';
           c.npcLine='Hai sconfitto Misty? Ho qualcosa per la tua squadra.';
-          c.npcSprite=`${FIRERED_OVERWORLD_BASE}scientist.png`;
-          c.localSpriteFallback='assets/characters/scientist-down.png';
+          c.npcSprite=overworldSpriteUrl('scientist');
+          c.localSpriteFallback='assets/sprites/ui/trainer-avatar-fallback.svg';
         }
       }
       if(this.floor===75&&!this.oakEventDismissed){
         const oak=this.gridMap[3][5];oak.type='town-ground';oak.entity='npc';oak.decoration=null;
         oak.specialRole='celestial-oak';oak.npcName='Professor Oak';
-        oak.npcSprite='assets/characters/oak-frlg-down.png';
-        oak.localSpriteFallback='assets/characters/oak-frlg-down.png';
+        oak.npcSprite='assets/sprites/npc/oak-overworld-local.svg';
+        oak.localSpriteFallback='assets/sprites/npc/oak-overworld-local.svg';
       }
       place(9,9,'door');
     } else {
@@ -1006,8 +1059,8 @@ generateFloorDungeon() {
         candidates.splice(candidates.findIndex(v=>v[0]===x&&v[1]===y),1);
         return this.gridMap[y][x];
       };
-      // Raid placement is resolved after ordinary items/trainer placements.
-      // Exactly one hidden raid; it is independent of collectible item count.
+      // Item and trainer placements are independent of the existing surprise-raid trigger.
+      // F02 is intentionally not part of this release.
       const classes=[['Bullo','youngster-gen3','youngster'],['Pigliamosche','bugcatcher-gen3','bug_catcher'],
         ['Fantallenatore','acetrainer-gen3','cooltrainer_m'],['Pokémon Ranger','pokemonranger-gen3','cooltrainer_f'],
         ['Montanaro','hiker-gen3','hiker'],['Campeggiatore','camper-gen3','camper']];
@@ -1015,8 +1068,8 @@ generateFloorDungeon() {
         const c=pick(); if(!c)break;
         const [name,sprite,overworld]=classes[Math.floor(Math.random()*classes.length)];
         c.entity='trainer'; c.trainerName=name;
-        c.trainerSprite=`${TRAINER_PORTRAIT_BASE}${sprite}.png`;
-        c.trainerOverworldSprite=`${FIRERED_OVERWORLD_BASE}${overworld}.png`;
+        c.trainerSprite=overworldPortraitUrl(overworld);
+        c.trainerOverworldSprite=overworldSpriteUrl(overworld);
       }
       for(let i=0,n=1+Math.floor(Math.random()*3);i<n;i++) {
         const c=pick();
@@ -1028,7 +1081,6 @@ generateFloorDungeon() {
         }
       }
       // R2.4: raids are a 10% surprise on collected item tiles, not in grass.
-      this.hiddenRaidPosition=null;
     }
 
     if(isCity || isVillage || this.devMode){
@@ -1106,8 +1158,8 @@ generateFloorDungeon() {
       const exit=this.gridMap[9][5];exit.type='cave-stone';exit.entity='cave-exit';
       this.gridMap[4][5].entity='mewtwo';
       const oak=this.gridMap[7][4];oak.entity='npc';oak.specialRole='cave-oak';
-      oak.npcName='Professor Oak';oak.npcSprite='assets/characters/oak-frlg-down.png';
-      oak.localSpriteFallback='assets/characters/oak-frlg-down.png';
+      oak.npcName='Professor Oak';oak.npcSprite='assets/sprites/npc/oak-overworld-local.svg';
+      oak.localSpriteFallback='assets/sprites/npc/oak-overworld-local.svg';
       this.$id('area-type-label').textContent='GROTTA CELESTE';
       this.renderDungeon();this.renderSidebar();
     });
@@ -1151,41 +1203,32 @@ generateFloorDungeon() {
       this.$id('area-type-label').textContent='VILLAGGIO';
       this.renderDungeon();this.renderSidebar();
     });
-    this.isLocked=false;this.logMsg('Sei tornato al villaggio prima della palestra di Giovanni.');
+    this.isLocked=false;this.logMsg('Sei tornato al villaggio prima della palestra di Giovanni.');this.saveCheckpoint();
   }
-  revealArea(px, py) {
-    for (let dy = -1; dy <= 1; dy++) {
-      for (let dx = -1; dx <= 1; dx++) {
-        const nx = px + dx, ny = py + dy;
-        if (nx >= 0 && nx < this.gridSize && ny >= 0 && ny < this.gridSize) {
-          this.gridMap[ny][nx].revealed = true;
-        }
-      }
-    }
-  }
-
-  scanRadar() {
-    if(this.isLocked || !this.gridMap?.length)return;
-    if(!this.gridMap.some(row=>row.some(cell=>!cell.revealed))){
-      this.logMsg('Mappa già esplorata: nessuna scansione consumata.');return;
-    }
-    if(this.radarCharges<=0){this.logMsg('Radar esaurito: acquista un utilizzo al Pokémarket (1.500 Pokécoins).');return;}
-    this.radarCharges--;
-    for(const row of this.gridMap)for(const cell of row)cell.revealed=true;
-    this.renderDungeon();this.renderSidebar();
-    this.logMsg(`Rotom Radar attivato! Utilizzi rimanenti: ${this.radarCharges}.`);
-  }
-
+  // revealArea moved to js/map-helpers.js (R2.22 modularisation).
+  // scanRadar moved to js/map-helpers.js (R2.22 modularisation).
   collectFloorItem(cell){
-    if(!cell || cell.entity!=='item')return false;
+    if(!cell || cell.entity!=='item' || this.isRaidActive || this.raidBattleRetryPending)return false;
     if(!cell.itemKind){
       // Legacy maps without an assigned drop are upgraded once, never rerolled.
       const roll=Math.random();
       cell.itemKind=roll<.4?'pokeball':roll<.8?healingTier(this.floor).id:'elixir';
     }
-    // 10% chance of a raid in place of the collectible, not in addition to it.
-    // The item does not enter the inventory in this outcome.
-    if(!this.isTownFloor() && Math.random()<.10){
+    // Transactional check: a full inventory must not consume the tile,
+    // including via the existing (unchanged) surprise-raid chance.
+    if(!this.canAcceptItem(cell.itemKind)){
+      const name={pokeball:'POKÉ BALL',potion:'POZIONE',superPotion:'SUPERPOZIONE',hyperPotion:'IPERPOZIONE',elixir:'ELISIR'}[cell.itemKind]||'OGGETTO';
+      this.logMsg(`Zaino pieno: ${name} rimane a terra. Torna dopo aver liberato spazio.`);
+      this.showDiscoveryNotice(`ZAINO PIENO · ${name}`);
+      return false;
+    }
+    // Each successfully attempted collectible independently rolls a 10% Raid.
+    // Only active/pending Raid state blocks another activation. A failed first
+    // opponent load preserves the original roll on the same source cell.
+    if(cell.raidRetryPending || Math.random()<.10){
+      this.raidPickupSourceCell=cell;
+      this.raidTriggeredOnFloor=true;
+      cell.raidRetryPending=false;
       cell.entity=null;
       this.renderDungeon();
       this.logMsg('La Poké Ball nasconde una sfida RAID!');
@@ -1200,9 +1243,14 @@ generateFloorDungeon() {
     }
     this.logMsg(collected?`Hai trovato: ${label}!`:`Zaino pieno: ${label} rimane a terra. Torna dopo aver liberato spazio.`);
     this.showDiscoveryNotice(collected?`${label} RACCOLTO!`:`ZAINO PIENO · ${label}`);
+    if(collected)this.saveCheckpoint();
     return collected;
   }
 
+  canAcceptItem(id){
+    if(id==='fishingRod')return !this.items.fishingRod;
+    return BAG_LIMITS[id]!==undefined && (this.items[id]||0)<BAG_LIMITS[id];
+  }
   grantItem(id,count=1){
     const limit=BAG_LIMITS[id]; if(limit===undefined)return false;
     if(id==='fishingRod'){if(this.items.fishingRod)return false;this.items.fishingRod=true;return true;}
@@ -1211,7 +1259,7 @@ generateFloorDungeon() {
     this.items[id]+=Math.min(available,count);return true;
   }
   purchaseItem(id,price){
-    if(id==='superPotion' && this.floor<21 || id==='hyperPotion' && this.floor<51){this.logMsg('Questo rimedio non è ancora disponibile.');return false;}
+    if(!isPokemartItemUnlocked(id,this.floor)){this.logMsg('Questo rimedio non è ancora disponibile in questo PokéMarket.');return false;}
     if(this.money<price){this.logMsg(`Pokécoins insufficienti: servono ${price}.`);return false;}
     if(!this.grantItem(id)){this.logMsg('Capacità massima raggiunta!');return false;}
     this.money-=price;this.renderSidebar();this.logMsg('Acquisto completato!');return true;
@@ -1239,8 +1287,10 @@ generateFloorDungeon() {
     if (this.isLocked || this.pendingItemTarget || this.adventureCompleted || !this.gridMap?.length) return;
     // A tile must complete its walking cycle before another one begins.
     // Logical collisions remain tile-based; only the sprite interpolates.
-    if(Date.now()<this.walkReadyAt)return;
+    if(this.walkClock()<this.walkReadyAt)return;
+    if(Math.abs(dx)+Math.abs(dy)!==1)return; // never allow diagonals / zero steps
     this.playerFacing=dx<0?'left':dx>0?'right':dy<0?'up':'down';
+    this.playerStep=0;
     const nx = this.playerPos.x + dx;
     const ny = this.playerPos.y + dy;
 
@@ -1256,6 +1306,7 @@ generateFloorDungeon() {
         this.logMsg('L’acqua profonda circonda la Grotta Celeste.');return;
       }
       if (targetCell.type === 'water') {
+        this.renderDungeon();
         if (!this.items.fishingRod) {
           this.logMsg("Ti serve una Canna da Pesca per pescare!");
           return;
@@ -1288,7 +1339,7 @@ generateFloorDungeon() {
       const interactFromAdjacent=this.isSolidTownCell(targetCell);
       if(!interactFromAdjacent){
         this.walkDurationMs=this.gameDelay(210);
-        this.walkReadyAt=Date.now()+this.walkDurationMs;
+        this.walkReadyAt=this.walkClock()+this.walkDurationMs;
         this.playerStep=1;
         this.pendingWalk={dx,dy};
         this.playerPos={x:nx,y:ny};
@@ -1302,17 +1353,15 @@ generateFloorDungeon() {
       }
 
       if (targetCell.entity === 'pokecenter') {
-        this.team.forEach(p => p.healAll());
-        this.isLocked = true;
-        document.getElementById('box-pc-overlay').classList.remove('hidden');
-        this.logMsg("Centro Pokémon: Squadra e PP curati!");
-        this.renderSidebar();
-        this.renderDungeon();
+        // Direct Nurse Joy conversation, without loading an indoor dungeon.
+        if(this.playerPos.x===2&&this.playerPos.y===3&&dx===0&&dy===-1){
+          this.openPokemonCenterDialog();
+        }else this.logMsg('Parla con l’infermiera Joy davanti all’ingresso sul lato sud.');
         return;
       } else if (targetCell.entity === 'pokemart') {
-        this.isLocked = true;
-        document.getElementById('pokemart-overlay').classList.remove('hidden');
-        this.logMsg("Hai aperto il Pokémarket.");
+        if(this.playerPos.x===7&&this.playerPos.y===3&&dx===0&&dy===-1){
+          this.openPokemartDialog();
+        }else this.logMsg('Parla con il commesso davanti all’ingresso sul lato sud.');
         return;
       } else if (targetCell.entity === 'npc') {
         this.isLocked = true;
@@ -1362,12 +1411,13 @@ generateFloorDungeon() {
         this.floor++;
         this.logMsg(`Sei salito al Livello ${this.floor}!`);
         this.generateFloorDungeon();
+        this.saveCheckpoint();
         return;
       } else if(!this.isCelestialCave && targetCell.type==='grass' && this.rollLegendaryEncounter()){
         this.pendingWildEncounterType='legendary';this.isLocked=true;
         this.$id('wild-encounter-overlay').classList.remove('hidden');
         this.logMsg('Una presenza leggendaria ti osserva!');
-      } else if (!this.isCelestialCave && targetCell.type === 'grass' && Math.random() < GAME_BALANCE.wildEncounterChance) {
+      } else if (!this.isCelestialCave && targetCell.type === 'grass' && Math.random() < GAME_BALANCE.wildEncounterChance * (this.activeMon?.ability==='illuminate'?1.75:this.activeMon?.ability==='stench'?0.5:1)) {
         this.isLocked = true;
         this.logMsg('Un Pokémon selvatico è comparso!');
         document.getElementById('wild-encounter-overlay').classList.remove('hidden');
@@ -1379,10 +1429,14 @@ generateFloorDungeon() {
 
   rollLegendaryEncounter(random=Math.random){
     if(this.badgeCount()<3)return false;
-    // Independent probabilities: 3% per available species, 9% total initially.
+    // TASK-007: 0.08% per still-available bird, per valid grass step.
+    // Keep fixed intervals: already-owned birds do NOT boost the other odds.
     const owned=new Set([...(this.caughtLegendarySpecies||[]),...this.team.map(mon=>Number(mon.id))]);
-    const roll=Math.min(.999999,Math.max(0,Number(random())));
-    const index=Math.floor(roll/.03);
+    const roll=Math.min(.999999999,Math.max(0,Number(random())));
+    // Integer tickets avoid floating-point ambiguity at 0.08% boundaries.
+    const ticket=Math.floor(roll*1_000_000);
+    const ticketsPerBird=LEGENDARY_BIRD_CHANCE_PER_STEP*1_000_000; // exactly 800
+    const index=Math.floor(ticket/ticketsPerBird);
     const birds=[144,145,146];
     if(index>=birds.length||owned.has(birds[index]))return false;
     this.pendingLegendaryId=birds[index];return true;
@@ -1421,17 +1475,39 @@ generateFloorDungeon() {
     this.$id('trainer-encounter-overlay').classList.remove('hidden');
     return true;
   }
+  clearRaidTransientState(){
+    // Invalidate a pending "tap to enter the Raid" callback when the player
+    // changes dungeon or returns to the menu.
+    this.raidLaunchNonce=(this.raidLaunchNonce||0)+1;
+    this.cancelRaidNotice?.();
+    this.raidPickupSourceCell=null;
+    this.raidBattleRetryPending=false;
+    this.$id('raid-api-error')?.classList.add('hidden');
+    this.$id('pokenav-screen-root')?.classList.remove('raid-discovery');
+  }
   beginHiddenRaid(){
-    if(this.isRaidActive)return false;
+    if(this.isRaidActive || this.raidBattleRetryPending)return false;
+    this.raidTriggeredOnFloor=true;
     this.isRaidActive=true;this.raidQueueCount=5;this.isLocked=true;
+    const launch=++this.raidLaunchNonce;
     this.logMsg('Hai scoperto un RAID nascosto! Cinque battaglie senza cattura.');
     const root=this.$id('pokenav-screen-root');
     root.classList.add('raid-discovery');
     this.showDiscoveryNotice('RAID SEGRETO! 5 LOTTE · NESSUNA CATTURA',0);
     this.waitForNotice().then(()=>{
+      if(launch!==this.raidLaunchNonce)return;
       root.classList.remove('raid-discovery');
       if(this.isRaidActive)this.startBattle('wild');
     });
+    return true;
+  }
+  retryRaidBattle(){
+    // The failed opponent was never awarded XP; retry that same queue slot.
+    if(!this.isRaidActive || !this.raidBattleRetryPending ||
+       this.raidQueueCount<1 || this.raidQueueCount>5)return false;
+    this.raidBattleRetryPending=false;
+    this.$id('raid-api-error')?.classList.add('hidden');
+    this.startBattle('wild',true);
     return true;
   }
   getEncounterPool(type){
@@ -1560,13 +1636,13 @@ generateFloorDungeon() {
     for(let level=previousLevel;level<target;level++)needed+=experienceForNextLevel(pokemon.growthRate,level);
     this.devUpgradeInProgress=true;this.isLocked=true;
     try{
-      const events=await pokemon.gainExperience(Math.max(0,needed),100);
+      const events=await pokemon.gainExperience(Math.max(0,needed),100,options=>this.chooseEvolution(pokemon,options));
       if(pokemon.level<=previousLevel)throw new Error('Nessun aumento di livello');
       this.items[id]--;
       this.renderSidebar();
       this.logMsg(`${id==='goldCandy'?'Caramella d’Oro':'Caramella Rara'}: ${pokemon.name} passa dal Lv.${previousLevel} al Lv.${pokemon.level}!`);
       for(const event of events){
-        if(event.evolution)await this.showEvolution(pokemon,event.evolution);
+        if(event.evolution){window.PokexDex?.record(pokemon,'caught',`Evoluzione · Piano ${this.floor}`);await this.showEvolution(pokemon,event.evolution);}
         for(const move of event.moves)await this.learnMove(move,pokemon);
       }
       return true;
@@ -1594,7 +1670,7 @@ generateFloorDungeon() {
     if(!this.devMode||(this.isBattleVisible()&&this.battleType==='gym')||this.gymQueue.length)return false;
     if(this.isRaidActive){
       this.isRaidActive=false;this.raidQueueCount=0;
-      this.$id('pokenav-screen-root')?.classList.remove('raid-discovery');
+      this.clearRaidTransientState();
       this.endBattle('RAID saltato in Dev Mode. Nessuna ricompensa.');
       this.$id('wild-encounter-overlay')?.classList.add('hidden');
       return true;
@@ -1615,78 +1691,50 @@ generateFloorDungeon() {
   }
 
   getNpcLocalFallback(npcCell,x=0,y=0){
-    if(npcCell?.localSpriteFallback)return npcCell.localSpriteFallback;
-    if(npcCell?.specialRole==='fisherman')return 'assets/characters/fisher-overworld-reference.png';
-    if(['celestial-oak','cave-oak'].includes(npcCell?.specialRole))return 'assets/characters/oak-frlg-down.png';
-    if(npcCell?.specialRole==='exp-share-gift')return 'assets/characters/scientist-down.png';
-    if(npcCell?.specialRole==='gate-police')return 'assets/characters/policeman-down.png';
-    const map={
-      youngster:'assets/characters/npc-01.png',
-      lass:'assets/characters/npc-02.png',
-      balding_man:'assets/characters/npc-11.png',
-      old_woman:'assets/characters/npc-04.png',
-      cooltrainer_m:'assets/characters/npc-05.png',
-      cooltrainer_f:'assets/characters/npc-06.png',
-      picnicker:'assets/characters/npc-07.png',
-      camper:'assets/characters/npc-08.png',
-      nurse:'assets/characters/npc-09.png',
-      policeman:'assets/characters/policeman-down.png',
-      hiker:'assets/characters/npc-10.png',
-      scientist:'assets/characters/scientist-down.png',
-      rich_boy:'assets/characters/npc-11.png',
-      sailor:'assets/characters/npc-12.png',
-      gentleman:'assets/characters/npc-13.png',
-      clerk:'assets/characters/npc-14.png',
-      fisherman:'assets/characters/fisher-down.png'
-    };
-    const key=String(npcCell?.npcName||'').toLowerCase().replaceAll(' ','_');
-    return map[key] || this.npcFallbacks[(x+y+this.floor)%this.npcFallbacks.length];
+    if(npcCell?.localSpriteFallback)return resolvedSpritePath(npcCell.localSpriteFallback);
+    if(npcCell?.specialRole==='fisherman')return 'assets/sprites/ui/trainer-avatar-fallback.svg';
+    if(['celestial-oak','cave-oak'].includes(npcCell?.specialRole))return 'assets/sprites/npc/oak-overworld-local.svg';
+    if(npcCell?.specialRole==='exp-share-gift')return 'assets/sprites/ui/trainer-avatar-fallback.svg';
+    if(npcCell?.specialRole==='gate-police')return 'assets/sprites/ui/trainer-avatar-fallback.svg';
+    // Do not pretend the removed placeholder portraits match FireRed NPCs.
+    return this.npcFallbacks[(x+y+this.floor)%this.npcFallbacks.length];
   }
   // R2.12: a dialogue portrait must represent the same sprite displayed on
   // the map. The old role-to-SVG table was unrelated to the actual map sprite:
   // e.g. the dialogue could show a different character entirely.
   getNpcPortraitAsset(npcCell){
-    if(npcCell?.specialRole==='fisherman')return 'assets/characters/fisher-overworld-dialog-exact.png';
-    if(['celestial-oak','cave-oak'].includes(npcCell?.specialRole))return 'assets/characters/oak-frlg-mugshot-clean.png';
-    return npcCell?.npcSprite || this.npcSprites[0];
+    if(['celestial-oak','cave-oak'].includes(npcCell?.specialRole))return 'assets/sprites/npc/oak-frlg-mugshot.png';
+    if(npcCell?.specialRole==='pokemon-center-nurse')return overworldPortraitUrl('nurse');
+    if(npcCell?.specialRole==='pokemart-clerk')return overworldPortraitUrl('clerk');
+    if(npcCell?.specialRole==='fisherman')return overworldPortraitUrl('fisher');
+    if(npcCell?.specialRole==='gate-police')return overworldPortraitUrl('policeman');
+    const raw=String(npcCell?.npcSprite||'');
+    let key='';
+    if(raw.startsWith(FIRERED_OVERWORLD_BASE))key=raw.slice(FIRERED_OVERWORLD_BASE.length).replace(/\.png$/,'');
+    else if(raw.includes('/npc/overworld/'))key=raw.split('/').at(-1).replace(/\.png$/,'');
+    if(!key){
+      const name=String(npcCell?.npcName||'').toLowerCase();
+      if(['gentleman','gentiluomo'].includes(name))key='gentleman';
+      else if(['balding man','anziano'].includes(name))key='balding_man';
+      else if(['policeman','poliziotto'].includes(name))key='policeman';
+      else if(['scientist','scienziato'].includes(name))key='scientist';
+      else if(['clerk','commesso pokémarket'].includes(name))key='clerk';
+      else {const ix=FIRERED_NPC_LABELS_IT.findIndex(v=>v.toLowerCase()===name);
+        if(ix>=0)key=FIRERED_NPC_NAMES[ix];}
+    }
+    return overworldPortraitUrl(key)||'assets/sprites/ui/trainer-avatar-fallback.svg';
   }
   renderNpcPortrait(npcCell){
-    const slot=this.$id('npc-portrait-img');
-    if(!slot)return;
-    slot.replaceChildren();
-    slot.style.removeProperty('background');
-    slot.style.removeProperty('background-image');
+    const slot=this.$id('npc-portrait-img');if(!slot)return;
+    slot.replaceChildren();slot.style.removeProperty('background');slot.style.removeProperty('background-image');
     slot.classList.add('npc-portrait-local');
-    slot.classList.toggle('npc-portrait-fisher',npcCell?.specialRole==='fisherman');
-    slot.classList.toggle('npc-portrait-match-map',npcCell?.specialRole!=='fisherman');
+    slot.classList.toggle('npc-portrait-nurse',npcCell?.specialRole==='pokemon-center-nurse');
     slot.setAttribute('aria-label',npcCell?.npcName||'Abitante');
-    if(['celestial-oak','cave-oak'].includes(npcCell?.specialRole)){
-      const portrait=document.createElement('img');
-      portrait.className='npc-portrait-illustration npc-portrait-oak';
-      portrait.alt='';portrait.src=this.getNpcPortraitAsset(npcCell);
-      slot.append(portrait);return;
-    }
-    if(npcCell?.specialRole==='fisherman'){
-      // User-selected red-cap overworld sprite isolated from screenshot 1: exactly one image, no underlying seated character.
-      const img=document.createElement('img');
-      img.className='npc-portrait-illustration npc-portrait-fisher-only';
-      img.alt='';img.src=this.getNpcPortraitAsset(npcCell);
-      slot.append(img);
-      return;
-    }
-    const crop=document.createElement('span');
-    crop.className='npc-portrait-frame';
     const img=document.createElement('img');
-    img.className='npc-portrait-frame-img';img.alt='';
-    // The overworld also shows frame zero of this 16 x 32 FireRed spritesheet.
-    // The same fallback is used if the remote sprite fails to load.
-    img.onerror=()=>{
-      img.onerror=null;
-      img.src=this.getNpcLocalFallback(npcCell);
-      crop.classList.add('local-fallback');
-    };
-    img.src=this.getNpcPortraitAsset(npcCell);
-    crop.append(img);slot.append(crop);
+    img.className='npc-portrait-illustration pokex-portrait';
+    img.alt='';img.src=this.getNpcPortraitAsset(npcCell);
+    img.onerror=()=>{img.onerror=null;img.src='assets/sprites/ui/trainer-avatar-fallback.svg';};
+    slot.append(img);
   }
   hideDialogNpcBackground(hide,npcCell=null){
     this.activeDialogNpcCell=hide?npcCell:null;
@@ -1694,11 +1742,19 @@ generateFloorDungeon() {
     if(this.gridMap?.length)this.renderDungeon();
   }
   closeNpcDialog(){
+    this.cancelPokemonCenterHealing();
     const overlay=this.$id('npc-dialog-overlay');
     overlay?.classList.add('hidden');
+    // Do not leave a pending click that can close the next conversation.
+    clearTimeout(this.pendingNpcAdvanceTimer);
+    if(this.pendingNpcAdvance)document.removeEventListener('pointerdown',this.pendingNpcAdvance,true);
+    if(this.pendingNpcAdvanceKey)document.removeEventListener('keydown',this.pendingNpcAdvanceKey,true);
+    this.pendingNpcAdvanceKey=null;
+    overlay?.querySelector('.npc-click-hint')?.remove();
     this.isLocked=false;
     this.pendingNpcAdvance=null;
     this.hideDialogNpcBackground(false);
+    this.saveCheckpoint();
   }
 
   triggerNpcEvent(npcCell) {
@@ -1710,8 +1766,19 @@ generateFloorDungeon() {
     overlay.classList.remove('hidden');
     actions.style.display='none';
     // NPC branch handlers populate their text synchronously before this microtask.
-    Promise.resolve().then(()=>this.translateVisibleUI());
     // The EXP Share is awarded by an NPC after the second badge, not automatically.
+    if(npcCell.specialRole==='pokemon-center-nurse'){
+      this.startPokemonCenterHealing(overlay,speech);return;
+    }
+    if(npcCell.specialRole==='pokemart-clerk'){
+      speech.textContent='Commesso: «Benvenuto al PokéMarket! Cosa desideri acquistare?»';
+      this.waitForNpcClick(overlay,()=>{this.closeNpcDialog();this.openPokemartShop();});
+      return;
+    }
+    if(npcCell.specialRole==='pokemart-farewell'){
+      speech.textContent='Commesso: «Grazie per la visita! Torna a trovarci!»';
+      this.waitForNpcClick(overlay);return;
+    }
     if(npcCell.specialRole==='celestial-oak'){this.showOakIntroduction();return;}
     if(npcCell.specialRole==='cave-oak'){
       speech.textContent=this.celestialPhase==='complete'?'Professor Oak: “L’impresa è compiuta. L’uscita è in basso.”':
@@ -1772,6 +1839,7 @@ generateFloorDungeon() {
           this.team[index]=received;
           this.activeMon=received;
           npcCell.tradeCompleted=true;
+          window.PokexDex?.record(received,'caught',`Scambio NPC · Piano ${this.floor}`);
           this.logMsg(`Scambio effettuato! Ora hai ${received.name}!`);
           this.closeNpcDialog();this.renderSidebar();
         }catch(error){
@@ -1806,19 +1874,34 @@ generateFloorDungeon() {
     }
   }
 
-  waitForNpcClick(overlay){
+  waitForNpcClick(overlay,onAdvance=()=>this.closeNpcDialog()){
+    clearTimeout(this.pendingNpcAdvanceTimer);
+    if(this.pendingNpcAdvance)document.removeEventListener('pointerdown',this.pendingNpcAdvance,true);
+    if(this.pendingNpcAdvanceKey)document.removeEventListener('keydown',this.pendingNpcAdvanceKey,true);
+    this.pendingNpcAdvanceKey=null;
     overlay.querySelector?.('.npc-click-hint')?.remove();
     const hint=document.createElement('div');
     hint.className='npc-click-hint';hint.textContent='CLICCA PER CONTINUARE ▾';
     overlay.appendChild(hint);
     const listener=()=>{
-      this.closeNpcDialog();hint.remove();
-      this.pendingNpcAdvance=null;
       document.removeEventListener('pointerdown',listener,true);
+      if(this.pendingNpcAdvanceKey)document.removeEventListener('keydown',this.pendingNpcAdvanceKey,true);
+      this.pendingNpcAdvance=null;this.pendingNpcAdvanceKey=null;
+      onAdvance();
     };
     this.pendingNpcAdvance=listener;
-    // Il prossimo clic, e non un timer, fa avanzare il dialogo.
-    setTimeout(()=>document.addEventListener('pointerdown',listener,true),20);
+    const keyListener=(event)=>{
+      if(!['Space','Enter'].includes(event.code)&&event.key!==' ')return;
+      event.preventDefault();event.stopImmediatePropagation();listener();
+    };
+    this.pendingNpcAdvanceKey=keyListener;
+    this.pendingNpcAdvanceTimer=setTimeout(()=>{
+      this.pendingNpcAdvanceTimer=null;
+      if(this.pendingNpcAdvance===listener&&!overlay.classList.contains('hidden')){
+        document.addEventListener('pointerdown',listener,true);
+        document.addEventListener('keydown',keyListener,true);
+      }
+    },20);
   }
 
   createSingleFrameAvatar(url,fallback,description,extraClass=''){
@@ -1828,8 +1911,11 @@ generateFloorDungeon() {
     frame.className=`grid-icon official-overworld single-frame sprite-frame ${extraClass}`;
     frame.setAttribute('role','img');frame.setAttribute('aria-label',description);
     const image=document.createElement('img');image.className='overworld-frame-img';
-    image.src=url;image.alt='';image.loading='eager';image.decoding='async';
-    image.onerror=()=>{image.onerror=null;image.src=fallback;
+    image.src=resolvedSpritePath(url);image.alt='';image.loading='eager';image.decoding='async';
+    // Regular FireRed URLs are horizontally-arranged sheets: CSS clips the
+    // first 16x32 overworld frame.  Do not resize a dialogue portrait here.
+    if(image.src.endsWith('.svg')){frame.classList.add('pokex-single-frame');image.style.width='16px';image.style.height='32px';}
+    image.onerror=()=>{image.onerror=null;image.src=resolvedSpritePath(fallback);
       frame.classList.add('local-fallback');
       image.style.width='16px';image.style.height='32px';};
     frame.appendChild(image);return frame;
@@ -1842,8 +1928,10 @@ generateFloorDungeon() {
     board.classList.toggle('celestial-cave',this.isCelestialCave);
     const avatarFolder=this.playerGender==='female'?'girl':'red';
     const spriteUrl=this.playerFishingFrame!==null ?
-      `assets/${avatarFolder}/fish/${this.playerFacing}-${this.playerFishingFrame}.png` :
-      `assets/${avatarFolder}/walk/${this.playerFacing}-${this.playerStep}.png`;
+      (avatarFolder==='girl' && this.playerFacing!=='down'
+        ? `assets/sprites/player/girl/walk/${this.playerFacing}-${Math.min(this.playerFishingFrame,2)}.png`
+        : `assets/sprites/player/${avatarFolder}/fish/${this.playerFacing}-${this.playerFishingFrame}.png`) :
+      `assets/sprites/player/${avatarFolder}/walk/${this.playerFacing}-${this.playerStep}.png`;
     const actorName=this.playerGender==='female'?'Allenatrice':'Allenatore';
     const size=this.gridSize;
     const fresh=this._renderedGrid!==this.gridMap || board.querySelectorAll(':scope > .grid-cell').length!==size*size;
@@ -1857,7 +1945,7 @@ generateFloorDungeon() {
     avatar.classList.add('grid-icon','player-avatar');
     avatar.classList.toggle('red-local-sprite',avatarFolder==='red');
     avatar.classList.toggle('girl-local-sprite',avatarFolder==='girl');
-    avatar.classList.toggle('local-fishing-sprite',this.playerFishingFrame!==null);
+    avatar.classList.toggle('local-fishing-sprite',this.playerFishingFrame!==null && !(avatarFolder==='girl' && this.playerFacing!=='down'));
     avatar.setAttribute('role','img');
     avatar.setAttribute('aria-label',`${actorName} rivolto verso ${this.playerFacing}`);
     if(this.pendingWalk || !avatar.classList.contains('walk-arrival'))
@@ -1908,21 +1996,21 @@ generateFloorDungeon() {
             if(this.activeDialogNpcCell!==cell && ['celestial-oak','cave-oak'].includes(cell.specialRole)){
               const oak=document.createElement('img');oak.className='celestial-oak-sprite';
               node.appendChild(this.createSingleFrameAvatar(
-                cell.npcSprite||'assets/characters/oak-frlg-down.png',
-                'assets/characters/oak-frlg-down.png','Professor Oak','celestial-oak-sprite'));
+                cell.npcSprite||'assets/sprites/npc/oak-overworld-local.svg',
+                'assets/sprites/npc/oak-overworld-local.svg','Professor Oak','celestial-oak-sprite'));
             }else if(this.activeDialogNpcCell!==cell){
               const fallback=this.getNpcLocalFallback(cell,x,y);
               node.appendChild(this.createSingleFrameAvatar(cell.npcSprite||this.npcSprites[0],
                 fallback,`Abitante: ${cell.npcName||'Pokémon Rosso Fuoco'}`,'town-npc'));
             }
           }else if(cell.entity==='door'){
-            if(locked)node.appendChild(this.createSingleFrameAvatar(`${FIRERED_OVERWORLD_BASE}policeman.png`,
-              'assets/characters/policeman-down.png','Poliziotto: serve la medaglia per proseguire','gate-police'));
+            if(locked)node.appendChild(this.createSingleFrameAvatar(overworldSpriteUrl('policeman'),
+              'assets/sprites/ui/trainer-avatar-fallback.svg','Poliziotto: serve la medaglia per proseguire','gate-police'));
             else node.innerHTML='<span class="exit-arrow" role="img" aria-label="Uscita verso destra">➜</span>';
-          }else if(cell.entity==='item')node.innerHTML='<img class="grid-icon" src="assets/items/pokeball-game.png" alt="Oggetto">';
+          }else if(cell.entity==='item')node.innerHTML='<img class="grid-icon" src="assets/sprites/items/pokeball-game.png" alt="Oggetto">';
           else if(cell.entity==='trainer'){
             node.appendChild(this.createSingleFrameAvatar(
-              cell.trainerOverworldSprite||`${FIRERED_OVERWORLD_BASE}youngster.png`,
+              cell.trainerOverworldSprite||overworldSpriteUrl('youngster'),
               this.npcFallbacks[(x+y+this.floor)%this.npcFallbacks.length],
               cell.trainerName||'Allenatore','route-trainer'));
           }else if(cell.decoration){
@@ -1938,7 +2026,9 @@ generateFloorDungeon() {
       if(cell.revealed && ['house','pokemart','pokecenter','gym'].includes(cell.entity)){
         const building=document.createElement('img');
         building.className='map-building-overlay';
-        building.src=`assets/${cell.entity}.svg`;
+        const houseVariant=1+((x*7+y*3+this.floor)%3);
+        building.src=cell.entity==='house'?`assets/sprites/buildings/house-${houseVariant}.png`:
+          `assets/sprites/buildings/${cell.entity}.png`;
         building.alt=({house:'Casa',pokemart:'Pokémarket',pokecenter:'Centro Pokémon',gym:'Palestra'})[cell.entity];
         building.setAttribute('aria-hidden','true');
         // Overlay is anchored to the bottom of its tile, and sorted against
@@ -1954,7 +2044,7 @@ generateFloorDungeon() {
       if(cell.revealed && (cell.type==='tree'||cell.decoration)){
         const scenery=document.createElement('img');
         scenery.className='map-scenery-overlay'+(cell.type==='tree'?' scenery-tree':' scenery-decoration');
-        scenery.src=cell.type==='tree'?'assets/tree.svg':`assets/decor/${cell.decoration}.svg`;
+        scenery.src=cell.type==='tree'?'assets/sprites/world/tree.svg':`assets/sprites/decor/${cell.decoration}.svg`;
         scenery.alt='';scenery.setAttribute('aria-hidden','true');
         scenery.style.left=`${(x+.5)*100/size}%`;
         scenery.style.bottom=`${(size-y-1)*100/size}%`;
@@ -1976,7 +2066,7 @@ generateFloorDungeon() {
       const sequence=++this.walkSequence,facing=this.playerFacing;
       const frame=(step)=>{
         if(sequence===this.walkSequence&&avatar.isConnected)
-          avatar.style.backgroundImage=`url('assets/${avatarFolder}/walk/${facing}-${step}.png')`;
+          avatar.style.backgroundImage=`url('assets/sprites/player/${avatarFolder}/walk/${facing}-${step}.png')`;
       };
       frame(1);
       void avatar.offsetWidth;
@@ -1989,45 +2079,26 @@ generateFloorDungeon() {
         if(sequence===this.walkSequence)avatar.classList.remove('walk-arrival');
         this.playerStep=0;
       },this.walkDurationMs);
-    }else if(Date.now()>=this.walkReadyAt){
+    }else if(this.walkClock()>=this.walkReadyAt){
       avatar.classList.remove('walk-arrival');
     }
   }
 
-  async getPokemonData(id) {
-    const key = String(id);
-    if (!this.pokemonCache.has(key)) {
-      const promise=fetch(`https://pokeapi.co/api/v2/pokemon/${key}`)
-        .then(res=>{ if(!res.ok) throw new Error(`PokéAPI ${res.status}`); return res.json(); })
-        .then(async data=>{
-          // /pokemon returns combat data; /pokemon-species carries the growth rate.
-          // Resolve it only once per species and tolerate temporary network failures.
-          const species=data.species?.name||data.id;
-          try{
-            const res=await fetch(`https://pokeapi.co/api/v2/pokemon-species/${species}`);
-            if(res.ok){const details=await res.json();data.growth_rate=details.growth_rate;}
-          }catch(error){console.warn('Gruppo di crescita non disponibile, uso il fallback',error);}
-          return data;
-        })
-        .catch(err=>{ this.pokemonCache.delete(key); throw err; });
-      this.pokemonCache.set(key,promise);
-    }
-    return this.pokemonCache.get(key);
-  }
+  // Network data access is defined in js/game-services.js.
 
   showGymLeaderIntro() {
     const leader=this.currentGym;
     if(!leader) return;
     this.isLocked=true;
-    document.getElementById('overlay-battle').classList.add('hidden');
-    document.getElementById('battle-controls').classList.add('hidden');
+    // The leader introduction overlays the same arena; don't tear down the battle.
+    this.hideAllActions();
     const overlay=document.getElementById('gym-leader-intro');
     document.getElementById('gym-leader-name').textContent=leader.name.toUpperCase();
     document.getElementById('gym-leader-specialty').textContent=`SPECIALITÀ ${leader.specialty}`;
     document.getElementById('gym-leader-roster').textContent=`SQUADRA: ${leader.pokemon.length} POKÉMON`;
     const portrait=document.getElementById('gym-leader-portrait');
     this.setTrainerPortrait(portrait,`https://play.pokemonshowdown.com/sprites/trainers/${leader.sprite}.png`);
-    portrait.onerror=()=>{ portrait.onerror=null; portrait.src='assets/gym.svg'; };
+    portrait.onerror=()=>{ portrait.onerror=null; portrait.src='assets/sprites/ui/trainer-avatar-fallback.svg'; };
     portrait.style.visibility='visible';
     overlay.classList.remove('hidden');
     this.showDiscoveryNotice(`CAPOPALESTRA ${leader.name.toUpperCase()}!`,3200);
@@ -2061,7 +2132,7 @@ generateFloorDungeon() {
     } else {
       await this.battleText('Allenatore sconfitto! Il prossimo sfidante si prepara.');
       this.currentTrainerSprite=this.trainerSprites[Math.floor(Math.random()*this.trainerSprites.length)];
-      await this.startBattle('gym');
+      await this.startBattle('gym',true);
     }
   }
 
@@ -2069,234 +2140,24 @@ generateFloorDungeon() {
   wait(ms) { return new Promise(resolve => setTimeout(resolve, this.gameDelay(ms))); }
   syncAnimationSpeed(){
     for(const animation of document.getAnimations?.()||[]){
-      if(animation.playState==='running' && !animation.effect?.target?.closest?.('#game-quick-settings'))animation.playbackRate=this.speedMultiplier;
+      if(animation.playState==='running' && !animation.effect?.target?.closest?.('#game-quick-settings') && !animation.effect?.target?.classList?.contains?.('walk-arrival'))animation.playbackRate=this.speedMultiplier;
     }
   }
   setGameSpeed(value){
     this.speedMultiplier=value===2?2:1;
     document.documentElement.dataset.gameSpeed=String(this.speedMultiplier);
     const btn=this.$id('speed-toggle');
-    if(btn){btn.textContent=`${this.locale==='en'?'SPEED':'VELOCITÀ'} ×${this.speedMultiplier}`;btn.setAttribute('aria-pressed',String(this.speedMultiplier===2));}
-    // Re-time an already held direction without taking an extra step.
-    if(this.heldWalk?.interval){
-      const walk=this.heldWalk;
-      clearInterval(walk.interval);
-      walk.interval=setInterval(()=>{
-        if(this.heldWalk!==walk)return;
-        if(this.isLocked||this.pendingItemTarget||this.adventureCompleted){this.stopContinuousWalk();return;}
-        this.movePlayer(walk.dx,walk.dy);
-      },this.gameDelay(170));
-    }
+    if(btn){btn.textContent=`${'VELOCITÀ'} ×${this.speedMultiplier}`;btn.setAttribute('aria-pressed',String(this.speedMultiplier===2));}
+    // A speed change affects the next tile, without restarting an in-flight step.
+    if(this.walkInputs.size)this.queueContinuousWalk();
     clearInterval(this.speedAnimationTimer);
     this.syncAnimationSpeed();
     if(this.speedMultiplier===2)this.speedAnimationTimer=setInterval(()=>this.syncAnimationSpeed(),250);
     return this.speedMultiplier;
   }
-  localize(text){
-    if(this.locale!=='en')return String(text??'');
-    const exact={
-      'Un albero ti sbarra la strada!':'A tree blocks your path!',
-      'Ti serve una Canna da Pesca per pescare!':'You need a fishing rod to fish!',
-      'Lanci la lenza in acqua...':'You cast your fishing line...',
-      "Abbocca un Pokémon d'acqua!":'A Water-type Pokémon took the bait!',
-      'Questo elemento del villaggio blocca il passaggio.':'Something in the village blocks your way.',
-      'Centro Pokémon: Squadra e PP curati!':'Pokémon Center: Your team and PP are fully restored!',
-      'Hai aperto il Pokémarket.':'You entered the Poké Mart.',
-      'Hai lasciato il Pokémarket.':'You left the Poké Mart.',
-      'Sfida annullata: puoi tornare quando vuoi.':'Challenge cancelled. Come back anytime.',
-      'Non puoi fuggire da questa sfida!':'You cannot flee from this battle!',
-      'La Poké Ball nasconde una sfida RAID!':'The Poké Ball triggered a RAID battle!',
-      'Acquisto completato!':'Purchase complete!',
-      'Capacità massima raggiunta!':'Your bag is full!',
-      'Hai già conquistato la medaglia di questa palestra!':'You already earned this Gym Badge!',
-      'Una casetta tranquilla, illuminata e piena di fiori.':'A quiet little house surrounded by flowers.',
-      'Agente: per proseguire hai bisogno della medaglia di questa città.':'Officer: you need this city’s badge to proceed.',
-      'AGENTE: SERVE LA MEDAGLIA PER PROSEGUIRE':'OFFICER: GYM BADGE REQUIRED',
-      'Una presenza leggendaria ti osserva!':'A legendary presence is watching you!',
-      'Un Pokémon selvatico è comparso!':'A wild Pokémon appeared!',
-      'Non puoi catturare Pokémon di allenatori o dei raid!':'You cannot catch Trainers’ or Raid Pokémon!',
-      'Non puoi catturare Pokémon dei raid o degli allenatori!':'You cannot catch Raid or Trainer Pokémon!',
-      'Ma la mossa fallisce!':'But the move missed!',
-      'Non ha effetto…':'It had no effect...',
-      'È superefficace!':"It's super effective!",
-      'Non è molto efficace…':"It's not very effective...",
-      'Protezione fallisce!':'Protect failed!',
-      'RAID SEGRETO! 5 LOTTE · NESSUNA CATTURA':'SECRET RAID! 5 BATTLES · NO CAPTURES',
-      'Tre allenatori sconfitti! Ora arriva il Capopalestra!':'Three Trainers defeated! Here comes the Gym Leader!',
-      'Allenatore sconfitto! Il prossimo sfidante si prepara.':'Trainer defeated! The next challenger is ready.',
-      'SCEGLI UN POKÉMON NEL PANNELLO SINISTRO':'CHOOSE A POKÉMON FROM THE LEFT PANEL',
-      'POKÉMON SCONFITTO: CHI MANDI IN CAMPO?':'POKÉMON FAINTED: WHO WILL YOU SEND OUT?',
-      'SCEGLI UNO STRUMENTO DALLO ZAINO A DESTRA':'CHOOSE AN ITEM FROM THE BAG ON THE RIGHT',
-      'Tre compagni. Un solo inizio.':'Three companions. One beginning.',
-      'Preparazione della valigetta...':'Preparing the briefcase...',
-      'Hai rifiutato lo scambio.':'You declined the trade.',
-      'Lo scambio non è riuscito. Non hai perso alcun Pokémon.':'The trade failed. Your Pokémon were not lost.',
-      'Inizia una nuova avventura!':'A new adventure begins!',
-      'Nessuna Medaglia':'No Badges',
-      'CLICCA PER CONTINUARE ▾':'CLICK TO CONTINUE ▾',
-    };
-    const raw=String(text??'');
-    if(exact[raw])return exact[raw];
-    const patterns=[
-      [/^Sei arrivato al Livello (\d+)\. Esplora liberamente!$/,'You reached Floor $1. Explore freely!'],
-      [/^Sei salito al Livello (\d+)!$/,'You advanced to Floor $1!'],
-      [/^Vai (.+)!$/,'Go, $1!'],
-      [/^(.+) è esausto!$/,'$1 fainted!'],
-      [/^(.+) riceve (\d+) punti esperienza!$/,'$1 gained $2 Exp. Points!'],
-      [/^(.+) raggiunge il livello (\d+)!$/,'$1 grew to Level $2!'],
-      [/^(.+) impara (.+)!$/,'$1 learned $2!'],
-      [/^(.+) è pronto a combattere!$/,'$1 is ready to battle!'],
-      [/^(.+) usa (.+)!$/,'$1 used $2!'],
-      [/^Preso! (.+) è stato catturato!$/,'Gotcha! $1 was caught!'],
-      [/^Hai catturato (.+)!$/,'You caught $1!'],
-      [/^(.+) è uscito dalla Poké Ball!$/,'Oh no! $1 broke free!'],
-      [/^Hai trovato: (.+)!$/,'You found: $1!'],
-      [/^Zaino pieno: (.+) rimane a terra\. Torna dopo aver liberato spazio\.$/,'Your bag is full: $1 remains here. Come back later.'],
-      [/^(.+) recupera (\d+) PS!$/,'$1 restored $2 HP!'],
-      [/^(.+) subisce (\d+) danni da (.+)!$/,'$1 took $2 damage from $3!'],
-      [/^Un allenatore ti sfida!$/,'A Trainer challenges you!'],
-      [/^(.+) è stato sconfitto, chi vuoi mandare in campo\?$/,'$1 fainted. Who will you send out?'],
-      [/^Hai scelto (.+), confermi la scelta\?$/,'You chose $1. Confirm your choice?'],
-      [/^Vuoi iniziare la sfida di (.+)\? /,'Do you want to begin $1’s Gym challenge? '],
-    ];
-    for(const [pattern,translation] of patterns)if(pattern.test(raw))return raw.replace(pattern,translation);
-    return raw;
-  }
-  translateVisibleUI(){
-    if(typeof document.createTreeWalker!=='function')return;
-    // Centralized UI glossary. Re-evaluated after renders and language changes.
-    // Dynamic battle/status text also passes through localize().
-    const vocabulary={
-    "NUOVA AVVENTURA": "NEW ADVENTURE",
-    "UN’AVVENTURA POKÉMON ROGUELIKE": "A POKÉMON ROGUELIKE ADVENTURE",
-    "SCEGLI IL TUO POKÉMON": "CHOOSE YOUR POKÉMON",
-    "LA TUA AVVENTURA INIZIA QUI": "YOUR ADVENTURE STARTS HERE",
-    "RIMEDI": "MEDICINE",
-    "POKÉ BALL": "POKÉ BALLS",
-    "OGGETTI CHIAVE": "KEY ITEMS",
-    "SQUADRA POKÉMON": "POKÉMON PARTY",
-    "PORTAMEDAGLIE": "BADGE CASE",
-    "CONTROLLI DI MOVIMENTO": "MOVEMENT CONTROLS",
-    "DATI PERCORSO": "ROUTE DATA",
-    "TIPO: PERCORSO": "TYPE: ROUTE",
-    "PERCORSO": "ROUTE",
-    "VILLAGGIO": "VILLAGE",
-    "CITTÀ": "CITY",
-    "ZAINO": "BAG",
-    "SCANSIONI": "SCANS",
-    "LIVELLO": "LEVEL",
-    "DENARO": "MONEY",
-    "INFO POKÉMON": "POKÉMON INFO",
-    "SPOSTA POKÉMON": "MOVE POKÉMON",
-    "CHIUDI": "CLOSE",
-    "ANNULLA": "CANCEL",
-    "CONFERMA": "CONFIRM",
-    "INIZIA SFIDA": "START CHALLENGE",
-    "LOTTA!": "BATTLE!",
-    "LOTTA": "FIGHT",
-    "BORSA": "BAG",
-    "POKÉMON": "POKÉMON",
-    "FUGA": "RUN",
-    "NON IMPARARE": "DO NOT LEARN",
-    "NUOVA MOSSA DISPONIBILE": "NEW MOVE AVAILABLE",
-    "Il Pokémon ha già 4 mosse. Scegli quale dimenticare:": "This Pokémon knows four moves. Choose one to forget:",
-    "CLICCA PER CONTINUARE ▾": "CLICK TO CONTINUE ▾",
-    "AL CENTRO POKÉMON": "AT THE POKÉMON CENTER",
-    "CENTRO POKÉMON": "POKÉMON CENTER",
-    "POKÉMARKET": "POKÉ MART",
-    "COMMESSO": "CLERK",
-    "Benvenuto al Negozio! Acquista strumenti utili:": "Welcome! Choose useful items for your adventure:",
-    "Benvenuto! Il mio Kecleon ti aiuterà a scegliere gli strumenti.": "Welcome! My Kecleon will help you choose your items.",
-    "Pozione": "Potion",
-    "Elisir": "Elixir",
-    "Caramella Rara": "Rare Candy",
-    "Caramella d’Oro": "Gold Candy",
-    "Canna da Pesca": "Fishing Rod",
-    "Condividi Esperienza": "Exp. Share",
-    "Radar Scan +1 ($2.000)": "Radar Scan +1 ($2,000)",
-    "ESCI DAL NEGOZIO": "LEAVE SHOP",
-    "SQUADRA PIENA": "PARTY FULL",
-    "LIBERA IL POKÉMON": "RELEASE POKÉMON",
-    "Seleziona un Pokémon dalla valigetta per iniziare l’avventura.": "Choose a Pokémon from the briefcase to begin your adventure.",
-    "RotomDex: Seleziona una Poké Ball dalla valigetta per scegliere il tuo compagno.": "RotomDex: Pick a Poké Ball from the briefcase to choose your partner.",
-    "Il Capopalestra non si fa certo battere facilmente.": "The Gym Leader will not be easy to defeat.",
-    "Hai visto i fiori nuovi vicino alla fontana?": "Have you seen the new flowers by the fountain?",
-    "In questa città i sentieri sono collegati: esplora con calma.": "All the paths in this town are connected. Take your time.",
-    "I Pokémon esausti non tornano: prenditi cura della tua squadra.": "Fainted Pokémon cannot come back. Take care of your team.",
-    "Qualche volta la Poké Ball nell’erba nasconde una sorpresa.": "A Poké Ball hidden in the grass may conceal a surprise.",
-    "Ho sentito che un raro Pokémon abita sulla costa.": "I heard a rare Pokémon lives along the coast.",
-    "Al Centro Pokémon puoi ripristinare PS e PP.": "At the Pokémon Center you can restore HP and PP.",
-    "Prima di lasciare la città passa dal Pokémarket.": "Visit the Poké Mart before leaving town.",
-    "La Medaglia ti permetterà di superare il prossimo passaggio.": "A Gym Badge will let you pass the next checkpoint.",
-    "La mia passeggiata preferita è lungo il viale alberato.": "I love walking along the tree-lined avenue.",
-    "Una mossa superefficace può cambiare l’esito di una lotta.": "A super-effective move can turn a battle around.",
-    "Con la canna da pesca potresti incontrare Pokémon d’acqua.": "You can find Water-type Pokémon with a fishing rod.",
-    "ACCETTA": "ACCEPT",
-    "RIFIUTA": "DECLINE",
-    "SFIDA IN PALESTRA": "GYM CHALLENGE",
-    "Vuoi iniziare la sfida?": "Do you want to start the challenge?",
-    "Squadra e PP curati al 100%!": "Your team and PP have been fully restored!",
-    "NESSUNA MEDAGLIA": "NO BADGES",
-    "Nessuna Medaglia": "No Badges",
-    "SQUADRA": "PARTY",
-    "ABILITÀ": "ABILITY",
-    "NATURA": "NATURE",
-    "SFIDA FINALE DELLA PALESTRA": "FINAL GYM CHALLENGE",
-    "SPECIALITÀ": "SPECIALTY",
-    "Tre avversari superati. Adesso affronti il vero capopalestra!": "Three Trainers defeated. Now face the Gym Leader!",
-    "RADAR ∞": "RADAR ∞",
-    "CATTURA 100% ✓": "100% CATCH ✓",
-    "SALTA RAID / TRAINER DUNGEON": "SKIP RAID / DUNGEON TRAINER",
-    "Sblocca con il codice": "Unlock with code",
-    "Velocità gioco": "Game speed",
-    "SCEGLI IL TUO COMPAGNO": "CHOOSE YOUR PARTNER",
-    "FINE DELL’AVVENTURA": "THE ADVENTURE ENDS",
-    "TORNA AL MENU": "BACK TO MENU",
-    "NUOVA MOSSA": "NEW MOVE",
-    "IL TUO POKÉMON": "YOUR POKÉMON"
-};
-    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
-    let node;
-    while((node=walker.nextNode())){
-      const parent=node.parentElement;
-      if(!parent || parent.closest('script,style,[data-i18n-it],[contenteditable],textarea'))continue;
-      const current=node.textContent;
-      const original=node._pokexSourceItalian;
-      const previousEnglish=original?vocabulary[original]:null;
-      if(original && current.trim()!==original && current.trim()!==previousEnglish)node._pokexSourceItalian=null;
-      const source=node._pokexSourceItalian||current.trim();
-      if(vocabulary[source]){
-        node._pokexSourceItalian=source;
-        node.textContent=current.replace(current.trim(),this.locale==='en'?vocabulary[source]:source);
-      }
-    }
-  }
-  toggleQuickSettings(){
-    const panel=this.$id('quick-settings-panel'),toggle=this.$id('quick-settings-toggle');
-    if(!panel||!toggle)return;
-    const opening=panel.classList.contains('hidden');
-    panel.classList.toggle('hidden',!opening);
-    toggle.setAttribute('aria-expanded',String(opening));
-    toggle.setAttribute('aria-label',opening?'Chiudi opzioni':'Apri opzioni');
-  }
-  closeQuickSettings(){
-    this.$id('quick-settings-panel')?.classList.add('hidden');
-    const toggle=this.$id('quick-settings-toggle');
-    if(toggle){toggle.setAttribute('aria-expanded','false');toggle.setAttribute('aria-label','Apri opzioni');}
-  }
-  setGameLanguage(locale){
-    this.locale=locale==='en'?'en':'it';
-    document.documentElement.lang=this.locale;
-    for(const language of ['it','en'])this.$id('language-'+language)?.setAttribute('aria-pressed',String(this.locale===language));
-    document.querySelectorAll('[data-i18n-it][data-i18n-en]').forEach(node=>{
-      node.textContent=node.getAttribute(`data-i18n-${this.locale}`);
-    });
-    if(this.team.length)this.renderSidebar();
-    if(this.partyInfoPokemon)this.openPokemonInfo(this.partyInfoPokemon);
-    this.translateVisibleUI();
-    const speed=this.$id('speed-toggle');if(speed)speed.textContent=`${this.locale==='en'?'SPEED':'VELOCITÀ'} ×${this.speedMultiplier}`;
-    return this.locale;
-  }
+  // Il gioco usa testi italiani direttamente, senza traduttore a runtime.
+  // toggleQuickSettings moved to js/ui-helpers.js (R2.22 modularisation).
+  // closeQuickSettings moved to js/ui-helpers.js (R2.22 modularisation).
   $id(id) { return document.getElementById(id); }
   openWings() { this.$id('rotom-container').classList.add('wings-open'); }
   hideAllActions() {
@@ -2322,12 +2183,14 @@ generateFloorDungeon() {
       return;
     }
     this.battleMode=null; this.hideAllActions();
+    this.updateBattleWingCloseButtons();
     this.$id('panel-main-actions').classList.remove('hidden');
     this.$id('btn-move-back').classList.add('hidden');
     const run=this.$id('btn-act-run');
     const forbidden=this.isRaidActive || ['gym','trainer','mewtwo'].includes(this.battleType);
     run.disabled=forbidden;run.title=forbidden?'Non puoi fuggire da una sfida con allenatori o dal raid.':'';
     this.renderSidebar();
+    this.focusBattleSelection('#btn-act-fight');
   }
   encounterLevel(type,leader=false,rng=Math.random){
     const isTrainer=type==='trainer'||type==='gym';
@@ -2353,30 +2216,100 @@ generateFloorDungeon() {
     }catch(err){
       // Do not show the literal HTML alt text on failed remote sprite loads.
       element.alt='';
-      element.src='assets/items/pokeball-game.png';
+      element.src='assets/sprites/ui/pokemon-placeholder.svg';
       try{await element.decode?.();}catch(_){}
       return false;
     }
   }
+  // Preload the actually selected visual assets while the previous map is still on
+  // screen. This uses CSS-computed URLs, so gym palettes and future themes do
+  // not require a duplicate lookup table in the battle engine.
+  async prepareBattleStageImages(stage){
+    if(typeof getComputedStyle!=='function' || typeof Image==='undefined')return true;
+    const elements=[stage,stage.querySelector('.enemy-platform-gba'),stage.querySelector('.player-platform-gba'),this.$id('player-trainer-sprite')].filter(Boolean);
+    const sources=new Set();
+    const urlPattern=/url\(\s*(?:"([^"]+)"|'([^']+)'|([^\s)]+))\s*\)/g;
+    for(const element of elements){
+      const background=getComputedStyle(element).backgroundImage||'';
+      for(const result of background.matchAll(urlPattern)){
+        const url=result[1]||result[2]||result[3];if(url)sources.add(url);
+      }
+    }
+    // TASK-010: both protagonists use five local throwing frames.
+    // Decode them before battle reveal to prevent flicker during the pose swap.
+    const trainerFolder=this.playerGender==='female'?'girl':'red';
+    for(let frame=0;frame<5;frame++)sources.add(`assets/sprites/player/${trainerFolder}/throw/${frame}.png`);
+    // Retain Image references until decoding completes so browsers cannot
+    // garbage-collect orphaned requests while the battle stays hidden.
+    const pendingImages=[];
+    const loaded=await Promise.all([...sources].map(src=>new Promise(resolve=>{
+      const image=new Image();pendingImages.push(image);let settled=false;
+      const finish=ok=>{if(settled)return;settled=true;clearTimeout(timer);resolve(ok);};
+      const timer=setTimeout(()=>finish(false),8000);
+      image.onload=()=>{
+        if(typeof image.decode==='function')image.decode().then(()=>finish(true),()=>finish(false));
+        else finish(true);
+      };
+      image.onerror=()=>finish(false);
+      image.src=src;
+      if(image.complete&&image.naturalWidth>0)image.onload();
+    })));
+    pendingImages.length=0;
+    if(loaded.some(ok=>!ok))console.warn('Alcune risorse di battaglia non sono disponibili; uso i fallback del browser.');
+    return loaded.every(Boolean);
+  }
+  // The map remains visible during preparation. Once the selected scene is
+  // decoded, a single short fade reveals the stage and its interface together.
+  revealPreparedBattle(token){
+    const overlay=this.$id('overlay-battle');
+    overlay.classList.add('battle-revealing');
+    overlay.classList.remove('battle-preparing');
+    if(this.battleRevealTimer)clearTimeout(this.battleRevealTimer);
+    this.battleRevealTimer=setTimeout(()=>{
+      if(token===this.battleToken)overlay.classList.remove('battle-revealing');
+      this.battleRevealTimer=null;
+    },400);
+  }
+  // RC5.8: abstract backdrop + themed platform. The background now follows
+  // the selected platform theme, while encounter logic and biome calculation
+  // remain untouched because other game systems still rely on them.
+  battlePlatformTheme(type,biome){
+    if(type==='mewtwo')return 'celestial';
+    if(this.isRaidActive || type==='legendary')return 'raid';
+    if(type==='gym')return 'arena';
+    const platforms={meadow:'meadow',forest:'woodland',coast:'sand',
+      cavern:'cave',city:'town',celestial:'celestial',raid:'raid'};
+    return platforms[biome]||'meadow';
+  }
+  // TASK-008: only the gym's actual leader controls its color theme.
+  battleGymPalette(type){
+    if(type!=='gym'||!this.currentGym)return null;
+    return GYM_BATTLE_THEMES[this.currentGym.name]?.palette||null;
+  }
   async startBattle(type,keepPlayerOnField=false) {
     this.closePartyActions();this.closePokemonInfo();
     this.ensureActivePokemon();
+    const continuousRound=keepPlayerOnField && this.isBattleVisible();
     this.battleType=type;this.isLocked=true;this.battleBusy=true;
+    if(!continuousRound)this.battleWeather=null;
     this.battleParticipants = new Set();
     this.battleMode=null;this.pendingForcedSwitch=false;
     const token=++this.battleToken;
     if(!this.activeMon || this.activeMon.currentHp<=0){
       const alive=this.team.find(p=>p.currentHp>0);
-      if(!alive){this.endBattle('Tutta la squadra è esausta.');this.$id('gameover-overlay').classList.remove('hidden');return;}
+      if(!alive){this.isRaidActive=false;this.raidQueueCount=0;this.clearRaidTransientState();this.endBattle('Tutta la squadra è esausta.');this.$id('gameover-overlay').classList.remove('hidden');window.PokexCheckpoints?.discard();this.updateContinueButton();return;}
       this.activeMon=alive;
     }
-    this.$id('overlay-battle').classList.add('battle-preparing');
-    this.$id('overlay-battle').classList.remove('hidden');
+    const battleOverlay=this.$id('overlay-battle');
+    if(this.battleRevealTimer)clearTimeout(this.battleRevealTimer);
+    battleOverlay.classList.remove('battle-revealing');
+    if(!continuousRound)battleOverlay.classList.add('battle-preparing');
+    battleOverlay.classList.remove('hidden');
     this.$id('battle-controls').classList.remove('hidden');
     this.$id('rotom-body').classList.add('battle-active');
     this.hideAllActions();this.openWings();
     const leader=type==='gym' && this.gymQueue[0]==='leader' && this.currentGym;
-    window.pokexplorerMusic?.setScene(type==='mewtwo'?'mewtwo':leader?'gym':type==='legendary'?'legend_trio':'encounter');
+    if(!continuousRound || (leader && this.gymLeaderIndex===0))window.pokexplorerMusic?.setScene(type==='mewtwo'?'mewtwo':leader?'gym':type==='legendary'?'legend_trio':'encounter');
     const pool=this.getEncounterPool(type);
     // Roll level first so procedurally generated foes appear at valid evolution stages.
     const encounterLv=type==='mewtwo'?50:type==='legendary'?30:leader?this.currentGym.levels[this.gymLeaderIndex]:this.encounterLevel(type,false);
@@ -2389,15 +2322,33 @@ generateFloorDungeon() {
       // Floor-based progression, with leaders stronger than regular encounters.
       this.enemyMon=new Pokemon(data,encounterLv);
       await Promise.all([this.enemyMon.loadLearnset(),this.activeMon.loadLearnset()]);
+      if(token===this.battleToken)window.PokexDex?.record(this.enemyMon,'seen',`${type} · Piano ${this.floor}`);
     }catch(err) {
       console.error('Battaglia non avviata:',err);
       if(token===this.battleToken){
         // Loading must not consume a trainer, a gym attempt or the only hidden raid.
         if(this.pendingTrainerCell){this.pendingTrainerCell.entity='trainer';this.pendingTrainerCell=null;}
         if(this.isRaidActive){
-          const tile=this.gridMap?.[this.playerPos.y]?.[this.playerPos.x];
-          if(tile){tile.entity='item';tile.itemKind=tile.itemKind||'pokeball';}
-          this.isRaidActive=false;this.raidQueueCount=0;
+          const completed=5-this.raidQueueCount;
+          if(completed===0){
+            // Only the FIRST opponent has failed: restore the ORIGINAL pickup,
+            // not playerPos (which is not necessarily the item cell).
+            const source=this.raidPickupSourceCell;
+            if(source){source.entity='item';source.raidRetryPending=true;}
+            this.isRaidActive=false;this.raidQueueCount=0;
+            this.raidTriggeredOnFloor=false;
+            this.clearRaidTransientState();
+            this.endBattle('Dati RAID non disponibili. Oggetto ripristinato: riprova quando sei online.');
+            this.renderDungeon();
+          }else{
+            // Mid-chain failure must NOT erase completed wins, duplicate XP or
+            // revive the source item. Keep the remaining queue and allow retry.
+            this.endBattle('Connessione interrotta durante il RAID. Riprova il caricamento.');
+            this.isLocked=true;
+            this.raidBattleRetryPending=true;
+            this.$id('raid-api-error')?.classList.remove('hidden');
+          }
+          return;
         }
         if(type==='gym'){this.gymQueue=[];this.currentGym=null;this.gymLeaderIndex=0;}
         this.endBattle('Dati Pokémon non disponibili. Evento ripristinato: riprova quando sei online.');
@@ -2411,9 +2362,9 @@ generateFloorDungeon() {
     if(!keepPlayerOnField)this.triggerEntryAbilities(this.activeMon,this.enemyMon);
     this.triggerEntryAbilities(this.enemyMon,this.activeMon);
     this.battleParticipants.add(this.activeMon);
-    this.$id('enemy-name').textContent=this.enemyMon.name;
+    this.$id('enemy-name').textContent=this.enemyMon.name+(this.enemyMon.gender==='male'?' ♂':this.enemyMon.gender==='female'?' ♀':'')+(this.enemyMon.isShiny?' ✨':'');
     this.$id('enemy-lv').textContent=this.enemyMon.level;
-    this.$id('enemy-sprite').src=this.enemyMon.spriteFront;
+    this.$id('enemy-sprite').src=resolvedSpritePath(this.enemyMon.spriteFront);
     this.$id('enemy-sprite').classList.remove('faint-anim','summon-anim','recall-anim');
     this.$id('enemy-sprite').classList.add('hidden');
     this.$id('player-trainer-sprite').setAttribute('aria-label',this.playerGender==='female'?'Allenatrice, vista di spalle':'Allenatore, visto di spalle');
@@ -2421,7 +2372,7 @@ generateFloorDungeon() {
     previousTrainer.className='poke-sprite-gba enemy-trainer-frame hidden';
     previousTrainer.removeAttribute('style');
     if(!keepPlayerOnField)this.$id('player-sprite').classList.add('hidden');
-    this.$id('player-trainer-sprite').style.backgroundImage=this.playerGender==='female'?"url('assets/girl/throw/full.png')":"url('assets/red/throw/0.png')";
+    this.$id('player-trainer-sprite').style.backgroundImage=this.playerGender==='female'?"url('assets/sprites/player/girl/throw/0.png')":"url('assets/sprites/player/red/throw/0.png')";
     this.$id('player-trainer-sprite').classList.toggle('female-trainer',this.playerGender==='female');
     this.$id('player-trainer-sprite').classList.remove('red-sheet-ready');
     this.$id('player-trainer-sprite').classList.add('hidden');
@@ -2429,18 +2380,29 @@ generateFloorDungeon() {
     const stage=this.$id('battle-stage');
     stage.classList.toggle('wild-battle',!hostile);
     stage.classList.toggle('trainer-battle',hostile);
-    stage.dataset.biome=type==='mewtwo'?'cavern':this.floor%10===0?'city':this.floor%5===0?'coast':
+    // Visual-only selection: preserve encounters, Raid queue and all combat mechanics.
+    stage.dataset.biome=type==='mewtwo'?'celestial':this.isRaidActive?'raid':type==='legendary'?'raid':
+      type==='gym'?'city':this.floor%10===0?'city':this.floor%5===0?'coast':
       this.floor%4===0?'cavern':this.floor%3===0?'forest':'meadow';
+    // Prevent legacy HD backgrounds from matching the old data-scene selector.
+    delete stage.dataset.scene;
+    stage.dataset.platformTheme=this.battlePlatformTheme(type,stage.dataset.biome);
+    // TASK-008: palette only for gym battles, selected by LEADER identity.
+    // Removing the attribute on every other battle prevents palette leakage.
+    const gymPalette=this.battleGymPalette(type);
+    if(gymPalette)stage.dataset.gymPalette=gymPalette;
+    else delete stage.dataset.gymPalette;
     this.resetBattleVisuals(keepPlayerOnField);
     this.updateBattleHUD();
     // The initial scene is covered until the HUD and both image resources are
     // ready. Never paint the HTML alt texts 'Enemy' / 'Player' between frames.
     await Promise.all([
       this.prepareBattleImage(this.$id('enemy-sprite')),
-      this.prepareBattleImage(this.$id('player-sprite'))
+      this.prepareBattleImage(this.$id('player-sprite')),
+      this.prepareBattleStageImages(stage)
     ]);
     if(token!==this.battleToken)return;
-    this.$id('overlay-battle').classList.remove('battle-preparing');
+    if(!continuousRound)this.revealPreparedBattle(token);
     await this.battleText(hostile ? (leader?`Il Capopalestra ${this.currentGym.name} ti sfida!`:'Un allenatore ti sfida!') :
       (type==='mewtwo'?'Appare Mewtwo.':this.isRaidActive?`RAID ${6-this.raidQueueCount}/5 · Una presenza misteriosa!`:type==='legendary'?'UN POKÉMON LEGGENDARIO APPARE!':'Un Pokémon selvatico appare!'));
     if(token!==this.battleToken)return;
@@ -2467,7 +2429,7 @@ generateFloorDungeon() {
     await this.battleText(`${this.enemyMon.name} è pronto a combattere!`);
     if(token!==this.battleToken)return;
     if(!keepPlayerOnField){
-      this.$id('player-trainer-sprite').style.backgroundImage=this.playerGender==='female'?"url('assets/girl/throw/full.png')":"url('assets/red/throw/0.png')";
+      this.$id('player-trainer-sprite').style.backgroundImage=this.playerGender==='female'?"url('assets/sprites/player/girl/throw/0.png')":"url('assets/sprites/player/red/throw/0.png')";
       this.$id('player-trainer-sprite').classList.toggle('female-trainer',this.playerGender==='female');
       this.$id('player-trainer-sprite').classList.remove('red-sheet-ready');
       this.$id('player-trainer-sprite').classList.remove('hidden');
@@ -2485,17 +2447,7 @@ generateFloorDungeon() {
     if(token!==this.battleToken)return;
     this.battleBusy=false;this.showMainActions();
   }
-  resetBattleVisuals(keepPlayerOnField=false){
-    for(const id of ['battle-throw-ball','capture-ball','capture-smoke','summon-flash']){
-      const el=this.$id(id);if(el){el.className=el.dataset.baseClass || el.className.split(' ')[0];el.removeAttribute('style');}
-    }
-    this.$id('attack-fx-container').replaceChildren();
-    for(const id of ['enemy-sprite','player-sprite']){
-      this.$id(id).classList.remove('recall-anim','summon-anim','summon-cinematic','hit-anim','attack-lunge','hidden');
-    }
-    this.$id('enemy-sprite').classList.add('hidden');
-    if(!keepPlayerOnField)this.$id('player-sprite').classList.add('hidden');
-  }
+  // resetBattleVisuals moved to js/battle-helpers.js (R2.22 modularisation).
   async animateBall(side){
     const ball=this.$id('battle-throw-ball');
     const stage=this.$id('battle-stage');
@@ -2505,7 +2457,7 @@ generateFloorDungeon() {
     const target=this.battleThrowDestination(side);
     const size=34;
     const clamp=(value,min,max)=>Math.min(max,Math.max(min,value));
-    const releaseX=trainerRect.left-rect.left+trainerRect.width*(side==='enemy'?.35:.68);
+    const releaseX=trainerRect.left-rect.left+trainerRect.width*(side==='enemy'?.35:(this.playerGender==='female'?.78:.68));
     const releaseY=trainerRect.top-rect.top+trainerRect.height*.43;
     const sx=clamp(releaseX-size/2,4,Math.max(4,rect.width-size-4));
     const sy=clamp(releaseY-size/2,4,Math.max(4,rect.height-size-4));
@@ -2521,18 +2473,13 @@ generateFloorDungeon() {
     const frames=[0,.18,.38,.60,.82,1].map((t,i)=>({
       transform:`translate3d(${x(t)}px,${y(t)}px,0) rotate(${angle*360*t}deg) scale(${.72+.28*Math.sin(Math.PI*t)})`,
       opacity:i===5?0:1,offset:t}));
-    const trainerMotion=side==='player' ? (this.playerGender==='female'?
-      this.playMotion(trainer,[
-        {transform:'translate3d(0,0,0) rotate(0deg)'},
-        {transform:'translate3d(-7px,-5px,0) rotate(-8deg)'},
-        {transform:'translate3d(11px,-6px,0) rotate(7deg)'},
-        {transform:'translate3d(0,0,0) rotate(0deg)'}],570,'ease-out'):
-      (async()=>{
-        for(let i=0;i<5;i++){
-          trainer.style.backgroundImage=`url('assets/red/throw/${i}.png')`;
-          await this.wait(i===4?195:115);
-        }
-      })()) : this.playMotion(trainer,[
+    const trainerMotion=side==='player' ? (async()=>{
+      const folder=this.playerGender==='female'?'girl':'red';
+      for(let i=0;i<5;i++){
+        trainer.style.backgroundImage=`url('assets/sprites/player/${folder}/throw/${i}.png')`;
+        await this.wait(i===4?195:115);
+      }
+    })() : this.playMotion(trainer,[
       {transform:'translate3d(0,0,0) rotate(0deg)'},
       {transform:'translate3d(-10px,-7px,0) rotate(-4deg)'},
       {transform:'translate3d(0,0,0) rotate(0deg)'}],500,'ease-out');
@@ -2575,7 +2522,7 @@ generateFloorDungeon() {
     const landingY=platform ? platform.top-area.top-12 : target.y+35;
     const ground={x:target.x-width/2,y:Math.max(hit.y+10,Math.min(area.height-48,landingY))};
     ball.className='capture-ball compositor-ball';
-    ball.style.setProperty('--capture-ball-image',ballType==='masterball'?"url('assets/items/master-ball.svg')":"url('assets/items/pokeball-game.png')");
+    ball.style.setProperty('--capture-ball-image',ballType==='masterball'?"url('assets/sprites/items/master-ball.svg')":"url('assets/sprites/items/pokeball-game.png')");
     ball.dataset.ballType=ballType;
     ball.style.display='block';ball.style.opacity='1';
     ball.style.left='0px';ball.style.top='0px';
@@ -2627,48 +2574,10 @@ generateFloorDungeon() {
     ball.className='capture-ball';ball.removeAttribute('style');
     burst.className='capture-smoke';burst.removeAttribute('style');
   }
-  updateBattleHUD() {
-    if(!this.activeMon||!this.enemyMon)return;
-    const a=this.activeMon,b=this.enemyMon;
-    this.$id('player-name').textContent=a.name;
-    this.$id('enemy-name').textContent=b.name;
-    this.$id('player-lv').textContent=a.level;
-    this.$id('enemy-lv').textContent=b.level;
-    this.$id('player-sprite').src=a.spriteBack;
-    const playerPct=Math.max(0,100*a.currentHp/a.maxHp);
-    const enemyPct=Math.max(0,100*b.currentHp/b.maxHp);
-    this.$id('player-hp-fill').style.width=`${playerPct}%`;
-    this.$id('enemy-hp-fill').style.width=`${enemyPct}%`;
-    this.$id('player-hp-fill').className=`stat-bar-hp-gba hp-${this.hpColorState(a)}`;
-    this.$id('enemy-hp-fill').className=`stat-bar-hp-gba hp-${this.hpColorState(b)}`;
-    this.$id('player-hp-text').textContent=`${a.currentHp}/${a.maxHp}`;
-    this.$id('enemy-hp-text').textContent=`${b.currentHp}/${b.maxHp}`;
-    this.$id('player-exp-fill').style.width=`${a.level>=this.getLevelCap()?100:Math.max(0,Math.min(100,100*a.exp/Math.max(1,a.expToNext)))}%`;
-    this.renderBattleConditions('player',a);
-    this.renderBattleConditions('enemy',b);
-    this.renderSidebar();
-  }
-  renderBattleConditions(side,mon){
-    const out=this.$id(`${side}-conditions`);if(!out)return;
-    out.replaceChildren();
-    const statuses={burn:'BRU',poison:'VEL','bad-poison':'VEL+',paralysis:'PAR',sleep:'SON',freeze:'GEL',confusion:'CONF'};
-    if(mon.status && mon.status!=='leech-seed'){const chip=document.createElement('span');chip.className='condition-chip status-chip';chip.textContent=statuses[mon.status]||mon.status.toUpperCase();out.append(chip);}
-    if(mon.trappedTurns>0){const chip=document.createElement('span');chip.className='condition-chip status-chip';chip.textContent='INTR.';out.append(chip);}
-    if(mon.seeded){const chip=document.createElement('span');chip.className='condition-chip status-chip';chip.textContent='SEME';out.append(chip);}
-    for(const [field,label] of [['lightScreenTurns','SCH. LUCE'],['reflectTurns','RIFLESSO'],['safeguardTurns','SALV.'],['mistTurns','NEBBIA']]){
-      if(mon[field]>0){const chip=document.createElement('span');chip.className='condition-chip boost';chip.textContent=`${label} ${mon[field]}`;out.append(chip);}
-    }
-    if(mon.futureSight){const chip=document.createElement('span');chip.className='condition-chip status-chip';chip.textContent=`DIV. ${mon.futureSight.turns}`;out.append(chip);}
-    if(mon.focusEnergyActive){const chip=document.createElement('span');chip.className='condition-chip boost';chip.textContent='FOCUS';out.append(chip);}
-    const labels={attack:'ATT',defense:'DIF','special-attack':'ATT.SP','special-defense':'DIF.SP',speed:'VEL.',accuracy:'PREC',evasion:'ELUS'};
-    for(const [key,value] of Object.entries(mon.statStages||{})){
-      if(!value)continue;
-      const chip=document.createElement('span');chip.className=`condition-chip ${value>0?'boost':'nerf'}`;
-      chip.textContent=`${labels[key]||key} ${value>0?'+':''}${value}`;out.append(chip);
-    }
-  }
+  // updateBattleHUD moved to js/battle-helpers.js (R2.22 modularisation).
+  // renderBattleConditions moved to js/battle-helpers.js (R2.22 modularisation).
   setBattleMsg(text){
-    this.$id('battle-msg').textContent=this.localize(text);
+    this.$id('battle-msg').textContent=String(text??'');
     this.$id('battle-log').classList.toggle('awaiting-click',Boolean(this.dialogueResolve));
   }
   acknowledgeDialogue(){
@@ -2685,12 +2594,42 @@ generateFloorDungeon() {
       this.$id('battle-log').classList.add('awaiting-click');
     });
   }
+  async chooseEvolution(pokemon,options){
+    if(!Array.isArray(options)||options.length<2)return options?.[0]?.id??null;
+    const overlay=this.$id('evolution-choice-overlay');
+    if(overlay && overlay.parentElement!==this.$id('pokenav-screen-root'))this.$id('pokenav-screen-root').appendChild(overlay);
+    const list=this.$id('evolution-choice-options');
+    const title=this.$id('evolution-choice-title');
+    if(!overlay||!list)return null;
+    title.textContent=`SCEGLI L’EVOLUZIONE DI ${pokemon.name}`;
+    list.replaceChildren();
+    const names={134:'VAPOREON',135:'JOLTEON',136:'FLAREON'};
+    return await new Promise(resolve=>{
+      const finish=value=>{overlay.classList.add('hidden');list.replaceChildren();resolve(value);};
+      for(const option of options){
+        const button=document.createElement('button');button.type='button';
+        const image=document.createElement('img');image.src=`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${option.id}.png`;
+        image.alt='';image.onerror=()=>{image.onerror=null;image.src='assets/sprites/ui/pokemon-placeholder.svg';};
+        const caption=document.createElement('span');caption.textContent=`${names[option.id]||'POKÉMON #'+option.id} · Lv.${option.level}`;
+        button.append(image,caption);button.onclick=()=>finish(option.id);list.appendChild(button);
+      }
+      this.$id('evolution-choice-later').onclick=()=>finish(null);
+      overlay.classList.remove('hidden');
+      list.querySelector('button')?.focus();
+    });
+  }
+  evolutionText(phase,evo){
+    if(!evo)return '';
+    ;
+    return phase==='done'?`${evo.from} si è evoluto in ${evo.to}!`:`${evo.from} si sta evolvendo…`;
+  }
   async showEvolution(mon, evo){
     const panel=this.$id('evolution-overlay');
+    if(panel && panel.parentElement!==this.$id('pokenav-screen-root'))this.$id('pokenav-screen-root').appendChild(panel);
     this.evolutionMon=mon;this.evolutionData=evo;
-    this.$id('evolution-from').src=evo.fromSprite||'assets/items/pokeball-game.png';
-    this.$id('evolution-to').src=evo.toSprite||'assets/items/pokeball-game.png';
-    this.$id('evolution-caption').textContent=`${evo.from} si sta evolvendo...`;
+    this.$id('evolution-from').src=evo.fromSprite||'assets/sprites/items/pokeball-game.png';
+    this.$id('evolution-to').src=evo.toSprite||'assets/sprites/items/pokeball-game.png';
+    this.$id('evolution-caption').textContent=this.evolutionText('start',evo);
     this.$id('evolution-from').classList.remove('hidden');
     this.$id('evolution-to').classList.add('hidden');
     this.$id('evolution-start').classList.remove('hidden');
@@ -2704,11 +2643,11 @@ generateFloorDungeon() {
     this.$id('evolution-from').classList.add('evo-transform');
     this.$id('evolution-to').classList.remove('hidden');
     this.$id('evolution-to').classList.add('evo-reveal');
-    this.$id('evolution-caption').textContent=`${this.evolutionData.from} si sta evolvendo...`;
+    this.$id('evolution-caption').textContent=this.evolutionText('start',this.evolutionData);
     setTimeout(()=>{
       this.$id('evolution-from').classList.add('hidden');
       this.$id('evolution-from').classList.remove('evo-transform');
-      this.$id('evolution-caption').textContent=`${this.evolutionData.from} si è evoluto in ${this.evolutionData.to}!`;
+      this.$id('evolution-caption').textContent=this.evolutionText('done',this.evolutionData);
       this.$id('evolution-finish').classList.remove('hidden');
       this.renderSidebar();this.updateBattleHUD();
     },1700);
@@ -2719,15 +2658,20 @@ generateFloorDungeon() {
     const resolve=this.evolutionResolve;this.evolutionResolve=null;
     if(resolve)resolve();
   }
+  displayMoveName(move){
+    return String(move.name);
+  }
   showMoves(){
     if(this.battleConfirmAction)return;
     if(this.battleBusy || this.pendingForcedSwitch || this.hasForcedBattleAction())return;
-    this.battleMode='moves';this.hideAllActions();
+    this.battleMode='moves';this.hideAllActions();this.updateBattleWingCloseButtons();
     const panel=this.$id('panel-move-actions');panel.innerHTML='';panel.classList.remove('hidden');
     this.$id('btn-move-back').classList.remove('hidden');
     for(const m of this.activeMon.moves){
       const btn=document.createElement('button');btn.className=`act-btn move-${m.type}`;
-      btn.innerHTML=`<strong>${m.name}</strong><small>${m.type.toUpperCase()} · PP ${m.currentPp}/${m.maxPp}</small>`;
+      const moveLabel=document.createElement('strong');moveLabel.textContent=this.displayMoveName(m);
+      const detail=document.createElement('small');detail.textContent=`${m.type.toUpperCase()} · PP ${m.currentPp}/${m.maxPp}`;
+      btn.append(moveLabel,detail);
       btn.disabled=m.currentPp<=0;
       btn.onclick=()=>this.executeAttack(m);
       panel.appendChild(btn);
@@ -2736,39 +2680,41 @@ generateFloorDungeon() {
       const struggle=new Move('Scontro','normal',50,1,'physical');
       struggle.currentPp=1;const btn=document.createElement('button');btn.className='act-btn';btn.textContent='SCONTRO';btn.onclick=()=>this.executeAttack(struggle);panel.appendChild(btn);
     }
-
+    this.focusBattleSelection('#panel-move-actions button:not(:disabled)');
   }
   showTeamMenu(force=false){
     if(!force&&(this.battleBusy || this.hasForcedBattleAction()))return;
     if(this.battleBusy && !force)return;
     this.pendingForcedSwitch=Boolean(force);
     this.battleMode='team';this.hideAllActions();
-    this.openWings();this.renderSidebar();
+    this.openWings();this.renderSidebar();this.updateBattleWingCloseButtons();
     this.$id('panel-team-actions').classList.remove('hidden');
     this.$id('panel-team-actions').innerHTML=`<span>${force?'POKÉMON SCONFITTO: CHI MANDI IN CAMPO?':'SCEGLI UN POKÉMON NEL PANNELLO SINISTRO'}</span>${force?'':'<button id="battle-team-back" class="act-btn mini-back-btn">←</button>'}`;
     if(!force)this.$id('battle-team-back').onclick=()=>{this.teleportSwitchPending=false;this.showMainActions();};
     this.setBattleMsg(force?`${this.activeMon.name} è stato sconfitto, chi vuoi mandare in campo?`:'Apri il Pokémon nella squadra a sinistra e scegli MANDA IN CAMPO.');
+    this.focusBattleSelection('#team-grid button:not(:disabled)');
   }
   showBagMenu(){
     if(this.battleBusy||this.pendingForcedSwitch||this.hasForcedBattleAction())return;
-    this.battleMode='bag';this.hideAllActions();this.openWings();this.renderSidebar();
+    this.battleMode='bag';this.hideAllActions();this.openWings();this.renderSidebar();this.updateBattleWingCloseButtons();
     this.$id('panel-bag-actions').classList.remove('hidden');
     this.$id('panel-bag-actions').innerHTML='<span>SCEGLI UNO STRUMENTO DALLO ZAINO A DESTRA</span><button id="battle-bag-back" class="act-btn mini-back-btn">←</button>';
     this.$id('battle-bag-back').onclick=()=>this.showMainActions();
     this.setBattleMsg('Apri lo zaino e scegli un oggetto.');
+    this.focusBattleSelection('#bag-tabs button');
   }
   selectBattlePokemon(pokemon){
     if(this.battleConfirmAction || (!this.pendingForcedSwitch&&this.hasForcedBattleAction()))return;
     if(!this.$id('overlay-battle') || this.$id('overlay-battle').classList.contains('hidden'))return;
     if(this.battleBusy || this.dialogueResolve)return;
-    if(!this.pendingForcedSwitch && this.activeMon?.trappedTurns>0){this.setBattleMsg(`${this.activeMon.name} non può essere sostituito: è intrappolato!`);return;}
+    if(!this.pendingForcedSwitch && (this.activeMon?.trappedTurns>0 || this.activeMon?.meanLookSource || this.isOpponentTrapping(this.activeMon))){this.setBattleMsg(`${this.activeMon.name} non può essere sostituito: è intrappolato!`);return;}
     if(pokemon===this.activeMon){this.setBattleMsg('Questo Pokémon è già in campo!');return;}
     if(pokemon.currentHp<=0){this.setBattleMsg('Un Pokémon esausto non può combattere!');return;}
     this.askBattleConfirmation(this.pendingForcedSwitch?`Hai scelto ${pokemon.name}, confermi la scelta?`:`Richiamare ${this.activeMon.name} e mandare ${pokemon.name} (Lv.${pokemon.level})?`,()=>this.performSwitch(pokemon),true);
   }
   askBattleConfirmation(message,yes,cancellable=true){
     const o=this.$id('battle-confirm');this.battleConfirmAction=yes;
-    this.$id('battle-confirm-text').textContent=message;
+    this.$id('battle-confirm-text').textContent=String(message??'');
     this.$id('btn-battle-confirm-no').classList.toggle('hidden',!cancellable);
     o.classList.remove('hidden');
     this.$id('btn-battle-confirm-yes').focus({preventScroll:true});
@@ -2793,6 +2739,7 @@ generateFloorDungeon() {
     this.pendingForcedSwitch=false;
     this.battleBusy=true;this.hideAllActions();
     if(!forced&&!fromTeleport){await this.battleText(`${this.activeMon.name}, torna nella Poké Ball!`);await this.animateRecall('player');}
+    if(this.enemyMon?.meanLookSource===this.activeMon)this.enemyMon.meanLookSource=null;
     if(this.enemyMon?.trapSource===this.activeMon){this.enemyMon.trappedTurns=0;this.enemyMon.trapSource=null;this.enemyMon.trapMove=null;}
     this.activeMon.clearVolatile();
     if(this.activeMon.ability==='natural-cure'){this.activeMon.status=null;this.activeMon.statusTurns=0;}
@@ -2822,7 +2769,10 @@ generateFloorDungeon() {
       if(this.isRaidActive||['gym','trainer'].includes(this.battleType)){
         this.setBattleMsg('Non puoi catturare Pokémon di allenatori o dei raid!');return;
       }
-      this.askBattleConfirmation(id==='masterball'?'Vuoi lanciare la Master Ball?':'Vuoi lanciare una Poké Ball?',()=>this.useBattleItem(id));
+      const lastBall = id==='pokeball' && this.items.pokeball===1;
+      const message = id==='masterball' ? 'Vuoi lanciare la Master Ball?' :
+        (lastBall ? 'È la tua ultima Poké Ball. Vuoi lanciarla?' : 'Vuoi lanciare una Poké Ball?');
+      this.askBattleConfirmation(message,()=>this.useBattleItem(id));
       return;
     }
     if(['rareCandy','goldCandy'].includes(id)){
@@ -2830,6 +2780,10 @@ generateFloorDungeon() {
       if(this.isBattleVisible()){
         this.showItemFeedback('Le caramelle DEV si usano solo fuori dalla battaglia.');return;
       }
+    }
+    if(id==='abilityCapsule'){
+      if(this.isBattleVisible()){this.showItemFeedback('La Capsula Abilità si usa solo fuori dalla battaglia.');return;}
+      this.beginItemTargetSelection(id);return;
     }
     if(!['potion','superPotion','hyperPotion','elixir','rareCandy','goldCandy'].includes(id))return;
     this.beginItemTargetSelection(id);
@@ -2842,15 +2796,15 @@ generateFloorDungeon() {
     if((this.isBattleVisible()&&this.hasForcedBattleAction()) || !this.team.length || this.isLocked && !this.isBattleVisible())return;
     this.pendingItemTarget=id;this.openWings();
     const box=this.$id('item-target-prompt');
-    const itemNames={potion:'Pozione',superPotion:'Superpozione',hyperPotion:'Iperpozione',elixir:'Elisir',rareCandy:'Caramella Rara',goldCandy:'Caramella d’Oro'};
+    const itemNames={potion:'Pozione',superPotion:'Superpozione',hyperPotion:'Iperpozione',elixir:'Elisir',rareCandy:'Caramella Rara',goldCandy:'Caramella d’Oro',abilityCapsule:'Capsula Abilità'};
     this.$id('item-target-message').textContent=`A quale Pokémon vuoi dare ${itemNames[id]}?`;
     box.classList.remove('hidden');
     const mobileList=this.$id('item-target-mobile-list');mobileList.replaceChildren();
     this.team.forEach(mon=>{
       const button=document.createElement('button');button.type='button';
       button.className='item-target-mobile-pokemon';
-      button.textContent=`${mon.name} · Lv.${mon.level} · ${mon.currentHp}/${mon.maxHp} PS`;
-      button.disabled=mon.currentHp<=0 || (['rareCandy','goldCandy'].includes(id)&&mon.level>=100);
+      button.textContent=`${mon.name} · Lv.${mon.level} · ${mon.currentHp}/${mon.maxHp} ${'PS'}`;
+      button.disabled=(mon.currentHp<=0 && id!=='abilityCapsule') || (['rareCandy','goldCandy'].includes(id)&&mon.level>=100);
       button.onclick=()=>this.giveItemToPokemon(mon);
       mobileList.appendChild(button);
     });
@@ -2860,18 +2814,84 @@ generateFloorDungeon() {
       this.$id('panel-bag-actions').classList.remove('hidden');
       this.$id('panel-bag-actions').textContent='SCEGLI UN POKÉMON DALLA SQUADRA A SINISTRA';
       this.setBattleMsg('A quale Pokémon vuoi dare lo strumento?');
+      this.updateBattleWingCloseButtons();
+      this.focusBattleSelection('#team-grid button:not(:disabled)');
     } else this.logMsg('A quale Pokémon vuoi dare lo strumento? Sceglilo dalla squadra.');
   }
   cancelItemTargetSelection(){
     if(!this.pendingItemTarget)return;
     this.pendingItemTarget=null;
     this.$id('item-target-prompt').classList.add('hidden');
-    if(this.isBattleVisible() && !this.battleBusy)this.showMainActions();
+    if(this.isBattleVisible() && !this.battleBusy){
+      if(this.battleMode==='item-target')this.showBagMenu();
+      else this.showMainActions();
+    }
     else this.renderSidebar();
+  }
+  async openAbilityCapsule(pokemon){
+    if(this.abilityCapsuleOpen || this.isBattleVisible() || this.battleBusy || this.adventureCompleted ||
+       !this.team.includes(pokemon) || !this.items.abilityCapsule || this.pendingItemTarget!=='abilityCapsule')return false;
+    this.pendingItemTarget=null;this.$id('item-target-prompt').classList.add('hidden');
+    this.renderSidebar();
+    const overlay=this.$id('ability-capsule-overlay'),list=this.$id('ability-capsule-options');
+    this.abilityCapsuleOpen=true;this.abilityCapsuleCandidate=pokemon;const serial=(this.abilityCapsuleSerial=(this.abilityCapsuleSerial||0)+1);overlay.classList.remove('hidden');
+    this.$id('ability-capsule-description').textContent=`${pokemon.name} · Verifica abilità normali…`;
+    this.$id('ability-capsule-feedback').textContent='';list.replaceChildren();
+    this.$id('ability-capsule-cancel').focus();
+    try{
+      // Never trust an old checkpoint's abilityOptions: check the *species* PokeAPI data.
+      const data=await this.getPokemonData(pokemon.id);
+      if(!this.abilityCapsuleOpen||this.abilityCapsuleCandidate!==pokemon||serial!==this.abilityCapsuleSerial)return false;
+      if(Number(data?.id)!==pokemon.id)throw Error('Risposta specie non valida');
+      const allowed=PokexAbilities.normalOptions(data);
+      if(!allowed.length)throw Error('Dati ufficiali delle abilità non disponibili');
+      pokemon.abilityOptions=allowed;
+      const choices=PokexAbilities.alternatives(pokemon.ability,allowed);
+      if(!allowed.includes(pokemon.ability)){
+        this.$id('ability-capsule-feedback').textContent='Abilità attuale non verificabile per questa specie. Nessun oggetto consumato.';
+        return false;
+      }
+      if(!choices.length){
+        this.$id('ability-capsule-feedback').textContent='Questa specie non possiede altre abilità normali. Nessun oggetto consumato.';
+        return false;
+      }
+      this.$id('ability-capsule-description').textContent=(`Scegli una nuova abilità normale per ${pokemon.name}. Le abilità nascoste sono escluse.`);
+      for(const option of choices){
+        const button=document.createElement('button');button.type='button';
+        button.textContent=ABILITY_NAMES_IT[option]||option.replaceAll('-',' ').toUpperCase();
+        button.onclick=()=>this.confirmAbilityCapsule(pokemon,option,allowed);
+        list.appendChild(button);
+      }
+      list.querySelector('button')?.focus();return true;
+    }catch(error){
+      if(this.abilityCapsuleOpen && this.abilityCapsuleCandidate===pokemon && serial===this.abilityCapsuleSerial)
+        this.$id('ability-capsule-feedback').textContent='Dati abilità non disponibili. Controlla la connessione: nessun oggetto consumato.';
+      return false;
+    }
+  }
+  confirmAbilityCapsule(pokemon,option,allowed){
+    if(!this.abilityCapsuleOpen||this.abilityCapsuleCandidate!==pokemon||
+       !this.team.includes(pokemon)||this.isBattleVisible()||this.battleBusy||!this.items.abilityCapsule||
+       !allowed.includes(option)||!allowed.includes(pokemon.ability)||option===pokemon.ability)return false;
+    const previous=pokemon.ability;
+    pokemon.ability=option;pokemon.abilityName=ABILITY_NAMES_IT[option]||option.replaceAll('-',' ');
+    if(pokemon.status&&PokexAbilities.statusBlocked(pokemon,pokemon.status)){pokemon.status=null;pokemon.statusTurns=0;}
+    this.items.abilityCapsule--;this.closeAbilityCapsule();this.renderSidebar();
+    this.showItemFeedback(`${pokemon.name}: ${ABILITY_NAMES_IT[previous]||previous} → ${pokemon.abilityName}!`);
+    this.saveCheckpoint();return true;
+  }
+  closeAbilityCapsule(){
+    this.abilityCapsuleSerial=(this.abilityCapsuleSerial||0)+1;this.abilityCapsuleOpen=false;this.abilityCapsuleCandidate=null;
+    this.$id('ability-capsule-overlay')?.classList.add('hidden');
+    this.$id('ability-capsule-options')?.replaceChildren();
+    if(this.pendingItemTarget==='abilityCapsule'){this.pendingItemTarget=null;this.$id('item-target-prompt')?.classList.add('hidden');}
+    this.renderSidebar();
+    this.$id('bag-list')?.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
   }
   async giveItemToPokemon(pokemon){
     const id=this.pendingItemTarget;
     if(!id||!this.team.includes(pokemon)||!this.items[id])return;
+    if(id==='abilityCapsule')return this.openAbilityCapsule(pokemon);
     if(pokemon.currentHp<=0){this.showItemFeedback('Non puoi usare lo strumento su un Pokémon esausto!');return;}
     if(['rareCandy','goldCandy'].includes(id)){
       if(!this.devMode||this.isBattleVisible()||pokemon.level>=100){
@@ -2892,7 +2912,8 @@ generateFloorDungeon() {
       const before=pokemon.currentHp;
       const heal={potion:20,superPotion:50,hyperPotion:200}[id];
       pokemon.currentHp=Math.min(pokemon.maxHp,pokemon.currentHp+heal);
-      this.showItemFeedback(`${pokemon.name} recupera ${pokemon.currentHp-before} PS grazie a ${ {potion:'Pozione',superPotion:'Superpozione',hyperPotion:'Iperpozione'}[id] }!`);
+      const healNames={potion:'Pozione',superPotion:'Superpozione',hyperPotion:'Iperpozione'};
+      this.showItemFeedback(`${pokemon.name} recupera ${pokemon.currentHp-before} PS grazie a ${healNames[id]}!`);
     } else {
       pokemon.restorePp();this.showItemFeedback(`Elisir: i PP di ${pokemon.name} sono stati ripristinati!`);
     }
@@ -2923,6 +2944,8 @@ generateFloorDungeon() {
     if(success){
       if(this.battleType==='mewtwo')this.completeMewtwoEncounter();
       if([144,145,146].includes(Number(wild.id)))this.caughtLegendarySpecies.add(Number(wild.id));
+      // Record at confirmed capture, even when the player must release it.
+      window.PokexDex?.record(wild,'caught',`${this.battleType} · Piano ${this.floor}`);
       await this.battleText(`Preso! ${wild.name} è stato catturato!`);
       if(this.team.length<this.getTeamSlotLimit()){this.team.push(wild);this.endBattle(`Hai catturato ${wild.name}!`);}
       else this.promptTeamFullChoice(wild);
@@ -2969,7 +2992,7 @@ generateFloorDungeon() {
     user.classList.remove('attack-lunge');void user.offsetWidth;user.classList.add('attack-lunge');
     for(let i=0;i<count;i++){
       const p=document.createElement('img');p.className='v6-move-projectile';
-      p.src=`assets/effects/${effect}.svg`;p.alt='';p.draggable=false;
+      p.src=`assets/sprites/effects/${effect}.svg`;p.alt='';p.draggable=false;
       p.style.left=`${start.x+(i%3-1)*6}px`;p.style.top=`${start.y+(i%3-1)*4}px`;
       p.style.setProperty('--travel-x',`${dx+(i%4-1.5)*12}px`);
       p.style.setProperty('--travel-y',`${dy+(i%3-1)*15}px`);
@@ -3007,60 +3030,74 @@ generateFloorDungeon() {
       (enemyMove.priority===move.priority && this.battleSpeed(this.enemyMon)>this.battleSpeed(this.activeMon));
     if(enemyFirst){const enemyResult=await this.applyMove(this.enemyMon,this.activeMon,enemyMove,'player');
       if(enemyResult==='battle-ended')return;
-      if(this.activeMon.currentHp<=0){await this.onPlayerFainted();return;}}
+      if(this.activeMon.currentHp<=0){await this.resolveBattleFaints();return;}}
     if(this.enemyMon.currentHp>0){await this.applyMove(this.activeMon,this.enemyMon,move,'enemy');}
-    // The self-KO must be processed even if the enemy fell too.
-    if(this.activeMon.currentHp<=0){
-      if(this.enemyMon.currentHp<=0){
-        const fallen=this.activeMon;
-        await this.handleBattleVictory();
-        this.team=this.team.filter(p=>p!==fallen);
-        if(this.activeMon===fallen)this.activeMon=this.team.find(p=>p.currentHp>0)||null;
-        this.renderSidebar();
-        if(!this.activeMon)this.$id('gameover-overlay').classList.remove('hidden');
-      }else await this.onPlayerFainted();
-      return;
-    }
+    // Both Pokémon may faint in the same hit (Destiny Bond / recoil).
+    if(this.activeMon.currentHp<=0){await this.resolveBattleFaints();return;}
     if(this.enemyMon.currentHp<=0){await this.handleBattleVictory();return;}
     if(!enemyFirst){await this.enemyTurn(true);return;}
     await this.applyEndOfTurnEffects();
-    if(this.activeMon.currentHp<=0){await this.onPlayerFainted();return;}
+    if(this.activeMon.currentHp<=0){await this.resolveBattleFaints();return;}
     if(this.enemyMon.currentHp<=0){await this.handleBattleVictory();return;}
     this.battleBusy=false;this.showMainActions();
   }
+  async resolveBattleFaints(){
+    if(this.activeMon?.currentHp>0)return false;
+    if(this.enemyMon?.currentHp>0){await this.onPlayerFainted();return true;}
+    // Both fainted: keep the existing permadeath rule, but do not leave an
+    // invisible zero-HP enemy in the next turn when Destiny Bond triggers.
+    const fallen=this.activeMon;
+    await this.handleBattleVictory();
+    this.team=this.team.filter(p=>p!==fallen);
+    if(this.activeMon===fallen)this.activeMon=this.team.find(p=>p.currentHp>0)||null;
+    this.renderSidebar();
+    if(!this.activeMon){
+      this.$id('gameover-overlay').classList.remove('hidden');
+      window.PokexCheckpoints?.discard();this.updateContinueButton();
+    }
+    return true;
+  }
   beginBattleTurn(){
-    if(this.activeMon)this.activeMon.protectedThisTurn=false;
-    if(this.enemyMon)this.enemyMon.protectedThisTurn=false;
+    if(this.activeMon){this.activeMon.protectedThisTurn=false;this.activeMon.flinchedThisTurn=false;}
+    if(this.enemyMon){this.enemyMon.protectedThisTurn=false;this.enemyMon.flinchedThisTurn=false;}
   }
   triggerEntryAbilities(mon,opponent){
-    if(!mon||!opponent)return;
-    if(mon.ability==='intimidate'&&!['clear-body','white-smoke','hyper-cutter'].includes(opponent.ability)){
-      opponent.statStages.attack=Math.max(-6,(opponent.statStages.attack||0)-1);
-    }
+    const messages=PokexAbilities.entry(mon,opponent,{weather:this.effectiveBattleWeather(),
+      setWeather:type=>{this.battleWeather={type,turns:5};},typeEffectiveness});
+    if(messages.length)this.setBattleMsg(messages.at(-1));
   }
   statusAbilityBlocks(mon,ailment){
-    return (ailment==='poison' && mon.ability==='immunity') ||
-      (ailment==='burn' && mon.ability==='water-veil') ||
-      (ailment==='paralysis' && mon.ability==='limber') ||
-      (ailment==='freeze' && mon.ability==='magma-armor') ||
-      (ailment==='sleep' && ['insomnia','vital-spirit'].includes(mon.ability));
+    return PokexAbilities.statusBlocked(mon,ailment,{weather:this.effectiveBattleWeather()});
   }
   abilityAttackImmunity(defender,move,attacker){
-    if(defender.ability==='levitate'&&move.type==='ground')return `${defender.name} evita la mossa grazie a Levitazione!`;
-    const absorb={water:'water-absorb',electric:'volt-absorb'};
-    if(absorb[move.type]===defender.ability){
-      const amount=Math.max(1,Math.floor(defender.maxHp/4));
-      defender.currentHp=Math.min(defender.maxHp,defender.currentHp+amount);
-      return `${defender.name} recupera PS grazie a ${defender.abilityName}!`;
+    const outcome=PokexAbilities.immunity(attacker,defender,move,
+      {weather:this.effectiveBattleWeather(),effectiveness:typeEffectiveness(move.type,defender.types)});
+    if(!outcome)return null;
+    if(outcome.kind==='heal'){
+      const restored=PokexAbilities.restore(defender,outcome.amount);
+      return `${defender.name} recupera ${restored} PS grazie a ${defender.abilityName}!`;
     }
-    if(move.type==='fire'&&defender.ability==='flash-fire'){
-      defender.flashFireActivated=true;
-      return `${defender.name} potenzia il Fuoco grazie a Fuocardore!`;
+    if(outcome.kind==='stage'){
+      PokexAbilities.stage(defender,outcome.stat,1);
+      return `${defender.name} potenzia le statistiche grazie a ${defender.abilityName}!`;
     }
-    return null;
+    if(outcome.kind==='boost')defender[outcome.key]=true;
+    return `${defender.name} neutralizza ${move.name} grazie a ${defender.abilityName}!`;
+  }
+  effectiveBattleWeather(){
+    if(['cloud-nine','air-lock'].includes(this.activeMon?.ability) || ['cloud-nine','air-lock'].includes(this.enemyMon?.ability))return null;
+    return this.battleWeather;
+  }
+  isOpponentTrapping(mon){
+    const ability=this.enemyMon?.ability;
+    if(!mon||!ability||!this.isBattleVisible())return false;
+    if(ability==='shadow-tag'&&mon.ability!=='shadow-tag')return true;
+    if(ability==='magnet-pull'&&mon.types?.includes('steel'))return true;
+    if(ability==='arena-trap'&&!mon.types?.includes('flying')&&mon.ability!=='levitate')return true;
+    return false;
   }
   battleSpeed(mon){
-    return mon.speed*statMultiplier(mon.statStages?.speed)*(mon.status==='paralysis'?.25:1);
+    return mon.speed*statMultiplier(mon.statStages?.speed)*(mon.status==='paralysis'&&mon.ability!=='quick-feet'?.25:1)*PokexAbilities.speedMultiplier(mon,{weather:this.effectiveBattleWeather()});
   }
   pickEnemyMove(){
     if(this.enemyMon?.rechargeTurns>0)return FORCED_RECHARGE_ACTION;
@@ -3078,7 +3115,8 @@ generateFloorDungeon() {
   stopRollout(mon){mon.rolloutTurns=0;mon.rolloutHits=0;mon.rolloutMove=null;}
   // A separate hit runs its own damage, crit, ability and recoil logic. Only
   // the initial accuracy check and one PP payment occur per multihit action.
-  async applyMove(attacker,defender,move,target){
+  async applyMove(attacker,defender,move,target,options={}){
+    if(attacker.flinchedThisTurn){attacker.flinchedThisTurn=false;await this.battleText(`${attacker.name} tentenna e non attacca!`);return 'flinch';}
     if(attacker.rechargeTurns>0){
       attacker.rechargeTurns--;
       await this.battleText(`${attacker.name} deve riposare per recuperare le energie!`);
@@ -3086,14 +3124,20 @@ generateFloorDungeon() {
     }
     // The release of a charging attack does not spend PP a second time.
     const releasing=Boolean(attacker.pendingCharge && attacker.pendingCharge.move.id===move.id);
-    if(attacker.status==='sleep'){
-      attacker.statusTurns--;
-      if(attacker.statusTurns>0){attacker.pendingCharge=null;attacker.rampageTurns=0;this.stopRollout(attacker);await this.battleText(`${attacker.name} sta dormendo!`);return;}
-      attacker.status=null;await this.battleText(`${attacker.name} si è svegliato!`);
+    const sleepMove=['snore','sleep-talk'].includes(move.id);
+    if(attacker.status==='sleep' && !options.fromSleepTalk){
+      attacker.statusTurns-=attacker.ability==='early-bird'?2:1;
+      if(attacker.statusTurns>0 && !sleepMove){attacker.pendingCharge=null;attacker.rampageTurns=0;this.stopRollout(attacker);await this.battleText(`${attacker.name} sta dormendo!`);return;}
+      if(attacker.statusTurns<=0){attacker.status=null;attacker.nightmareActive=false;
+        await this.battleText(`${attacker.name} si è svegliato!`);}
+    }
+    if(sleepMove && attacker.status!=='sleep'){
+      await this.battleText(`${move.name} fallisce: ${attacker.name} non dorme!`);return 'no-effect';
     }
     if(attacker.status==='freeze' && Math.random()>=.2){attacker.pendingCharge=null;attacker.rampageTurns=0;this.stopRollout(attacker);await this.battleText(`${attacker.name} è congelato!`);return;}
     if(attacker.status==='freeze')attacker.status=null;
     if(attacker.status==='paralysis' && Math.random()<.25){attacker.pendingCharge=null;attacker.rampageTurns=0;this.stopRollout(attacker);await this.battleText(`${attacker.name} è paralizzato!`);return;}
+    if(attacker.attractedTo===defender && defender.currentHp>0 && Math.random()<.5){await this.battleText(`${attacker.name} è immobilizzato dall'infatuazione!`);return;}
     if(attacker.confusionTurns>0){
       await this.battleText(`${attacker.name} è confuso!`);
       attacker.confusionTurns--;
@@ -3106,7 +3150,7 @@ generateFloorDungeon() {
       }
       if(attacker.confusionTurns===0)await this.battleText(`${attacker.name} non è più confuso!`);
     }
-    if(!releasing && !attacker.rampageTurns && !attacker.rolloutTurns)
+    if(!options.skipPp && !releasing && !attacker.rampageTurns && !attacker.rolloutTurns)
       move.currentPp=Math.max(0,move.currentPp-(defender.ability==='pressure'?2:1));
     if(releasing)attacker.pendingCharge=null;
     else if(CHARGE_MOVES.has(move.id)){
@@ -3123,7 +3167,52 @@ generateFloorDungeon() {
       attacker.rampageTurns=2+Math.floor(Math.random()*2);
       attacker.rampageMove=move;
     }
+    if(move.id!=='destiny-bond')attacker.destinyBondActive=false;
+    if(move.id!=='fury-cutter')attacker.furyCutterHits=0;
+    attacker.lastUsedMoveId=move.id;
     this.setBattleMsg(`${attacker.name} usa ${move.name}!`);
+    if(move.unsupported){await this.battleText(`${move.name}: dati non disponibili, mossa non eseguibile offline.`);return 'unsupported';}
+    if(['sandstorm','rain-dance','sunny-day','hail','snowscape'].includes(move.id)){
+      const kind={'sandstorm':'sandstorm','rain-dance':'rain','sunny-day':'sun',hail:'hail',snowscape:'snow'}[move.id];
+      if(this.battleWeather?.type===kind){await this.battleText('Queste condizioni meteo sono già attive!');return 'no-effect';}
+      this.battleWeather={type:kind,turns:5};
+      await this.battleText(`${attacker.name} modifica il tempo con ${move.name}!`);return 'weather';
+    }
+    if(move.id==='metronome'){
+      await this.battleText('Metronomo non è ancora supportato dal motore di combattimento.');return 'unsupported';
+    }
+    if((move.selfKo||['self-destruct','explosion'].includes(move.id)) && (attacker.ability==='damp'||defender.ability==='damp')){
+      await this.battleText('Umidità impedisce l’esplosione!');return 'no-effect';
+    }
+    if(move.id==='destiny-bond'){
+      attacker.destinyBondActive=true;
+      await this.battleText(`${attacker.name} è pronto a trascinare con sé l’avversario!`);
+      return 'destiny-bond';
+    }
+    if(move.id==='curse'){
+      if(!attacker.types?.includes('ghost')){
+        attacker.statStages.attack=Math.min(6,(attacker.statStages.attack||0)+1);
+        attacker.statStages.defense=Math.min(6,(attacker.statStages.defense||0)+1);
+        attacker.statStages.speed=Math.max(-6,(attacker.statStages.speed||0)-1);
+        await this.battleText(`${attacker.name}: Attacco e Difesa aumentano, Velocità diminuisce!`);
+      }else if(defender.ghostCurseActive){
+        await this.battleText(`${defender.name} è già colpito da Maledizione!`);return 'no-effect';
+      }else if(defender.protectedThisTurn){
+        await this.battleText(`${defender.name} blocca Maledizione!`);return 'no-effect';
+      }else{
+        attacker.currentHp=Math.max(0,attacker.currentHp-Math.max(1,Math.floor(attacker.maxHp/2)));
+        defender.ghostCurseActive=true;
+        await this.battleText(`${attacker.name} sacrifica PS: una maledizione colpisce ${defender.name}!`);
+      }
+      this.updateBattleHUD();return 'curse';
+    }
+    if(move.id==='sleep-talk'){
+      const alternatives=attacker.moves.filter(m=>m.id!==move.id && m.id!=='sleep-talk' && m.id!=='metronome' && m.id!=='assist' && m.id!=='mirror-move');
+      if(!alternatives.length){await this.battleText('Sonnolalia fallisce: nessuna mossa utilizzabile!');return 'no-effect';}
+      const chosen=alternatives[Math.floor(Math.random()*alternatives.length)];
+      await this.battleText(`${attacker.name} usa Sonnolalia: ${chosen.name}!`);
+      return this.applyMove(attacker,defender,chosen,target,{skipPp:true,fromSleepTalk:true});
+    }
     if(move.id==='geomancy'){
       for(const stat of ['special-attack','special-defense','speed'])
         attacker.statStages[stat]=Math.min(6,(attacker.statStages[stat]||0)+2);
@@ -3215,7 +3304,7 @@ generateFloorDungeon() {
       return;
     }
     attacker.protectStreak=0;
-    const targetsOpponent=move.power>0||move.ailment||move.id==='leech-seed'||
+    const targetsOpponent=move.power>0||move.ailment||['leech-seed','nightmare','mean-look','spite','low-kick'].includes(move.id)||
       (move.statChange&&move.statChange.stage<0)||
       (move.statChanges?.some(change=>change.stage<0)||false)||
       ['swagger','flatter'].includes(move.id);
@@ -3231,6 +3320,16 @@ generateFloorDungeon() {
       return;
     }
     let resolvedMove=move;
+    if(move.id==='fury-cutter'){
+      const multiplier=Math.pow(2,Math.min(4,attacker.furyCutterHits||0));
+      resolvedMove={...move,power:move.power*multiplier};
+    }
+    if(move.id==='low-kick'){
+      if(!Number.isFinite(defender.weight)){await this.battleText('Calciobasso fallisce: peso del bersaglio non disponibile.');return 'no-effect';}
+      const weightKg=defender.weight/10;
+      const power=weightKg<10?20:weightKg<25?40:weightKg<50?60:weightKg<100?80:weightKg<200?100:120;
+      resolvedMove={...move,power};
+    }
     if(ROLLOUT_MOVES.has(move.id)){
       const power=move.power*Math.pow(2,attacker.rolloutHits||0)*(attacker.defenseCurlUsed?2:1);
       resolvedMove={...move,power};
@@ -3241,9 +3340,30 @@ generateFloorDungeon() {
       await this.battleText(`Magnitudo ${outcome.level}!`);
     }
     await this.playAttackAnimation(move,target);
-    const accuracy=move.alwaysHits?Infinity:Math.min(100,(move.accuracy??100)*(attacker.ability==='compound-eyes'?1.3:1) * accuracyStageMultiplier(attacker.statStages?.accuracy) /
+    const abilityAccuracy=PokexAbilities.accuracyMultiplier(attacker,defender,move,{weather:this.effectiveBattleWeather()});
+    const accuracy=abilityAccuracy===Infinity?Infinity:Math.min(100,(move.accuracy??100)*abilityAccuracy * accuracyStageMultiplier(attacker.statStages?.accuracy) /
       accuracyStageMultiplier(defender.statStages?.evasion));
-    if(Math.random()*100 >= accuracy){this.stopRollout(attacker);if(move.selfKo||['self-destruct','explosion'].includes(move.id))attacker.currentHp=0;await this.battleText('Ma la mossa fallisce!');return;}
+    if(Math.random()*100 >= accuracy){attacker.furyCutterHits=0;this.stopRollout(attacker);if(move.selfKo||['self-destruct','explosion'].includes(move.id))attacker.currentHp=0;await this.battleText('Ma la mossa fallisce!');return;}
+    if(move.id==='nightmare'){
+      if(defender.status!=='sleep'){await this.battleText('Incubo fallisce: il bersaglio non dorme!');return 'no-effect';}
+      if(defender.nightmareActive){await this.battleText(`${defender.name} è già tormentato da Incubo!`);return 'no-effect';}
+      defender.nightmareActive=true;
+      await this.battleText(`${defender.name} è tormentato da Incubo finché dormirà!`);
+      return 'nightmare';
+    }
+    if(move.id==='spite'){
+      const last=defender.lastUsedMoveId;
+      const victim=defender.moves?.find(m=>m.id===last);
+      if(!victim||victim.currentPp<=0){await this.battleText('Dispetto fallisce: nessuna mossa con PP da ridurre!');return 'no-effect';}
+      const lost=Math.min(victim.currentPp,2+Math.floor(Math.random()*4));
+      victim.currentPp-=lost;await this.battleText(`Dispetto riduce di ${lost} i PP di ${victim.name}!`);
+      return 'spite';
+    }
+    if(move.id==='mean-look'){
+      if(defender.meanLookSource){await this.battleText('Il bersaglio non può già scappare!');return 'no-effect';}
+      defender.meanLookSource=attacker;
+      await this.battleText(`${defender.name} non può più fuggire!`);return 'mean-look';
+    }
     let modifier=typeEffectiveness(move.type,defender.types);
     // Immunità da abilità: il colpo non infligge danni (con assorbimento dove previsto).
     const immunity=this.abilityAttackImmunity(defender,move,attacker);
@@ -3251,7 +3371,7 @@ generateFloorDungeon() {
     // Fixed-damage moves ignore offensive/defensive stats but still obey immunities.
     const fixedDamage=({'dragon-rage':40,'sonic-boom':20,'night-shade':attacker.level,
       'seismic-toss':attacker.level,'super-fang':Math.max(1,Math.floor(defender.currentHp/2))})[move.id]??null;
-    if(move.power>0 || fixedDamage!==null){
+    if(resolvedMove.power>0 || fixedDamage!==null){
       const count=attacker.ability==='skill-link' && move.maxHits>move.minHits?move.maxHits:rollMultiHitCount(move);
       let landed=0,totalDamage=0,anyCrit=false;
       for(let i=0;i<count && defender.currentHp>0 && attacker.currentHp>0;i++){
@@ -3259,9 +3379,16 @@ generateFloorDungeon() {
         if(i>0 && ['triple-kick','triple-axel','population-bomb'].includes(move.id) && Math.random()*100>=accuracy)break;
         const hitMove=move.id==='triple-kick'||move.id==='triple-axel'
           ?{...resolvedMove,power:resolvedMove.power*(i+1)}:resolvedMove;
-        const result=fixedDamage===null?calculateBattleDamage(attacker,defender,hitMove):
+        const result=fixedDamage===null?calculateBattleDamage(attacker,defender,hitMove,Math.random,{weather:this.effectiveBattleWeather()}):
           {damage:modifier===0?0:Math.min(defender.currentHp,fixedDamage),effectiveness:modifier,critical:false};
+        // Sturdy prevents a one-hit knockout from full HP. Multi-hit moves can still KO.
+        if(defender.ability==='sturdy'&&defender.currentHp===defender.maxHp&&result.damage>=defender.currentHp&&
+           !PokexAbilities.suppress(attacker)&&result.damage>0)result.damage=Math.max(0,defender.currentHp-1);
         defender.currentHp=Math.max(0,defender.currentHp-result.damage);
+        if(defender.currentHp===0 && result.damage>0 && defender.destinyBondActive && attacker.currentHp>0){
+          defender.destinyBondActive=false;attacker.currentHp=0;
+          await this.battleText(`${defender.name} trascina ${attacker.name} con sé grazie a Destinobbligato!`);
+        }
         landed++;totalDamage+=result.damage;anyCrit ||= result.critical;
         if(result.damage>0 && move.id==='rapid-spin'){attacker.trappedTurns=0;attacker.trapMove=null;}
         if(result.damage>0 && ['wrap','bind','clamp','fire-spin','whirlpool','sand-tomb'].includes(move.id) && defender.currentHp>0 && !defender.trappedTurns){
@@ -3269,14 +3396,22 @@ generateFloorDungeon() {
           defender.trappedTurns=roll<.375?2:roll<.75?3:roll<.875?4:5;
           defender.trapMove=move.name;defender.trapSource=attacker;
         }
-        if(result.damage>0 && move.category==='physical' && attacker.currentHp>0 &&
-          !attacker.status && defender.currentHp>0){
-          const reactive={static:['paralysis',.30], 'poison-point':['poison',.30], 'flame-body':['burn',.30]};
-          const reaction=reactive[defender.ability];
-          if(reaction&&Math.random()<reaction[1]){attacker.status=reaction[0];attacker.statusTurns=3;}
+        // Contact means a move with the PokeAPI contact flag, not all physical damage.
+        for(const feedback of PokexAbilities.contact(attacker,defender,move,result.damage,{weather:this.effectiveBattleWeather()}))
+          await this.battleText(feedback);
+        if(result.damage>0&&defender.currentHp>0&&!defender.flinchedThisTurn){
+          const chance=Math.max(move.flinchChance||0,attacker.ability==='stench'?10:0)*(attacker.ability==='serene-grace'?2:1);
+          if(Math.random()*100<chance && defender.ability!=='inner-focus'){
+            defender.flinchedThisTurn=true;
+            if(defender.ability==='steadfast')PokexAbilities.stage(defender,'speed',1);
+          }
+        }
+        if(result.damage>0 && result.critical && defender.ability==='anger-point'){
+          defender.statStages.attack=6;await this.battleText(`Grancollera massimizza l'Attacco di ${defender.name}!`);
         }
         if(move.drain>0 && result.damage>0)attacker.currentHp=Math.min(attacker.maxHp,attacker.currentHp+Math.max(1,Math.floor(result.damage*move.drain/100)));
-        if(move.drain<0 && result.damage>0 && attacker.ability!=='rock-head')attacker.currentHp=Math.max(0,attacker.currentHp-Math.max(1,Math.floor(result.damage*-move.drain/100)));
+        if(move.drain<0 && result.damage>0 && !['rock-head','magic-guard'].includes(attacker.ability))attacker.currentHp=Math.max(0,attacker.currentHp-Math.max(1,Math.floor(result.damage*-move.drain/100)));
+        if(move.drain>0&&defender.ability==='liquid-ooze')attacker.currentHp=Math.max(0,attacker.currentHp-Math.max(1,Math.floor(result.damage*move.drain/100))*2);
         this.updateBattleHUD();
         if(count>1){
           await this.battleText(`Colpo ${landed}: ${result.damage} danni${result.critical?' · BRUTTO COLPO!':''}`);
@@ -3289,6 +3424,8 @@ generateFloorDungeon() {
       if(count===1)await this.battleText(`${attacker.name} usa ${move.name}! ${totalDamage} danni. ${anyCrit?'⚡ BRUTTO COLPO! ':''}${reaction}`);
       else if(reaction)await this.battleText(reaction);
       // Rollout/Ice Ball lock the combatant for up to five consecutive turns.
+      if(move.id==='fury-cutter' && modifier>0 && totalDamage>0)
+        attacker.furyCutterHits=Math.min(4,(attacker.furyCutterHits||0)+1);
       if(ROLLOUT_MOVES.has(move.id)){
         if(modifier===0 || defender.currentHp<=0 || attacker.currentHp<=0)this.stopRollout(attacker);
         else if(attacker.rolloutTurns>0){
@@ -3302,22 +3439,25 @@ generateFloorDungeon() {
       const amount=Math.max(1,Math.floor(attacker.maxHp*(move.healing||50)/100));
       attacker.currentHp=Math.min(attacker.maxHp,attacker.currentHp+amount);
       await this.battleText(`${attacker.name} recupera ${amount} PS!`);
-    } else if(move.id==='leech-seed'){defender.seeded=true;await this.battleText(`${defender.name} è stato parassitato!`);
+    } else if(move.id==='leech-seed'){
+      if(defender.types.includes('grass')||defender.seeded){
+        await this.battleText(defender.seeded?'Parassiseme è già attivo!':'Parassiseme non ha effetto sui Pokémon Erba!');
+      }else{defender.seeded=true;await this.battleText(`${defender.name} è stato parassitato!`);}
     } else if(!move.statChange && !move.ailment) await this.battleText(`${attacker.name} esegue ${move.name}!`);
     // All Pokémon stat changes (including two-stat buffs) need application.
     // Negative stages usually target the foe; statTarget handles self-debuffs.
     const changes=move.statChanges?.length?move.statChanges:(move.statChange?[move.statChange]:[]);
     for(const {stat,stage,chance} of changes){
       if(!((move.power===0 || defender.currentHp>0)&&(move.power===0 || modifier>0)))continue;
-      if(Math.random()*100>=(chance??100))continue;
+      if(Math.random()*100>=Math.min(100,(chance??100)*(attacker.ability==='serene-grace'?2:1)))continue;
       const targetsSelf=move.statTarget==='user'||move.statTarget==='users-field'||
         (move.power>0&&['superpower','close-combat','overheat','draco-meteor','leaf-storm'].includes(move.id));
       const targetsFoe=move.statTarget==='selected-pokemon'||move.statTarget==='all-opponents'||
         ['swagger','flatter'].includes(move.id);
       const targetP=targetsSelf?attacker:targetsFoe?defender:stage<0?defender:attacker;
-      const immune=stage<0 && targetP===defender && (['clear-body','white-smoke'].includes(targetP.ability)||
-        (stat==='attack'&&targetP.ability==='hyper-cutter')||
-        (stat==='accuracy'&&targetP.ability==='keen-eye')|| targetP.mistTurns>0);
+      if(move.power>0&&stage<0&&targetP===defender&&defender.ability==='shield-dust'&&!PokexAbilities.suppress(attacker))continue;
+      const immune=stage<0 && targetP===defender &&
+        ((PokexAbilities.dropBlocked(targetP,stat,true,{weather:this.effectiveBattleWeather()})&&!PokexAbilities.suppress(attacker))||targetP.mistTurns>0);
       if(immune){await this.battleText(`${targetP.name} impedisce il calo delle statistiche!`);}
       else {
         const before=targetP.statStages[stat]||0;
@@ -3326,15 +3466,16 @@ generateFloorDungeon() {
         if(move.id==='defense-curl' && targetP===attacker)attacker.defenseCurlUsed=true;
         await this.battleText(after===before?`${targetP.name}: ${STAT_LABELS_IT[stat]||stat} non può cambiare ancora!`:
           `${targetP.name}: ${STAT_LABELS_IT[stat]||stat} ${stage<0?'diminuisce':'aumenta'}!`);
+        if(stage<0 && targetP===defender && after<before)for(const message of PokexAbilities.afterStatDrop(targetP,true))await this.battleText(message);
       }
     }
     this.updateBattleHUD();
-    const blocked=move.power>0 && defender.ability==='shield-dust';
+    const blocked=move.power>0 && defender.ability==='shield-dust'&&!PokexAbilities.suppress(attacker);
     const ailmentChance=Math.min(100,(move.ailmentChance || (move.power===0?100:0))*(attacker.ability==='serene-grace'?2:1));
     if(move.ailment && !['none','leech-seed'].includes(move.ailment) &&
       (move.ailment==='confusion'?!defender.confusionTurns:!defender.status) && defender.currentHp>0 && (move.power===0 || modifier>0) &&
-      !blocked && !(move.ailment==='confusion' && defender.ability==='own-tempo') &&
-      !(defender.safeguardTurns>0) && !this.statusAbilityBlocks(defender,move.ailment) && Math.random()*100<ailmentChance) {
+      !blocked && !(move.ailment==='confusion' && defender.ability==='own-tempo'&&!PokexAbilities.suppress(attacker)) &&
+      !(defender.safeguardTurns>0) && (PokexAbilities.suppress(attacker)||!this.statusAbilityBlocks(defender,move.ailment)) && Math.random()*100<ailmentChance) {
       if(move.ailment==='confusion')defender.confusionTurns=2+Math.floor(Math.random()*4);
       else {defender.status=move.ailment;defender.statusTurns=2+Math.floor(Math.random()*3);}
       await this.battleText(`${defender.name}: ${({poison:'avvelenamento','bad-poison':'iperavvelenamento',burn:'scottatura',paralysis:'paralisi',sleep:'sonno',freeze:'congelamento',confusion:'confusione'})[move.ailment]||'stato alterato'}!`);
@@ -3370,10 +3511,10 @@ generateFloorDungeon() {
     const move=this.pickEnemyMove();
     const enemyResult=await this.applyMove(this.enemyMon,this.activeMon,move,'player');
     if(enemyResult==='battle-ended')return;
-    if(this.activeMon.currentHp<=0){await this.onPlayerFainted();return;}
+    if(this.activeMon.currentHp<=0){await this.resolveBattleFaints();return;}
     if(this.enemyMon.currentHp<=0){await this.handleBattleVictory();return;}
     await this.applyEndOfTurnEffects();
-    if(this.activeMon.currentHp<=0){await this.onPlayerFainted();return;}
+    if(this.activeMon.currentHp<=0){await this.resolveBattleFaints();return;}
     if(this.enemyMon.currentHp<=0){await this.handleBattleVictory();return;}
     this.battleBusy=false;this.showMainActions();
   }
@@ -3398,26 +3539,60 @@ generateFloorDungeon() {
         if(mon[key]>0){mon[key]--;if(mon[key]===0)await this.battleText(`${label} di ${mon.name} svanisce!`);}
       }
       if(mon.currentHp<=0)continue;
-      if(['burn','poison','bad-poison'].includes(mon.status)){
+      if(mon.ghostCurseActive && mon.ability!=='magic-guard'){
+        const damage=Math.min(mon.currentHp,Math.max(1,Math.floor(mon.maxHp/4)));
+        mon.currentHp-=damage;
+        this.updateBattleHUD();await this.battleText(`Maledizione sottrae ${damage} PS a ${mon.name}!`);
+      }
+      if(mon.currentHp<=0)continue;
+      if(mon.nightmareActive && mon.status!=='sleep')mon.nightmareActive=false;
+      if(mon.nightmareActive && mon.status==='sleep' && mon.ability!=='magic-guard'){
+        const damage=Math.min(mon.currentHp,Math.max(1,Math.floor(mon.maxHp/4)));
+        mon.currentHp-=damage;
+        this.updateBattleHUD();await this.battleText(`Incubo sottrae ${damage} PS a ${mon.name}!`);
+      }
+      if(mon.currentHp<=0)continue;
+      if(['burn','poison','bad-poison'].includes(mon.status)&&!['magic-guard'].includes(mon.ability) && !(mon.ability==='poison-heal'&&['poison','bad-poison'].includes(mon.status))){
         if(mon.status==='bad-poison')mon.toxicTurns=(mon.toxicTurns||0)+1;
         const damage=Math.max(1,Math.floor(mon.maxHp*(mon.status==='bad-poison'?Math.min(15,mon.toxicTurns):2)/16));
         mon.currentHp=Math.max(0,mon.currentHp-damage);
         this.updateBattleHUD();await this.battleText(`${mon.name} subisce ${damage} danni da ${mon.status==='burn'?'scottatura':'veleno'}!`);
       }
-      if(mon.trappedTurns>0 && mon.currentHp>0){
+      if(mon.trappedTurns>0 && mon.currentHp>0 && mon.ability!=='magic-guard'){
         const damage=Math.max(1,Math.floor(mon.maxHp/16));
         mon.currentHp=Math.max(0,mon.currentHp-damage);
         mon.trappedTurns--;
         this.updateBattleHUD();
         await this.battleText(`${mon.name} subisce ${damage} danni da ${mon.trapMove||'Avvolgibotta'}!`);
       }
-      if(mon.seeded && mon.currentHp>0){
-        const damage=Math.max(1,Math.floor(mon.maxHp/12));
+      if(mon.seeded && mon.currentHp>0 && mon.ability!=='magic-guard'){
+        const damage=Math.min(mon.currentHp,Math.max(1,Math.floor(mon.maxHp/8)));
         mon.currentHp=Math.max(0,mon.currentHp-damage);
         const leech=mon===this.activeMon?this.enemyMon:this.activeMon;
         leech.currentHp=Math.min(leech.maxHp,leech.currentHp+damage);
         this.updateBattleHUD();await this.battleText(`Parassiseme sottrae energia a ${mon.name}!`);
       }
+    }
+    for(const mon of combatants){
+      for(const message of PokexAbilities.endTurn(mon,{weather:this.effectiveBattleWeather()}))await this.battleText(message);
+    }
+    if(this.effectiveBattleWeather()?.type==='sandstorm'){
+      for(const mon of combatants){
+        if(!mon||mon.currentHp<=0||PokexAbilities.immuneToSand(mon))continue;
+        const damage=Math.min(mon.currentHp,Math.max(1,Math.floor(mon.maxHp/16)));
+        mon.currentHp-=damage;this.updateBattleHUD();
+        await this.battleText(`Terrempesta sottrae ${damage} PS a ${mon.name}!`);
+      }
+    }
+    if(this.effectiveBattleWeather()?.type==='hail'){
+      for(const mon of combatants){
+        if(!mon||mon.currentHp<=0||mon.types?.includes('ice')||['overcoat','magic-guard','snow-cloak','ice-body'].includes(mon.ability))continue;
+        const damage=PokexAbilities.hurt(mon,1/16);this.updateBattleHUD();await this.battleText(`Grandine infligge ${damage} danni a ${mon.name}!`);
+      }
+    }
+    if(this.battleWeather){
+      this.battleWeather.turns--;
+      if(this.battleWeather.turns<=0){this.battleWeather=null;await this.battleText('Il tempo torna normale.');}
     }
   }
   async onPlayerFainted(){
@@ -3429,11 +3604,11 @@ generateFloorDungeon() {
     this.renderSidebar();
     this.$id('player-sprite').classList.remove('faint-anim');
     if(!this.team.some(p=>p.currentHp>0)){
-      this.isRaidActive=false;this.battleToken++;
+      this.isRaidActive=false;this.raidQueueCount=0;this.clearRaidTransientState();this.battleToken++;
       this.$id('overlay-battle').classList.add('hidden');this.$id('battle-controls').classList.add('hidden');
       this.$id('rotom-body').classList.remove('battle-active');
       this.activeMon=null;this.renderSidebar();
-      this.$id('gameover-overlay').classList.remove('hidden');return;
+      this.$id('gameover-overlay').classList.remove('hidden');window.PokexCheckpoints?.discard();this.updateContinueButton();return;
     }
     this.battleBusy=false;this.showTeamMenu(true);
   }
@@ -3445,17 +3620,23 @@ generateFloorDungeon() {
       this.updateBattleHUD();
       return;
     }
-    const levelEvents=await mon.gainExperience(amount,levelCap);
+    const levelEvents=await mon.gainExperience(amount,levelCap,options=>this.chooseEvolution(mon,options));
     await this.battleText(`${mon.name} riceve ${amount} punti esperienza!`);
     this.renderSidebar();this.updateBattleHUD();
     for(const event of levelEvents){
       await this.battleText(`${mon.name} raggiunge il livello ${event.level}!`);
-      if(event.evolution)await this.showEvolution(mon,event.evolution);
+      if(event.evolution){window.PokexDex?.record(mon,'caught',`Evoluzione · Piano ${this.floor}`);await this.showEvolution(mon,event.evolution);}
       for(const move of event.moves)await this.learnMove(move,mon);
     }
     this.renderSidebar();this.updateBattleHUD();
   }
   async handleBattleVictory(){
+    // Multiple async click/turn completions must never consume two Raid slots.
+    const raidToken=this.isRaidActive?this.battleToken:null;
+    if(raidToken!==null){
+      if(this.raidVictoryResolutionToken===raidToken)return;
+      this.raidVictoryResolutionToken=raidToken;
+    }
     const defeated=this.enemyMon;
     this.$id('enemy-sprite').classList.add('faint-anim');
     await this.battleText(`${defeated.name} è esausto!`);
@@ -3473,6 +3654,15 @@ generateFloorDungeon() {
         mon===this.activeMon?earned:Math.max(1,Math.round(earned*.55));
       await this.awardBattleExperience(mon,reward);
     }
+    // Raccolta: once per defeated enemy, each surviving team member with Pickup
+    // has an independent 10% chance to find a simple item, subject to bag limits.
+    for(const collector of this.team){
+      if(collector.currentHp<=0||collector.ability!=='pickup'||Math.random()>=.10)continue;
+      const loot=['pokeball','potion','elixir'][Math.floor(Math.random()*3)];
+      if(this.grantItem(loot))await this.battleText(`${collector.name} trova un oggetto grazie a Raccolta!`);
+    }
+    const knockoutMsg=PokexAbilities.afterKnockout(this.activeMon);
+    if(knockoutMsg)await this.battleText(knockoutMsg);
     if(this.battleType==='mewtwo'){
       if(this.celestialPhase==='trial'){
         this.celestialPhase='rematch';this.endBattle('Hai sconfitto Mewtwo!');
@@ -3485,12 +3675,14 @@ generateFloorDungeon() {
       await this.advanceGymAfterVictory();return;
     }
     if(this.isRaidActive){
+      if(this.battleToken!==raidToken)return; // Run or battle changed while awaiting XP.
       this.raidQueueCount--;
       if(this.raidQueueCount>0){
         await this.battleText(`RAID · Restano ${this.raidQueueCount} avversari!`);
         await this.startBattle('wild',true);return;
       }
-      this.isRaidActive=false;this.endBattle('RAID SUPERATO! Hai vinto tutte e cinque le sfide!');return;
+      this.isRaidActive=false;this.clearRaidTransientState();
+      this.endBattle('RAID SUPERATO! Hai vinto tutte e cinque le sfide!');return;
     }
     if(['trainer','gym'].includes(this.battleType)){
       const reward=Math.max(100,Math.round((defeated.level*18+(this.battleType==='gym'?180:0))/10)*10);
@@ -3521,13 +3713,16 @@ generateFloorDungeon() {
   endBattle(msg){
     this.acknowledgeDialogue();
     this.battleToken++;this.battleBusy=false;this.pendingForcedSwitch=false;this.battleMode=null;
+    this.updateBattleWingCloseButtons();
     this.pendingItemTarget=null;this.$id('item-target-prompt').classList.add('hidden');
+    this.battleWeather=null;
     this.team.forEach(p=>{p.clearBattleConditions();p.protectedThisTurn=false;p.protectStreak=0;});
     this.closePartyActions();this.closePokemonInfo();
     this.ensureActivePokemon();
     this.enemyMon?.clearBattleConditions();
     this.$id('overlay-battle').classList.add('hidden');
-    this.$id('overlay-battle').classList.remove('battle-preparing');
+    this.$id('overlay-battle').classList.remove('battle-preparing','battle-revealing');
+    if(this.battleRevealTimer){clearTimeout(this.battleRevealTimer);this.battleRevealTimer=null;}
     this.$id('battle-controls').classList.add('hidden');
     this.$id('rotom-body').classList.remove('battle-active');
     this.$id('battle-confirm').classList.add('hidden');
@@ -3536,6 +3731,8 @@ generateFloorDungeon() {
     this.isLocked=false;this.logMsg(msg);this.renderSidebar();
     window.pokexplorerMusic?.setScene(this.isCelestialCave?'cave':'exploration');
     if(this.isCelestialCave)this.renderDungeon();
+    this.saveCheckpoint();
+    window.dispatchEvent?.(new Event('pokex:dex-battle-ended'));
   }
 
   showDiscoveryNotice(message, duration=2800) {
@@ -3548,7 +3745,7 @@ generateFloorDungeon() {
       (this.$id('pokenav-screen-root') || document.body).appendChild(notice);
     }
     clearTimeout(this.discoveryNoticeTimer);
-    notice.textContent=this.localize(message);
+    notice.textContent=String(message??'');
     notice.classList.toggle('raid-notice',message.includes('RAID'));
     notice.classList.add('visible');
     if(duration>0)this.discoveryNoticeTimer=setTimeout(()=>notice.classList.remove('visible'),duration);
@@ -3556,23 +3753,35 @@ generateFloorDungeon() {
 
   waitForNotice(){
     return new Promise(resolve=>{
-      let registered=false;
-      const finish=event=>{
-        if(event.type==='keydown' && !['Enter',' ','Escape'].includes(event.key))return;
-        event.preventDefault();event.stopImmediatePropagation();
+      let closed=false;
+      let activationTimer;
+      const cleanup=()=>{
+        if(closed)return;
+        closed=true;
+        clearTimeout(activationTimer);
         document.removeEventListener('pointerdown',finish,true);
         document.removeEventListener('keydown',finish,true);
         this.$id('discovery-notice')?.classList.remove('visible');
+        this.cancelRaidNotice=null;
         resolve();
       };
-      setTimeout(()=>{
+      const finish=event=>{
+        if(event.type==='keydown' && !['Enter',' ','Escape'].includes(event.key))return;
+        event.preventDefault();event.stopImmediatePropagation();
+        cleanup();
+      };
+      // If the floor is replaced or a run ends, no orphaned document listener
+      // may capture future clicks or begin an obsolete Raid.
+      this.cancelRaidNotice=cleanup;
+      activationTimer=setTimeout(()=>{
+        if(closed)return;
         document.addEventListener('pointerdown',finish,true);
         document.addEventListener('keydown',finish,true);
       },60);
     });
   }
 
-  logMsg(text) { document.getElementById('log-status-text').textContent = this.localize(text); }
+  logMsg(text) { document.getElementById('log-status-text').textContent = String(text??''); }
 
   isBadgeEarned(id){
     const names=['Sasso','Cascata','Tuono','Arcobaleno','Anima','Palude','Vulcano','Terra'];
@@ -3644,22 +3853,10 @@ generateFloorDungeon() {
     this.$id('rotom-container')?.classList.add('party-drawer-open');
     const battle=this.isBattleVisible();
     this.$id('party-move-action').disabled=battle;
-    this.$id('party-lead-action').classList.add('hidden');
     this.$id('party-move-action').title=battle?'Riordina la squadra fuori dalla battaglia.':'';
     this.$id('party-send-action').classList.toggle('hidden',!battle || pokemon===this.activeMon || pokemon.currentHp<=0);
     this.renderSidebar();
-  }
-  setActivePartyPokemon(pokemon){
-    if(!pokemon||!this.team.includes(pokemon)||pokemon.currentHp<=0||
-      this.isBattleVisible()||this.isLocked||this.pendingItemTarget)return false;
-    const position=this.team.indexOf(pokemon);
-    this.team.splice(position,1);
-    this.team.unshift(pokemon);
-    this.activeMon=pokemon;
-    this.closePartyActions();
-    this.renderSidebar();
-    this.logMsg(`${pokemon.name} è ora il Pokémon attivo!`);
-    return true;
+    if(battle)this.focusBattleSelection('#party-action-menu #party-send-action:not(.hidden):not(:disabled),#party-action-menu #party-close-action');
   }
   beginPartyReorder(){
     const selected=this.partyMenuPokemon;
@@ -3680,102 +3877,115 @@ generateFloorDungeon() {
     this.renderSidebar();
     this.logMsg(`Posizioni scambiate! ${this.activeMon?.name||this.team[0].name} è il Pokémon in testa.`);
   }
-  async getPokedexDescription(kind,id,locale=this.locale){
-    const cache=kind==='ability'?this.abilityDescriptionCache:this.moveDescriptionCache;
-    const key=`${id}:${locale}`;
-    if(!cache.has(key))cache.set(key,(async()=>{
-      try{
-        const response=await fetch(`https://pokeapi.co/api/v2/${kind}/${encodeURIComponent(id)}`);
-        if(!response.ok)return '';
-        const data=await response.json();
-        // Flavor text has broader Italian coverage than the formal effect entries.
-        const entries=data.flavor_text_entries||[];
-        const preferred=entries.filter(v=>v.language?.name===locale && (v.flavor_text||v.text));
-        const text=(preferred.at(-1)||entries.find(v=>v.language?.name==='en')||{});
-        const effect=(data.effect_entries||[]).find(v=>v.language?.name===locale)||
-          (data.effect_entries||[]).find(v=>v.language?.name==='en');
-        return String(text.flavor_text||text.text||effect?.short_effect||'').replace(/[\n\f]+/g,' ').replace(/\s+/g,' ').trim();
-      }catch(_error){return '';}
-    })());
-    return cache.get(key);
-  }
+  // Pokédex API description lookup is defined in js/game-services.js.
   async populatePokedexDescriptions(pokemon,requestId){
-    const lang=this.locale;
+    const lang='it';
     const abilityId=pokemon.ability;
     const abilityText=await this.getPokedexDescription('ability',abilityId,lang);
     if(this.partyInfoPokemon!==pokemon||requestId!==this.pokemonInfoRequest)return;
     this.$id('pokemon-info-ability-description').textContent=abilityText||
-      (lang==='en'?'Description unavailable offline.':'Descrizione non disponibile offline.');
+      'Descrizione non disponibile offline.';
     await Promise.all(pokemon.moves.map(async(move,index)=>{
       const description=await this.getPokedexDescription('move',move.id,lang);
       if(this.partyInfoPokemon!==pokemon||requestId!==this.pokemonInfoRequest)return;
       const node=this.$id('pokemon-info-moves').children[index]?.querySelector('.move-description');
       if(node)node.textContent=description||
-        (lang==='en'?'Description unavailable offline.':'Descrizione non disponibile offline.');
+        'Descrizione non disponibile offline.';
     }));
   }
-  async resolveAbilityName(pokemon){
-    if(!pokemon?.ability || pokemon.ability==='none')return;
-    const id=pokemon.ability;
-    if(!this.abilityInfoCache)this.abilityInfoCache=new Map();
-    if(!this.abilityInfoCache.has(id)){
-      const request=fetch(`https://pokeapi.co/api/v2/ability/${encodeURIComponent(id)}`)
-        .then(r=>r.ok?r.json():null)
-        .then(data=>data?.names?.find(n=>n.language?.name==='it')?.name||null)
-        .catch(()=>null);
-      this.abilityInfoCache.set(id,request);
+  // Ability translation lookup is defined in js/game-services.js.
+  selectPokemonInfoTab(tab='stats'){
+    const selected=tab==='moves'?'moves':'stats';
+    for(const key of ['stats','moves']){
+      const button=this.$id(`pokemon-tab-${key}`),panel=this.$id(`pokemon-panel-${key}`);
+      button?.classList.toggle('active',key===selected);
+      button?.setAttribute('aria-selected',String(key===selected));
+      panel?.classList.toggle('hidden',key!==selected);
     }
-    const italian=await this.abilityInfoCache.get(id);
-    if(!italian)return;
-    pokemon.abilityName=italian;
-    if(this.partyInfoPokemon===pokemon && !this.$id('pokemon-info-overlay').classList.contains('hidden')){
-      this.$id('pokemon-info-ability').textContent=`ABILITÀ: ${italian}`;
-    }
+    const container=this.$id('pokemon-info-content');if(container)container.scrollTop=0;
   }
   openPokemonInfo(pokemon){
     if(!pokemon||!this.team.includes(pokemon))return;
     this.partyInfoPokemon=pokemon;
-    this.$id('pokemon-info-name').textContent=pokemon.name;
-    this.$id('pokemon-info-sprite').src=pokemon.spriteFront||'';
-    this.$id('pokemon-info-sprite').alt=`${pokemon.name} di fronte`;
-    this.$id('pokemon-info-level').textContent=`LIVELLO ${pokemon.level}`;
+    this.$id('pokemon-info-name').textContent=pokemon.name+(pokemon.gender==='male'?' ♂':pokemon.gender==='female'?' ♀':'')+(pokemon.isShiny?' ✨':'');
+    const infoSprite=this.$id('pokemon-info-sprite');
+    infoSprite.onerror=()=>{infoSprite.onerror=null;infoSprite.src='assets/sprites/ui/pokemon-placeholder.svg';};
+    infoSprite.src=resolvedSpritePath(pokemon.spriteFront||'assets/sprites/ui/pokemon-placeholder.svg');
+    this.$id('pokemon-info-sprite').alt=`Sprite frontale di ${pokemon.name}`;
     const typeIt={grass:'Erba',fire:'Fuoco',water:'Acqua',normal:'Normale',electric:'Elettro',poison:'Veleno',bug:'Coleottero',flying:'Volante',ground:'Terra',rock:'Roccia',ghost:'Spettro',psychic:'Psico',ice:'Ghiaccio',fighting:'Lotta',dragon:'Drago',dark:'Buio',steel:'Acciaio',fairy:'Folletto'};
-    this.$id('pokemon-info-types').textContent=`TIPO: ${pokemon.types.map(t=>typeIt[t]||t).join(' / ').toUpperCase()}`;
+
+    this.$id('pokemon-info-level').textContent=`${'LIVELLO'} ${pokemon.level}`;
+    const typesNode=this.$id('pokemon-info-types');typesNode.replaceChildren();
+    for(const type of (pokemon.types||[pokemon.type])){
+      const badge=document.createElement('span');badge.className='pokemon-type-chip type-'+type;
+      badge.textContent=((typeIt[type]||type)).toUpperCase();typesNode.appendChild(badge);
+    }
     const nature=pokemon.nature||POKEMON_NATURES[0];
-    const delta=nature[1]===nature[2]?'neutra':`+${STAT_LABELS_IT[nature[1]]} / −${STAT_LABELS_IT[nature[2]]}`;
-    this.$id('pokemon-info-nature').textContent=`NATURA: ${nature[0]} (${delta})`;
-    this.$id('pokemon-info-ability').textContent=`${this.locale==='en'?'ABILITY':'ABILITÀ'}: ${pokemon.abilityName||'—'}`;
-    this.$id('pokemon-info-ability-description').textContent=this.locale==='en'?'Loading ability…':'Caricamento abilità…';
+    const delta=nature[1]===nature[2]?('neutra'):`+${STAT_LABELS_IT[nature[1]]} / −${STAT_LABELS_IT[nature[2]]}`;
+    this.$id('pokemon-info-nature').textContent=`${'NATURA'}: ${nature[0]} (${delta})`;
+    const localAbility=(pokemon.abilityName||'—');
+    this.$id('pokemon-info-ability').textContent=`${'ABILITÀ'}: ${localAbility}`;
+    this.$id('pokemon-info-ability-description').textContent='Caricamento abilità…';
     this.$id('pokemon-info-hero').className=`pokemon-info-hero type-${pokemon.type}`;
     const stats=this.$id('pokemon-info-stats');stats.replaceChildren();
     const values=pokemon.getStatsSummary();
-    for(const [key,label] of Object.entries(STAT_LABELS_IT)){
+    // Scale the bars to the strongest stat of this Pokémon, so low-level
+    // teams do not show six nearly empty bars on the summary screen.
+    const statScale=Math.max(30,...Object.values(values).map(value=>Number(value)||0));
+    for(const [key,italianLabel] of Object.entries(STAT_LABELS_IT)){
+      const label=italianLabel;
       const tile=document.createElement('div');tile.className='pokemon-info-stat';
       const name=document.createElement('span');name.textContent=label;
       const value=document.createElement('em');value.textContent=key==='hp'?`${pokemon.currentHp}/${values[key]}`:values[key];
       if(nature[1]!==nature[2])value.classList.add(nature[1]===key?'raised':nature[2]===key?'lowered':'neutral');
-      tile.append(name,value);stats.append(tile);
+      const meter=document.createElement('div');meter.className='pokemon-stat-meter';
+      meter.setAttribute('role','progressbar');meter.setAttribute('aria-label',label);
+      meter.setAttribute('aria-valuemin','0');meter.setAttribute('aria-valuemax','300');
+      meter.setAttribute('aria-valuenow',String(Math.min(300,Math.max(0,Number(values[key])||0))));
+      const fill=document.createElement('span');fill.className='pokemon-stat-meter-fill';
+      fill.style.width=`${Math.min(100,Math.max(3,(Number(values[key])||0)/statScale*100))}%`;
+      meter.appendChild(fill);tile.append(name,value,meter);stats.append(tile);
     }
     const moves=this.$id('pokemon-info-moves');moves.replaceChildren();
     for(const move of pokemon.moves){
       const tile=document.createElement('div'),name=document.createElement('span'),extra=document.createElement('small');
-      name.textContent=move.name;extra.textContent=`${(typeIt[move.type]||move.type).toUpperCase()} · POT ${move.power||'—'} · PREC ${move.alwaysHits?'—':move.accuracy+'%'} · PP ${move.currentPp}/${move.maxPp}`;
+      tile.className='pokemon-move-tile type-'+String(move.type||'normal');
+      name.className='pokemon-move-name';name.textContent=this.displayMoveName(move);extra.textContent=`${((typeIt[move.type]||move.type)).toUpperCase()} · ${'POT'} ${move.power||'—'} · ${'PREC'} ${move.alwaysHits?'—':move.accuracy+'%'} · PP ${move.currentPp}/${move.maxPp}`;
+      const details=document.createElement('details');details.className='pokemon-move-details';
+      const summary=document.createElement('summary');summary.textContent='Descrizione';
       const description=document.createElement('small');description.className='move-description';
-      description.textContent=this.locale==='en'?'Loading description…':'Caricamento descrizione…';
-      tile.append(name,extra,description);moves.append(tile);
+      description.textContent='Caricamento descrizione…';
+      details.append(summary,description);tile.append(name,extra,details);moves.append(tile);
     }
+    this.selectPokemonInfoTab('stats');
     this.$id('pokemon-info-overlay').classList.remove('hidden');
     void this.resolveAbilityName(pokemon);
     void this.populatePokedexDescriptions(pokemon,++this.pokemonInfoRequest);
   }
   closePokemonInfo(){this.pokemonInfoRequest++;this.partyInfoPokemon=null;this.$id('pokemon-info-overlay')?.classList.add('hidden');}
   renderSidebar() {
-    this.$id('buy-super-potion-btn')?.classList.toggle('hidden',this.floor<21);
-    this.$id('buy-hyper-potion-btn')?.classList.toggle('hidden',this.floor<51);
+    // Keep availability and purchase validation tied to the same city milestones.
+    // CSS alone is not an access control: locked purchases must also be disabled.
+    for(const [itemId,buttonId] of [['superPotion','buy-super-potion-btn'],['hyperPotion','buy-hyper-potion-btn']]){
+      const button=this.$id(buttonId);if(!button)continue;
+      const unlocked=isPokemartItemUnlocked(itemId,this.floor);
+      button.classList.toggle('hidden',!unlocked);
+      button.hidden=!unlocked;
+      button.disabled=!unlocked;
+      button.setAttribute('aria-hidden',String(!unlocked));
+    }
     this.$id('floor-num').textContent=this.floor;
+    const location=this.$id('route-location-label');
+    if(location){
+      const cities=['Plumbeopoli','Celestopoli','Aranciopoli','Azzurropoli','Fucsiapoli','Zafferanopoli','Isola Cannella','Smeraldopoli'];
+      
+      location.textContent=this.isCelestialCave?`${'Luogo: Grotta Celeste'}`:this.floor%10===0?`${'Luogo'}: ${cities[this.floor/10-1]}`:
+        this.floor%5===0?`${'Luogo: Villaggio'}`:
+        `${'Sentiero: Percorso'} ${this.floor}`;
+    }
     this.$id('player-money').textContent=`$${this.money}`;
     const radarCount=this.$id('radar-charge-count');
-    if(radarCount)radarCount.textContent=`${this.locale==='en'?'SCANS':'SCANSIONI'}: ${this.radarCharges===Infinity?'∞':this.radarCharges}`;
+    if(radarCount)radarCount.textContent=`${'SCANSIONI'}: ${this.radarCharges===Infinity?'∞':this.radarCharges}`;
     const radarButton=this.$id('btn-scan-radar');
     if(radarButton){
       radarButton.classList.remove('hidden');
@@ -3783,9 +3993,11 @@ generateFloorDungeon() {
       radarButton.classList.toggle('radar-infinite',this.radarCharges===Infinity);
     }
     const bag=this.$id('bag-list');bag.innerHTML='';
+    const itemLabels={potion:'Pozione',superPotion:'Superpozione',hyperPotion:'Iperpozione',elixir:'Elisir',rareCandy:'Caramella Rara',goldCandy:'Caramella d’Oro',abilityCapsule:'Capsula Abilità'};
     const categories={
-      rimedi:[['potion','Pozione','potion'],['superPotion','Superpozione','superPotion'],['hyperPotion','Iperpozione','hyperPotion'],['elixir','Elisir','elixir'],
-        ...(this.devMode?[['rareCandy','Caramella Rara','rare-candy-game'],['goldCandy','Caramella d’Oro','gold-candy-game']]:[])],
+      rimedi:[['potion',itemLabels.potion,'potion'],['superPotion',itemLabels.superPotion,'superPotion'],['hyperPotion',itemLabels.hyperPotion,'hyperPotion'],['elixir',itemLabels.elixir,'elixir'],
+        ['abilityCapsule','Capsula Abilità','abilityCapsule'],
+        ...(this.devMode?[['rareCandy',itemLabels.rareCandy,'rareCandy'],['goldCandy',itemLabels.goldCandy,'goldCandy']]:[])],
       pokeball:[['pokeball','Poké Ball','poke-ball'],['masterball','Master Ball','master-ball']],
       chiave:[]
     };
@@ -3795,9 +4007,15 @@ generateFloorDungeon() {
     });
     const inBattle=!this.$id('overlay-battle')?.classList.contains('hidden');
     for(const [id,label,file] of categories[this.bagCategory]){
+      // Non-key items are visible only after they have actually been obtained.
+      // Key items intentionally remain listed (even before acquisition).
+      if((Number(this.items[id])||0)<=0)continue;
       const b=document.createElement('button');b.className='bag-item';
       if(file){
-        b.innerHTML=`<img src="${itemImage(id)}" alt=""><span>${label}</span><strong>×${this.items[id]}</strong>`;
+        const icon=document.createElement('img');icon.alt='';icon.src=itemImage(id);
+        const name=document.createElement('span');name.textContent=label;
+        const count=document.createElement('strong');count.textContent=`×${this.items[id]}`;
+        b.append(icon,name,count);
       }else{
         const symbol=document.createElement('span');symbol.className='dev-candy-symbol';
         symbol.textContent='';
@@ -3811,20 +4029,29 @@ generateFloorDungeon() {
       bag.appendChild(b);
     }
     if(this.bagCategory==='chiave'){
-      const rod=document.createElement('div');rod.className='bag-rod';
-      rod.replaceChildren();
-      const rodSprite=document.createElement('img');rodSprite.src=itemImage('fishingRod');
-      rodSprite.alt='';rodSprite.width=22;rodSprite.height=22;
-      rod.append(rodSprite,document.createTextNode(` Canna da pesca: ${this.items.fishingRod?'ottenuta':'non ancora ottenuta'}`));
-      bag.appendChild(rod);
-      if(this.hasExpShare()){
-        const toggle=document.createElement('button');toggle.type='button';
-        toggle.className='bag-item';toggle.id='toggle-exp-share';
-        toggle.innerHTML=`<img src="${itemImage('expShare')}" alt="" width="22" height="22">`;
-        toggle.append(document.createTextNode(` Condividi Esp.: ${this.expShareEnabled?'ON':'OFF'}`));
-        toggle.disabled=this.battleBusy||this.adventureCompleted;
-        toggle.onclick=()=>this.toggleExpShare();
-        bag.appendChild(toggle);
+      // Always show exactly two key items, even when not yet obtained.
+      const keyItems=[
+        ['fishingRod','Canna da Pesca',Boolean(this.items.fishingRod)],
+        ['expShare','Condividi Esperienza',this.hasExpShare()]
+      ];
+      for(const [key,label,owned] of keyItems){
+        const button=document.createElement('button');button.type='button';
+        button.className='bag-item bag-key-item'+(owned?' owned':'')+(key==='expShare'&&this.expShareEnabled&&owned?' enabled':'');
+        button.dataset.keyItem=key;
+        const icon=document.createElement('img');icon.src=itemImage(key);icon.alt='';icon.width=26;icon.height=26;
+        const name=document.createElement('span');name.textContent=label;
+        button.append(icon,name);
+        if(key==='expShare'&&owned){
+          const indicator=document.createElement('span');indicator.className='key-item-indicator';
+          indicator.textContent=this.expShareEnabled?'●':'○';
+          indicator.setAttribute('aria-hidden','true');button.append(indicator);
+        }
+        button.disabled=!owned||key==='fishingRod'||this.battleBusy||this.adventureCompleted;
+        button.setAttribute('aria-label',label+(!owned?(' (non ottenuto)'):
+          key==='fishingRod'?(' (usa vicino all’acqua)'):
+          this.expShareEnabled?(' (attivo)'):(' (disattivo)')));
+        if(key==='expShare')button.onclick=()=>this.toggleExpShare();
+        bag.appendChild(button);
       }
     }
     const team=this.$id('team-grid');team.innerHTML='';
@@ -3832,7 +4059,7 @@ generateFloorDungeon() {
     let progress=this.$id('party-progression-status');
     if(!progress){progress=document.createElement('div');progress.id='party-progression-status';
       progress.setAttribute('role','status');team.parentNode.insertBefore(progress,team);}
-    progress.textContent=this.locale==='en'?`PARTY ${this.team.length}/${this.getTeamSlotLimit()} · LV CAP ${this.getLevelCap()}`:`SQUADRA ${this.team.length}/${this.getTeamSlotLimit()} · CAP LV.${this.getLevelCap()}`;
+    progress.textContent=`SQUADRA ${this.team.length}/${this.getTeamSlotLimit()} · CAP LV.${this.getLevelCap()}`;
     for(let i=0;i<6;i++){
       const p=this.team[i];const slot=document.createElement('button');
       if(!p){
@@ -3845,11 +4072,23 @@ generateFloorDungeon() {
       else {
         const hp=Math.max(0,Math.floor(100*p.currentHp/p.maxHp));
         const hpState=this.hpColorState(p);
-        slot.className=`team-slot ${p===this.activeMon?'active':''} ${p.currentHp<=0?'fainted':''} type-${p.type} ${this.pendingItemTarget?(p.currentHp>0?'item-target-valid':'item-target-invalid'):''} ${this.partyMoveSource===p?'swap-choice':''} ${this.partyMoveSource&&p!==this.partyMoveSource?'move-destination':''}`;
-        slot.innerHTML=`<div class="slot-top"><span>${p.name}</span><span>Lv.${p.level}</span></div>
-          <img class="team-slot-img" src="${p.spriteFront}" alt="${p.name}">
-          <div class="team-hp-bg"><div class="team-hp-fill hp-${hpState}" style="width:${hp}%"></div></div><div class="team-hp-text">${p.currentHp}/${p.maxHp} PS</div>`;
-        slot.disabled=(inBattle && this.battleBusy) || (p.currentHp<=0 && !this.pendingItemTarget);
+        slot.className=`team-slot ${p===this.activeMon?'active':''} ${p.currentHp<=0?'fainted':''} type-${p.type} ${this.pendingItemTarget?(p.currentHp>0||this.pendingItemTarget==='abilityCapsule'?'item-target-valid':'item-target-invalid'):''} ${this.partyMoveSource===p?'swap-choice':''} ${this.partyMoveSource&&p!==this.partyMoveSource?'move-destination':''}`;
+        // T01: Keep the original active border, without an ATTIVO/LEAD badge.
+        // Announce lead and fainted status to assistive technology only.
+        const accessibilityStatus=p.currentHp<=0 ? ('esausto') :
+          p===this.activeMon ? ('Pokémon attivo') : '';
+        slot.setAttribute('aria-label',`${p.name} · ${'livello'} ${p.level} · ${p.currentHp}/${p.maxHp} ${'PS'}`+
+          (accessibilityStatus?` · ${accessibilityStatus}`:''));
+        const line=document.createElement('div');line.className='slot-top';
+        const monName=document.createElement('span');monName.textContent=p.name+(p.gender==='male'?' ♂':p.gender==='female'?' ♀':'')+(p.isShiny?' ✨':'');
+        const lv=document.createElement('span');lv.textContent=`Lv.${p.level}`;line.append(monName,lv);
+        const sprite=document.createElement('img');sprite.className='team-slot-img';
+        sprite.src=typeof p.spriteFront==='string' && /^(https:\/\/|assets\/|data:image\/)/.test(p.spriteFront)?resolvedSpritePath(p.spriteFront):'assets/sprites/ui/pokemon-placeholder.svg';sprite.alt=p.name;
+        const hpBack=document.createElement('div');hpBack.className='team-hp-bg';
+        const hpFill=document.createElement('div');hpFill.className=`team-hp-fill hp-${hpState}`;hpFill.style.width=`${hp}%`;hpBack.append(hpFill);
+        const hpText=document.createElement('div');hpText.className='team-hp-text';hpText.textContent=`${p.currentHp}/${p.maxHp} ${'PS'}`;
+        slot.append(line,sprite,hpBack,hpText);
+        slot.disabled=(inBattle && this.battleBusy) || (p.currentHp<=0 && !this.pendingItemTarget && !this.abilityCapsuleOpen);
         slot.onclick=()=>{
           if(this.pendingItemTarget){this.giveItemToPokemon(p);return;}
           this.openPartyActions(p);
@@ -3857,7 +4096,6 @@ generateFloorDungeon() {
       }
       team.appendChild(slot);
     }
-    this.translateVisibleUI();
   }
 
 }

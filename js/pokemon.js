@@ -104,7 +104,29 @@ const MOVE_FALLBACK = {
   protect:['normal',0,10,'status'],magnitude:['ground',70,30,'physical'],
   'dragon-rage':['dragon',0,10,'special'],'sonic-boom':['normal',0,20,'special'],
   'night-shade':['ghost',0,15,'special'],'seismic-toss':['fighting',0,20,'physical'],
-  'super-fang':['normal',0,10,'physical'],teleport:['psychic',0,20,'status']
+  'super-fang':['normal',0,10,'physical'],teleport:['psychic',0,20,'status'],
+  nightmare:['ghost',0,15,'status'],'mean-look':['normal',0,5,'status'],
+  snore:['normal',50,15,'special'],'sleep-talk':['normal',0,10,'status'],
+  curse:['ghost',0,10,'status'],'destiny-bond':['ghost',0,5,'status'],
+  'solar-beam':['grass',120,10,'special'],hypnosis:['psychic',0,20,'status'],acid:['poison',40,30,'physical'],
+  'hyper-beam':['normal',150,5,'physical'],'double-edge':['normal',120,15,'physical'],
+  'smoke-screen':['normal',0,20,'status'],smokescreen:['normal',0,20,'status'],
+  'scary-face':['normal',0,10,'status'],rage:['normal',20,20,'physical'],lick:['ghost',20,30,'physical'],
+  spite:['ghost',0,10,'status'],'bug-bite':['bug',60,20,'physical'],peck:['flying',35,35,'physical'],
+  gust:['flying',40,35,'physical'],'poison-gas':['poison',0,40,'status'],
+  sandstorm:['rock',0,10,'status'],'sweet-scent':['normal',0,20,'status'],minimize:['normal',0,10,'status'],
+  'water-pulse':['water',60,20,'special'],'karate-chop':['fighting',50,25,'physical'],
+  'low-kick':['fighting',0,20,'physical'],'rock-tomb':['rock',50,10,'physical'],
+  headbutt:['normal',70,15,'physical'],'horn-attack':['normal',65,25,'physical'],
+  'poison-fang':['poison',50,15,'physical'],'acid-armor':['poison',0,40,'status'],
+  wrap:['normal',15,20,'physical'],'stun-spore':['grass',0,30,'status'],
+  'fury-cutter':['bug',10,20,'physical'],'flame-wheel':['fire',60,25,'special'],
+  'fire-blast':['fire',120,5,'special'],'ice-beam':['ice',95,10,'special'],
+  'ice-punch':['ice',75,15,'special'],'confuse-ray':['ghost',0,10,'status'],
+  waterfall:['water',80,15,'special'],'dragon-breath':['dragon',60,20,'special'],
+  strength:['normal',80,15,'physical'],cut:['normal',50,30,'physical'],
+  fly:['flying',70,15,'physical'],dig:['ground',60,10,'physical'],
+  metronome:['normal',0,10,'status']
 };
 // FireRed/LeafGreen use the pre-Gen-IV type-based damage class split.
 // PokéAPI reports the modern per-move split, so normalize every damaging
@@ -179,7 +201,17 @@ const MOVE_STATUS_FALLBACK={
   'nasty-plot':{statChanges:[{stat:'special-attack',stage:2,chance:100}]},
   'tail-glow':{statChanges:[{stat:'special-attack',stage:2,chance:100}]},
   'focus-energy':{focusEnergy:true},
-  'poison-gas':{ailment:'poison',ailmentChance:100,accuracy:90},
+  'poison-gas':{ailment:'poison',ailmentChance:100,accuracy:55},
+  hypnosis:{ailment:'sleep',ailmentChance:100,accuracy:60},
+  acid:{statChanges:[{stat:'defense',stage:-1,chance:10}]},
+  lick:{ailment:'paralysis',ailmentChance:30},
+  'poison-fang':{ailment:'bad-poison',ailmentChance:30},
+  'flame-wheel':{ailment:'burn',ailmentChance:10},
+  'fire-blast':{ailment:'burn',ailmentChance:10},
+  'ice-beam':{ailment:'freeze',ailmentChance:10},
+  'ice-punch':{ailment:'freeze',ailmentChance:10},
+  'dragon-breath':{ailment:'paralysis',ailmentChance:30},
+  'rock-tomb':{statChanges:[{stat:'speed',stage:-1,chance:100}]},
   'stun-spore':{ailment:'paralysis',ailmentChance:100,accuracy:75},
   glare:{ailment:'paralysis',ailmentChance:100,accuracy:75},
   toxic:{ailment:'bad-poison',ailmentChance:100,accuracy:85},
@@ -239,7 +271,10 @@ class Move {
     this.safeguard=Boolean(extra.safeguard);this.copyStages=Boolean(extra.copyStages);
     this.maxAttackHalfHp=Boolean(extra.maxAttackHalfHp);
     this.cureTeam=Boolean(extra.cureTeam);this.cureStatus=Boolean(extra.cureStatus);
-    this.disengage=Boolean(extra.disengage);
+    this.disengage=Boolean(extra.disengage);this.unsupported=Boolean(extra.unsupported);
+    this.contact=Boolean(extra.contact);this.punch=Boolean(extra.punch);this.bite=Boolean(extra.bite);
+    this.sound=Boolean(extra.sound);this.ballistic=Boolean(extra.ballistic);
+    this.flinchChance=Number(extra.flinchChance)||0;
   }
 }
 const moveMetadataCache = new Map();
@@ -248,9 +283,7 @@ async function createMove(moveId) {
   if (!moveMetadataCache.has(id)) {
     moveMetadataCache.set(id, (async()=>{
       try {
-        const response=await fetch(`https://pokeapi.co/api/v2/move/${id}`);
-        if(!response.ok) throw new Error(`move ${id}: ${response.status}`);
-        const d=await response.json();
+        const d=await pokeApiRequest(`move/${encodeURIComponent(id)}`);
         const stat=d.stat_changes?.[0];
         return {type:d.type.name,power:d.power || 0,pp:d.pp || 10,category:d.damage_class.name,
           accuracy:d.accuracy ?? 100,alwaysHits:d.accuracy===null,priority:d.priority||0,critRate:d.meta?.crit_rate || 0,
@@ -258,21 +291,32 @@ async function createMove(moveId) {
           statChanges:(d.stat_changes||[]).map(c=>({stat:c.stat.name,stage:c.change,chance:d.meta?.stat_chance || d.effect_chance ||100})),
           statTarget:d.target?.name||null,
           ailment:d.meta?.ailment?.name || null,ailmentChance:d.meta?.ailment_chance || 0,
-          healing:d.meta?.healing || 0,drain:d.meta?.drain || 0,
+          healing:d.meta?.healing || 0,drain:d.meta?.drain || 0,flinchChance:d.meta?.flinch_chance || 0,
+          contact:Boolean(d.flags?.contact),punch:Boolean(d.flags?.punch),bite:Boolean(d.flags?.bite),sound:Boolean(d.flags?.sound),ballistic:Boolean(d.flags?.ballistic),
           minHits:d.meta?.min_hits || 1,maxHits:d.meta?.max_hits || d.meta?.min_hits || 1,
           italianName:d.names?.find(n=>n.language?.name==='it')?.name || null};
-      } catch(e) {const a=MOVE_FALLBACK[id] || ['normal',40,20,'physical'];return {type:a[0],power:a[1],pp:a[2],category:a[3],accuracy:100,...(MOVE_STATUS_FALLBACK[id]||{})};}
+      } catch(e) {const a=MOVE_FALLBACK[id];if(!a)return {type:'normal',power:0,pp:10,category:'status',accuracy:100,unsupported:true};
+        return {type:a[0],power:a[1],pp:a[2],category:a[3],accuracy:100,...(MOVE_STATUS_FALLBACK[id]||{})};}
     })());
   }
   const d=await moveMetadataCache.get(id);
   const meta={...d,...(MOVE_STATUS_FALLBACK[id]||{}),id};
+  // Offline metadata cannot include PokéAPI flags; use conservative explicit lists.
+  if(d && !('contact' in d))meta.contact=new Set(['scratch','tackle','quick-attack','body-slam','bite','double-kick','headbutt','poison-sting','poison-fang','lick','slash','double-edge','fury-swipes','fury-attack','comet-punch','ice-punch','fire-punch','thunder-punch','karate-chop','low-kick','seismic-toss','strength','cut','rollout']).has(id);
+  if(d && !('punch' in d))meta.punch=id.endsWith('-punch')||id==='comet-punch';
+  if(d && !('bite' in d))meta.bite=new Set(['bite','crunch','fire-fang','ice-fang','thunder-fang','poison-fang']).has(id);
+  if(d && !('sound' in d))meta.sound=new Set(['growl','supersonic','sing','screech','roar','hyper-voice','snore']).has(id);
   if(!meta.statChanges?.length && meta.statChange)meta.statChanges=[meta.statChange];
   // The API describes many special status techniques without actual boost metadata.
   if(id==='rest')meta.healing=100;
   // PokeAPI defaults to current generations. These values are FR/LG-specific.
   const generationThree={
     wrap:{power:15,accuracy:85,pp:20},
-    'fire-spin':{power:15,accuracy:70,pp:15}
+    'fire-spin':{power:15,accuracy:70,pp:15},
+    'hyper-beam':{power:150},'double-edge':{power:120},
+    'fire-blast':{power:120},'ice-beam':{power:95},'solar-beam':{power:120},
+    'rock-tomb':{power:50},fly:{power:70},dig:{power:60},
+    'fury-cutter':{power:10},'poison-gas':{accuracy:55},hypnosis:{accuracy:60}
   };
   Object.assign(meta,generationThree[id]||{});
   // Protezione always acts before normal attacks, even when PokéAPI is offline.
@@ -316,7 +360,23 @@ const ABILITY_NAMES_IT={
  'adaptability':'Adattabilità','technician':'Tecnico','serene-grace':'Leggiadro',
  'sniper':'Cecchino','super-luck':'Supersorte','no-guard':'Nullodifesa',
  'marvel-scale':'Pelledura','oblivious':'Indifferenza', 'pickup':'Raccolta',
- 'thick-fat':'Grassospesso', 'arena-trap':'Trappoarena'
+ 'thick-fat':'Grassospesso', 'arena-trap':'Trappoarena',
+ 'shed-skin':'Muta','cute-charm':'Incantevole','rivalry':'Antagonismo','tangled-feet':'Intricopiedi',
+ 'magic-guard':'Magicscudo','competitive':'Tenacia','dry-skin':'Pellearsa',
+ 'tinted-lens':'Lentifumé','damp':'Umidità','cloud-nine':'Antimeteo',
+ 'anger-point':'Grancollera','liquid-ooze':'Melma','hydration':'Idratazione',
+ 'stench':'Tanfo','sticky-hold':'Antifurto','skill-link':'Abillegame',
+ 'forewarn':'Premonizione','soundproof':'Antisuono','reckless':'Temerarietà',
+ 'iron-fist':'Ferropugno','scrappy':'Nervisaldi','filter':'Filtro','mold-breaker':'Rompiforma',
+ 'download':'Download','rain-dish':'Copripioggia','sand-rush':'Remasabbia','storm-drain':'Acquascolo',
+ 'sap-sipper':'Mangiaerba','speed-boost':'Acceleratore','poison-heal':'Velencura',
+ 'solar-power':'Solarpotere','slush-rush':'Spalaneve','sand-force':'Silicoforza',
+ 'magic-bounce':'Magispecchio','quick-feet':'Piedisvelti','super-luck':'Supersorte',
+ 'poison-touch':'Velentocco','motor-drive':'Elettrorapid','unaware':'Imprudenza',
+ 'moxie':'Arroganza','analytic':'Ponderazione','rain-dish':'Copripioggia',
+ 'stamina':'Sopportazione','anticipation':'Presagio','infiltrator':'Intrapasso',
+ 'overcoat':'Copricapo','fluffy':'Morbidone','multiscale':'Multisquame',
+ 'water-bubble':'Bolladacqua','prankster':'Burla','illuminate':'Risplendi'
 };
 function natureStatMultiplier(nature,stat){return !nature || nature[1]===nature[2] ? 1 : (nature[1]===stat ? 1.1 : (nature[2]===stat ? 0.9 : 1));}
 function pokemonStatValue(base,iv,ev,level,nature,key){
@@ -370,19 +430,41 @@ function experienceForNextLevel(rate, level){
   return n>=100?0:totalExperienceForLevel(rate,n+1)-totalExperienceForLevel(rate,n);
 }
 
+// Level-only campaign evolutions. Kanto is the current playable Pokédex:
+// stone/trade requirements are intentionally replaced with campaign levels.
+// Branches include only species present in KANTO_FAMILIES; later-generation
+// targets are deliberately NOT offered until they enter the playable Pokédex.
+const CAMPAIGN_EVOLUTIONS=(()=>{
+  const map=new Map();
+  for(const family of KANTO_FAMILIES){
+    for(let i=0;i<family.length-1;i++){
+      const [from]=family[i], [to,level]=family[i+1];
+      if(!map.has(from))map.set(from,[]);
+      if(!map.get(from).some(entry=>entry.id===to))map.get(from).push(Object.freeze({id:to,level}));
+    }
+  }
+  return map;
+})();
+function levelEvolutionOptions(speciesId,level){
+  return (CAMPAIGN_EVOLUTIONS.get(Number(speciesId))||[]).filter(option=>level>=option.level);
+}
+
 class Pokemon {
   constructor(data, level=5) {
     this.id=data.id; this.name=data.name.toUpperCase(); this.level=Math.min(100,Math.max(1,Math.floor(level)));
     this.growthRate=normalizedGrowthRate(data.growth_rate ?? data.growthRate, this.id);
-    this.baseExperience=data.base_experience||65;
+    this.baseExperience=data.base_experience||65;this.weight=Number.isFinite(data.weight)?data.weight:null;
     this.types=(data.types||[]).map(t=>t.type.name); this.type=this.types[0] || 'normal';
-    this.spriteFront=data.sprites?.front_default || '';
-    this.spriteBack=data.sprites?.back_default || this.spriteFront;
+    // Sex/shiny are individual traits, rolled exactly once at creation.
+    // Missing legacy traits are repaired by checkpoint restore, not rerolled.
+    this.gender=['male','female','genderless'].includes(data.gender)?data.gender:PokexDex.rollGender(this.id,data.gender_rate);
+    this.isShiny=typeof data.isShiny==='boolean'?data.isShiny:Math.random()<1/PokexDex.SHINY_RATE;
+    PokexDex.applySprites(this,data);
     this.baseStats=Object.fromEntries((data.stats||[]).map(s=>[s.stat.name,s.base_stat]));
     this.ivs=Object.fromEntries(Object.keys(STAT_LABELS_IT).map(k=>[k,Math.floor(Math.random()*32)]));
     this.evs=Object.fromEntries(Object.keys(STAT_LABELS_IT).map(k=>[k,0]));
     this.nature=POKEMON_NATURES[Math.floor(Math.random()*POKEMON_NATURES.length)];
-    this.abilityOptions=(data.abilities||[]).filter(a=>!a.is_hidden).map(a=>a.ability?.name).filter(Boolean);
+    this.abilityOptions=PokexAbilities.normalOptions(data);
     this.ability=this.abilityOptions[Math.floor(Math.random()*this.abilityOptions.length)]||'none';
     this.abilityName=ABILITY_NAMES_IT[this.ability]||this.ability.replaceAll('-',' ');
     this.evYield=Object.fromEntries((data.stats||[]).map(s=>[s.stat.name,s.effort||0]));
@@ -454,7 +536,7 @@ class Pokemon {
     }
     this.movesLoaded=true;
   }
-  async gainExperience(amount, levelCap=100) {
+  async gainExperience(amount, levelCap=100, chooseEvolution=null) {
     const levels=[];
     const cap=Math.max(1,Math.min(100,Math.floor(Number(levelCap)||100)));
     // Experience cannot be stockpiled at a temporary badge cap.
@@ -468,45 +550,45 @@ class Pokemon {
       const eligible=this.learnset.filter(m=>m.level===this.level);
       const newMoves=await Promise.all(eligible.map(async m=>createMove(m.id)));
       levels.push({level:this.level,moves:newMoves});
-      const evolution=await this.tryEvolution();
+      const evolution=await this.tryEvolution(chooseEvolution);
       if(evolution) levels[levels.length-1].evolution=evolution;
     }
     if(this.level>=cap){this.exp=0;if(this.level>=100)this.expToNext=0;}
     return levels;
   }
-  async tryEvolution() {
-    const evolutions={1:[16,2],2:[32,3],4:[16,5],5:[36,6],7:[16,8],8:[36,9],
-      10:[7,11],11:[10,12],13:[7,14],14:[10,15],16:[18,17],17:[36,18],19:[20,20],
-      21:[20,22],23:[22,24],27:[22,28],29:[16,30],32:[16,33],41:[22,42],43:[21,44],
-      46:[24,47],48:[31,49],50:[26,51],52:[28,53],54:[33,55],56:[28,57],58:[35,59],
-      60:[25,61],63:[16,64],64:[36,65],66:[28,67],67:[36,68],69:[21,70],70:[36,71],
-      72:[30,73],74:[25,75],75:[40,76],77:[40,78],79:[37,80],81:[30,82],84:[31,85],
-      86:[34,87],88:[38,89],92:[25,93],93:[38,94],96:[26,97],98:[28,99],100:[30,101],
-      104:[28,105],109:[35,110],111:[42,112],116:[32,117],118:[33,119],
-      129:[20,130],133:[99,133],147:[30,148],148:[55,149]};
-    const next=evolutions[this.id];
-    if(!next || this.level<next[0] || next[1]===this.id) return null;
+  async tryEvolution(chooseEvolution=null){
+    const options=levelEvolutionOptions(this.id,this.level);
+    if(!options.length)return null;
+    // No arbitrary selection for Eevee and other split evolution lines.
+    let selected=options[0];
+    if(options.length>1){
+      if(typeof chooseEvolution!=='function')return null;
+      const destination=await chooseEvolution(options,this);
+      selected=options.find(option=>option.id===Number(destination));
+      if(!selected)return null; // Defer evolution until the next level-up.
+    }
     try {
-      const res=await fetch(`https://pokeapi.co/api/v2/pokemon/${next[1]}`);
-      if(!res.ok) return;
-      const data=await res.json();const oldHp=this.maxHp;
-      const evolution={from:this.name,to:data.name.toUpperCase(),fromSprite:this.spriteFront,toSprite:data.sprites.front_default};
-      this.id=data.id;this.name=data.name.toUpperCase();this.baseExperience=data.base_experience||this.baseExperience;
+      const data=await pokeApiRequest(`pokemon/${selected.id}`);
+      if(Number(data.id)!==selected.id)throw Error('Evolution species mismatch');
+      const oldHp=this.maxHp;
+      const evolution={from:this.name,to:data.name.toUpperCase(),fromSprite:this.spriteFront,toSprite:PokexDex.spriteFor(data,this.gender,this.isShiny)};
+      this.id=data.id;this.name=data.name.toUpperCase();this.baseExperience=data.base_experience||this.baseExperience;this.weight=Number.isFinite(data.weight)?data.weight:this.weight;
       this.types=data.types.map(t=>t.type.name);this.type=this.types[0];
-      this.spriteFront=data.sprites.front_default;this.spriteBack=data.sprites.back_default||this.spriteFront;
+      PokexDex.applySprites(this,data);
       this.baseStats=Object.fromEntries(data.stats.map(s=>[s.stat.name,s.base_stat]));
       this.evYield=Object.fromEntries(data.stats.map(s=>[s.stat.name,s.effort||0]));
-      this.abilityOptions=(data.abilities||[]).filter(a=>!a.is_hidden).map(a=>a.ability?.name).filter(Boolean);
+      this.abilityOptions=PokexAbilities.normalOptions(data);
       if(!this.abilityOptions.includes(this.ability))this.ability=this.abilityOptions[0]||this.ability;
       this.abilityName=ABILITY_NAMES_IT[this.ability]||this.ability.replaceAll('-',' ');
       this.calcStats();this.currentHp=Math.min(this.maxHp,this.currentHp+this.maxHp-oldHp);
       this.learnset=this.parseLearnset(data);
-      this.movesLoaded=true;
+      this.movesLoaded=true; // Existing moves/PP/EV/IV/nature/EXP are preserved.
       return evolution;
     }catch(e){console.warn('Evoluzione non disponibile',e);return null;}
   }
   restorePp(){this.moves.forEach(m=>m.currentPp=m.maxPp);}
-  clearVolatile(){this.confusionTurns=0;this.toxicTurns=0;this.statStages={};this.seeded=false;this.trappedTurns=0;this.trapMove=null;this.trapSource=null;this.flashFireActivated=false;
+  clearVolatile(){if(this.tracedAbility){this.ability=this.tracedAbility;this.abilityName=ABILITY_NAMES_IT[this.ability]||this.ability.replaceAll('-',' ');this.tracedAbility=null;}
+    this.attractedTo=null;this.flinchedThisTurn=false;this.confusionTurns=0;this.toxicTurns=0;this.statStages={};this.seeded=false;this.nightmareActive=false;this.ghostCurseActive=false;this.destinyBondActive=false;this.meanLookSource=null;this.lastUsedMoveId=null;this.furyCutterHits=0;this.trappedTurns=0;this.trapMove=null;this.trapSource=null;this.flashFireActivated=false;
     this.pendingCharge=null;this.rechargeTurns=0;this.rampageTurns=0;this.rampageMove=null;
     this.rolloutTurns=0;this.rolloutHits=0;this.rolloutMove=null;this.defenseCurlUsed=false;
     this.lightScreenTurns=0;this.reflectTurns=0;this.safeguardTurns=0;
@@ -516,34 +598,27 @@ class Pokemon {
 }
 function accuracyStageMultiplier(stage){const n=Math.max(-6,Math.min(6,stage||0));return n>=0?(3+n)/3:3/(3-n);}
 function statMultiplier(stage){const n=Math.max(-6,Math.min(6,stage||0));return n>=0?(2+n)/2:2/(2-n);}
-function calculateBattleDamage(attacker,defender,move,random=Math.random) {
+function calculateBattleDamage(attacker,defender,move,random=Math.random,context={}) {
   const effectiveness=typeEffectiveness(move.type,defender.types);
-  if(!move.power || effectiveness===0) return {damage:0,effectiveness,critical:false};
+  if(!move.power||effectiveness===0)return {damage:0,effectiveness,critical:false};
   const special=move.category==='special';
-  const aBase=(special?attacker.spAtk:attacker.attack);
-  const boosted=(attacker.ability==='huge-power'||attacker.ability==='pure-power')&&!special?2:1;
-  const guts=attacker.ability==='guts'&&attacker.status&&!special?1.5:1;
-  const critical=!['battle-armor','shell-armor'].includes(defender.ability) && random()<Math.min(1,(attacker.focusEnergyActive?.125:.0625)+(move.critRate||0)*.0625);
-  const atkStage=attacker.statStages?.[special?'special-attack':'attack']||0;
-  const defStage=defender.statStages?.[special?'special-defense':'defense']||0;
-  const a=aBase*boosted*guts*statMultiplier(critical?Math.max(0,atkStage):atkStage);
-  const d=Math.max(1,(special?defender.spDef:defender.defense)*statMultiplier(critical?Math.min(0,defStage):defStage));
+  const settings={weather:context.weather||null,effectiveness,attackingLast:context.attackingLast||false};
+  const effects=PokexAbilities.damageModifiers(attacker,defender,move,settings);
+  const defenderAbility=PokexAbilities.suppress(attacker)?'none':defender.ability;
+  const critical=!['battle-armor','shell-armor'].includes(defenderAbility) &&
+    random()<Math.min(1,(attacker.focusEnergyActive?.125:.0625)+(move.critRate||0)*.0625+effects.criticalRate);
+  const attackStat=special?attacker.spAtk:attacker.attack;
+  const defenseStat=special?defender.spDef:defender.defense;
+  const attackStage=attacker.statStages?.[special?'special-attack':'attack']||0;
+  const defenseStage=defender.statStages?.[special?'special-defense':'defense']||0;
+  const attack=attackStat*effects.attack*statMultiplier(settings.ignoreAttackerStages?0:critical?Math.max(0,attackStage):attackStage);
+  const defense=Math.max(1,defenseStat*effects.defense*statMultiplier(settings.ignoreDefenderStages?0:critical?Math.min(0,defenseStage):defenseStage));
   const stab=attacker.types.includes(move.type)?(attacker.ability==='adaptability'?2:1.5):1;
-  const power=Math.max(1,move.power);
-  let abilityPower=1;
-  if(attacker.currentHp<=attacker.maxHp/3){
-    if((attacker.ability==='overgrow'&&move.type==='grass')||
-      (attacker.ability==='blaze'&&move.type==='fire')||
-      (attacker.ability==='torrent'&&move.type==='water')||
-      (attacker.ability==='swarm'&&move.type==='bug'))abilityPower=1.5;
-  }
-  if((attacker.ability==='flash-fire'&&attacker.flashFireActivated&&move.type==='fire'))abilityPower*=1.5;
-  if(attacker.ability==='technician' && move.power<=60)abilityPower*=1.5;
-  let abilityDefense=1;
-  if(defender.ability==='thick-fat'&&['fire','ice'].includes(move.type))abilityDefense=2;
-  const base=(((2*attacker.level/5+2)*power*abilityPower*a/(d*abilityDefense))/50+2) * ((attacker.status==='burn' && !special && attacker.ability!=='guts')?0.5:1);
-  // Reflect and Light Screen halve the respective incoming damage for five turns.
-  const screen=(!critical && (special?defender.lightScreenTurns>0:defender.reflectTurns>0))?.5:1;
-  const damage=Math.max(1,Math.floor(base * screen * (critical?2:1) * stab * effectiveness * (.85+random()*.15)));
+  const power=Math.max(1,move.power)*effects.power;
+  const base=(((2*attacker.level/5+2)*power*attack/defense)/50+2)*
+    (attacker.status==='burn'&&!special&&!['guts','quick-feet'].includes(attacker.ability)?.5:1);
+  const screened=critical||effects.ignoreScreens?false:special?defender.lightScreenTurns>0:defender.reflectTurns>0;
+  const screen=screened?.5:1;
+  const damage=Math.max(1,Math.floor(base*screen*(critical?2*effects.criticalDamage:1)*stab*effectiveness*(.85+random()*.15)));
   return {damage,effectiveness,critical};
 }
