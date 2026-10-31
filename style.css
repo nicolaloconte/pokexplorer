@@ -3757,3 +3757,54 @@ body>.party-action-menu.is-portal button{background:#244e70!important;color:whit
 @media(max-width:560px){.objectives-card{padding:8px;gap:6px}.objective-entry{min-height:62px;padding:6px}.objective-entry-art{width:40px;height:40px}.objectives-counters>div{padding:8px 2px}.objectives-quests{gap:4px}}
 #choose-champion:disabled{opacity:.49;cursor:not-allowed;filter:grayscale(1)}
 #choose-champion:not(:disabled){border-color:#d3ae50;background:#f7e1a0}
+
+/* Beta 1.7: Dev Mode floor teleport in bottom control bar, independent credit footer. */
+.poke-site-footer #floor-jump-trigger{
+  position:static!important;display:inline-flex;align-items:center;justify-content:center;
+  min-height:34px;border:2px solid #b49bfa;border-radius:6px;padding:8px 12px;
+  font:7px/1.4 "Press Start 2P",monospace;background:#302851;color:#f3eaff;
+  box-shadow:0 3px 0 #171130;cursor:pointer;
+}
+.poke-site-footer #floor-jump-trigger.hidden{display:none!important}
+.poke-site-footer #floor-jump-trigger:hover{filter:brightness(1.15)}
+.poke-site-footer #floor-jump-trigger:focus-visible{outline:3px solid #ffdf84;outline-offset:3px}
+#game-quick-settings #return-main-menu-quick{background:#31445d;border-color:#8cc9e8;min-height:43px;font-size:7px;line-height:1.6}
+#game-quick-settings #return-main-menu-quick.hidden{display:none!important}
+.poke-credits-footer{
+  position:relative;z-index:9;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;
+  gap:8px 24px;width:max-content;max-width:95vw;margin:0 auto 14px;padding:10px 17px;
+  border:1px solid #345374;border-radius:9px;background:rgba(9,20,40,.9);
+  color:#a9c9df;font:6px/1.9 "Press Start 2P",monospace;text-align:center;
+}
+.poke-credits-footer strong{color:#ffe1a0}
+.poke-credits-footer a{color:#80d8ff;text-decoration:none;overflow-wrap:anywhere}
+.poke-credits-footer a:hover,.poke-credits-footer a:focus-visible{text-decoration:underline;color:#fff}
+@media(max-width:650px){
+ .poke-site-footer{gap:8px!important;padding:8px!important;margin-bottom:6px!important}
+ .poke-credits-footer{width:95vw;box-sizing:border-box;font-size:5px;padding:10px 8px;margin-bottom:12px}
+ .poke-site-footer #floor-jump-trigger{font-size:6px;padding:8px 9px}
+}
+
+
+/* Beta 1.8 — consistent in-game confirmations and manual saving. */
+.pokex-confirm-overlay{position:fixed;inset:0;z-index:5000;display:flex;align-items:center;justify-content:center;
+ padding:18px;background:rgba(2,10,25,.83);backdrop-filter:blur(3px)}
+.pokex-confirm-overlay.hidden{display:none!important}
+.pokex-confirm-card{width:min(100%,485px);box-sizing:border-box;border:4px solid #66c8ec;border-radius:13px;
+ background:linear-gradient(160deg,#122f4c,#071a30);box-shadow:0 8px 0 #09111e,0 20px 60px #000b;
+ padding:26px 24px;text-align:center;color:#f2f7fb;font-family:'Press Start 2P',monospace}
+.pokex-confirm-eyebrow{display:block;color:#86d7f4;font-size:7px;line-height:2;margin-bottom:13px}
+.pokex-confirm-card h2{margin:0 0 20px;color:#ffe4a2;font-size:12px;line-height:1.8;text-wrap:balance}
+.pokex-confirm-card p{font-size:8px;line-height:2.2;color:#deecfa;margin:0 0 22px}
+.pokex-confirm-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.pokex-confirm-actions button{min-height:48px;flex:1 1 170px;border:2px solid #68c3ec;border-radius:7px;
+ padding:10px;background:#153f60;color:#fff;font:8px/1.7 'Press Start 2P',monospace;cursor:pointer}
+.pokex-confirm-actions #pokex-confirm-accept{background:#35b8f1;color:#051b2c;border-color:#a0e4ff}
+.pokex-confirm-actions button:hover{filter:brightness(1.12)}
+.pokex-confirm-actions button:focus-visible{outline:3px solid #ffe28c;outline-offset:3px}
+#game-quick-settings #save-game-quick{width:100%;background:#184b48;border-color:#69d6ba;color:#eefff7}
+#game-quick-settings .quick-save-status{font:6px/1.8 'Press Start 2P',monospace;color:#ffdb9b;
+ background:#152838;padding:9px 7px;border-radius:6px;border:1px solid #b89266;overflow-wrap:anywhere}
+#game-quick-settings .quick-save-status.saved{color:#a2f4b9;border-color:#6aca8d}
+@media(max-width:540px){.pokex-confirm-card{padding:17px 12px}.pokex-confirm-card h2{font-size:10px}
+ .pokex-confirm-card p{font-size:7px}.pokex-confirm-actions button{flex-basis:100%;font-size:7px}}

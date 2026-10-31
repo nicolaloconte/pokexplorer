@@ -238,6 +238,8 @@ class GameEngine {
   }
 
   returnToMainMenu(){
+    this.closeQuickSettings?.();
+    window.PokexDialogs?.close?.(false);
     this.acknowledgeDialogue();
     this.battleToken++;
     this.hideFinaleScreens();
@@ -287,7 +289,58 @@ class GameEngine {
     this.closePartyActions();this.closePokemonInfo();
     const notice=this.$id('discovery-notice');notice?.classList.remove('visible');
     this.renderBadges();this.renderSidebar();this.updateChampionChoice?.();
+    this.updateContinueButton();
+    this.syncQuickMenuState();
     this.logMsg('Inizia una nuova avventura!');
+  }
+
+  syncQuickMenuState(){
+    const inAdventure=!!this.$id('main-menu-overlay')?.classList.contains('hidden');
+    this.$id('return-main-menu-quick')?.classList.toggle('hidden',!inAdventure);
+    this.$id('save-game-quick')?.classList.toggle('hidden',!inAdventure);
+    this.$id('floor-jump-trigger')?.classList.toggle('hidden',!this.devMode);
+    const notice=this.$id('save-game-quick-status');
+    if(!inAdventure){notice?.classList.add('hidden');if(notice)notice.textContent='';}
+  }
+
+  async requestReturnToMainMenu(){
+    if(!this.$id('main-menu-overlay')?.classList.contains('hidden'))return false;
+    this.closeQuickSettings();
+    this.stopContinuousWalk?.();
+    const guest=window.PokexCheckpoints?.isGuestMode?.();
+    const message='Tutti i dati non salvati andranno persi. ' +
+      (guest?'In modalità UTENTE non è disponibile un salvataggio permanente.':
+        'Potrai riprendere soltanto dall’ultimo checkpoint salvato, automatico o manuale.');
+    const accepted=await window.PokexDialogs.confirm({
+      title:'SEI SICURO DI VOLER TORNARE AL MENU?',message,
+      accept:'TORNA AL MENU',cancel:'ANNULLA'
+    });
+    if(!accepted)return false;
+    // Returning to the menu never creates a checkpoint: an explicit manual save
+    // or a previously earned automatic checkpoint is the only restoration point.
+    this.returnToMainMenu();
+    return true;
+  }
+
+  manualSaveAdventure(){
+    if(!this.$id('main-menu-overlay')?.classList.contains('hidden'))return false;
+    const status=this.$id('save-game-quick-status');
+    const report=(message,ok=false)=>{
+      if(status){status.textContent=message;status.classList.remove('hidden');
+        status.classList.toggle('saved',ok);}
+      return ok;
+    };
+    if(window.PokexCheckpoints?.isGuestMode?.())
+      return report('Modalità UTENTE: accedi con Discord per salvare la partita.');
+    if(this.isCelestialCave||this.celestialCutsceneActive||this.celestialDeparturePending||
+       this.celestialDepositRequired||this.celestialExpeditionBusy)
+      return report('Non puoi salvare durante la spedizione nella Grotta Celeste. Vale l’ultimo checkpoint.');
+    if(this.isLocked||this.battleBusy||this.isRaidActive||this.battleMode||
+       this.pendingItemTarget||this.teleportSwitchPending||this.dialogueResolve||
+       !Array.isArray(this.team)||!this.team.length||!this.gridMap?.length||this.adventureCompleted)
+      return report('Salvataggio non disponibile ora. Termina la battaglia, il dialogo o l’evento.');
+    if(!this.saveCheckpoint())return report('Salvataggio non riuscito: il checkpoint precedente è intatto.');
+    return report('Partita salvata su questo dispositivo. Sync cloud se disponibile.',true);
   }
 
   preloadBattleTrainers(){
@@ -359,7 +412,7 @@ class GameEngine {
       if(!window.PokexCheckpoints.restore(this,checkpoint))return false;
       this.logMsg('Avventura ripresa dall’ultimo checkpoint sicuro.');
       return true;
-    }catch(error){console.error('Resume failed:',error);window.alert('Checkpoint non valido o corrotto.');return false;}
+    }catch(error){console.error('Resume failed:',error);window.PokexDialogs?.alert({title:'ERRORE CHECKPOINT',message:'Checkpoint non valido o corrotto.'});return false;}
   }
   savedProgressText(){
 
@@ -424,9 +477,13 @@ class GameEngine {
     safeOnClick('choose-male',()=>this.selectPlayerGender('male'));
     safeOnClick('choose-female',()=>this.selectPlayerGender('female'));
     safeOnClick('choose-champion',()=>this.selectPlayerGender('champion'));
-    safeOnClick('btn-start-game', () => {
+    safeOnClick('btn-start-game', async () => {
       const previous=window.PokexCheckpoints?.load();
-      if(previous && !window.confirm('Una nuova avventura sostituirà il checkpoint precedente. Confermi?'))return;
+      if(previous && !await window.PokexDialogs.confirm({
+        title:'NUOVA AVVENTURA?',
+        message:'Avviare una nuova run sostituirà il checkpoint precedente al prossimo salvataggio. Vuoi continuare?',
+        accept:'NUOVA AVVENTURA',cancel:'ANNULLA'
+      }))return;
       // Keep previous checkpoint until starter selection finishes successfully.
       this.runId='run-'+Date.now();
       this.$id('main-menu-overlay').classList.add('hidden');
@@ -539,7 +596,10 @@ class GameEngine {
     safeOnClick('buy-radar-btn', () => this.purchaseRadar());
     safeOnClick('gym-entry-yes',()=>this.confirmGymChallenge());
     safeOnClick('gym-entry-no',()=>this.cancelGymChallenge());
-    safeOnClick('quick-settings-toggle',()=>this.toggleQuickSettings());
+    safeOnClick('quick-settings-toggle',()=>{this.syncQuickMenuState();this.toggleQuickSettings();});
+    safeOnClick('return-main-menu-quick',()=>this.requestReturnToMainMenu());
+    safeOnClick('save-game-quick',()=>this.manualSaveAdventure());
+    this.syncQuickMenuState();
     document.addEventListener('pointerdown',event=>{
       const menu=this.$id('game-quick-settings');
       if(menu && !menu.contains(event.target))this.closeQuickSettings();
@@ -548,10 +608,10 @@ class GameEngine {
       if(event.key==='Escape')this.closeQuickSettings();
     });
     safeOnClick('dev-mode-trigger',()=>{this.closeQuickSettings();this.openDevCode();});
-    safeOnClick('floor-jump-trigger',()=>{this.closeQuickSettings();this.openFloorJumpCode();});
+    safeOnClick('floor-jump-trigger',()=>this.openFloorJumpCode());
     safeOnClick('floor-jump-cancel',()=>this.closeFloorJumpCode());
     this.$id('floor-jump-form')?.addEventListener('submit',event=>{
-      event.preventDefault();this.teleportToFloor(this.$id('floor-jump-code').value,this.$id('floor-jump-level').value);
+      event.preventDefault();this.teleportToFloor(null,this.$id('floor-jump-level').value);
     });
     this.$id('floor-jump-overlay')?.addEventListener('keydown',event=>{
       if(event.key==='Escape'){event.preventDefault();this.closeFloorJumpCode();}
@@ -616,7 +676,7 @@ class GameEngine {
     // A dialogue can be advanced by clicking the battlefield or the log.
     // Never swallow the pointer event for a visible menu button or a confirmation.
     document.addEventListener('pointerdown', event => {
-      if (!this.dialogueResolve) return;
+      if (!this.dialogueResolve || event.target.closest('#pokex-confirm-overlay')) return;
       if (event.target.closest('button, [role="button"], #battle-confirm, #evolution-overlay')) return;
       this.acknowledgeDialogue();
     }, true);
@@ -1789,30 +1849,27 @@ generateFloorDungeon() {
     // Gym pools/fishing retain their biome-specific typing.
     return null;
   }
-  // TEST ONLY: PIN gate is independent of DEV MODE; does not grant cheats.
+  // TEST ONLY: floor navigation requires active Dev Mode, no second PIN.
   openFloorJumpCode(){
+    if(!this.devMode)return false;
     this.stopContinuousWalk?.();
     const overlay=this.$id('floor-jump-overlay');
     if(!overlay)return false;
-    this.$id('floor-jump-code').value='';
     this.$id('floor-jump-level').value=String(Math.max(1,Math.min(80,Number(this.floor)||1)));
     this.$id('floor-jump-error').textContent='';
     overlay.classList.remove('hidden');
-    this.$id('floor-jump-code').focus();
+    this.$id('floor-jump-level').focus();
     return true;
   }
   closeFloorJumpCode(){
     this.$id('floor-jump-overlay')?.classList.add('hidden');
-    this.$id('floor-jump-code').value='';
     this.$id('floor-jump-error').textContent='';
-    this.$id('quick-settings-toggle')?.focus();
+    this.$id('floor-jump-trigger')?.focus();
   }
   teleportToFloor(code,targetFloor){
     const error=this.$id('floor-jump-error');
-    if(String(code).trim()!=='2103'){
-      error.textContent='Codice errato. Riprova.';
-      this.$id('floor-jump-code').value='';
-      this.$id('floor-jump-code').focus();
+    if(!this.devMode){
+      if(error)error.textContent='Prima attiva DEV MODE dal menu Opzioni.';
       return false;
     }
     if(!this.team?.length||!this.gridMap?.length){
@@ -1889,10 +1946,11 @@ generateFloorDungeon() {
     this.$id('dev-mode-trigger')?.setAttribute('aria-pressed','true');
     if(this.$id('dev-mode-trigger'))this.$id('dev-mode-trigger').textContent='DEV MODE ✓';
     this.$id('developer-panel')?.classList.remove('hidden');
+    this.syncQuickMenuState(); // Unlock all teleport destinations and footer shortcut.
     this.bagCategory='rimedi';
     this.closeDevCode();
     this.renderSidebar();
-    this.logMsg('DEV MODE attiva! Mappe dei dungeon già scannerizzate, 999 Caramelle Rare e 999 Caramelle d’Oro. Nessun limite medaglie, massimo Lv.100.');
+    this.logMsg('DEV MODE attiva! Piani 1–80 sbloccati: usa VAI AL PIANO nel footer. Mappe scannerizzate, 999 Caramelle Rare e Caramelle d’Oro, massimo Lv.100.');
     return true;
   }
   async useDevCandy(pokemon,id){

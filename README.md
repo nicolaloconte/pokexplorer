@@ -70,3 +70,21 @@ Gli sprite OW approvati sono **ritratti di dialogo**, non modelli da posizionare
 ### Aggiornamento Beta 1.5 — Grotta Celeste
 
 Prima dell'ingresso, il Professor Oak fa scegliere al massimo due Pokémon da portare nella Grotta Celeste; gli altri restano al villaggio. Una sconfitta completa comporta la perdita definitiva dei Pokémon selezionati. In caso di cattura di Mewtwo, al ritorno Oak fa depositare uno dei sette Pokémon quando necessario. I Pokémon depositati restano conservati e possono essere ritirati dal laboratorio disponibile nei villaggi. Vedi `docs/FIX_1_5_GROTTA_CELESTE_LABORATORIO_OAK.md` per test e limitazioni.
+
+
+## Novità Beta 1.7 — Dev Mode, controlli e crediti (31 ottobre 2026)
+
+- Menu Opzioni in alto a destra: durante una run presenta **TORNA AL MENU PRINCIPALE**. Richiede conferma; salva soltanto quando è possibile creare un checkpoint sicuro. Se sei in battaglia o nella Grotta Celeste, il vecchio checkpoint resta invariato: i progressi non ancora salvati andranno persi. In modalità UTENTE nessun salvataggio è garantito.
+- **DEV MODE** mantiene l'accesso mediante PIN originale nel menu Opzioni. Una volta attivata, sblocca il teletrasporto verso **tutti i piani 1–80**, senza secondo PIN, rendendo visibile **VAI AL PIANO** nella barra inferiore, accanto a velocità e musica. Senza Dev Mode il pulsante non è visibile, e la funzione è bloccata anche dal motore.
+- Nuovo footer distinto per i crediti Pokéxplorer e link Discord: https://discord.gg/qNGscTEYHM. Il link apre una scheda separata.
+- Test: `node --test tests/*.test.cjs`, `python tests/release17.browser.py`, `python tests/release16.browser.py`.
+
+Dettagli: `docs/CHANGELOG_1_7_TASK_16_18.md`. Nessun push o deploy eseguito.
+
+
+### Beta 1.8 — salvataggio manuale e conferme nel gioco
+- Nel menu rapido durante una run compare **SALVA PARTITA**: solo in momenti sicuri, fuori da battaglie, dialoghi e Grotta Celeste.
+- Il ritorno al menu usa un pannello personalizzato. Non salva automaticamente quando si esce: conserva l’ultimo checkpoint, anche se la run era stata avviata in precedenza.
+- Il salvataggio automatico di fine dungeon resta attivo. Il salvataggio manuale avvia la sincronizzazione cloud come ogni checkpoint, se configurata e disponibile.
+- La modalità UTENTE senza Discord resta volontariamente non persistente: per salvare bisogna accedere; nessun checkpoint anonimo può sovrascrivere quello di un account Discord.
+- Le richieste di conferma in browser sono state sostituite da pannelli di Pokéxplorer.

@@ -84,10 +84,10 @@ window.addEventListener('DOMContentLoaded', async () => {
     if(logout){
       logout.classList.remove('hidden');
       logout.onclick=async()=>{
-        if(!window.confirm('Disconnettersi da Discord? I progressi locali resteranno in questo browser.'))return;
+        if(!await window.PokexDialogs.confirm({title:'ESCI DA DISCORD?',message:'I progressi locali resteranno salvati su questo browser.',accept:'DISCONNETTI',cancel:'ANNULLA'}))return;
         logout.disabled=true;
         try{await auth.signOut();window.location.reload();}
-        catch(err){logout.disabled=false;window.alert('Disconnessione non riuscita: '+String(err.message||err).slice(0,110));}
+        catch(err){logout.disabled=false;window.PokexDialogs.alert({title:'DISCONNESSIONE NON RIUSCITA',message:String(err.message||err).slice(0,110)});}
       };
     }
     const checkpoint=window.PokexCheckpoints;
@@ -98,9 +98,9 @@ window.addEventListener('DOMContentLoaded', async () => {
       else if(remote?.run && local){
         revision=remote.revision;
         if(JSON.stringify(remote.run)!==JSON.stringify(local)){
-          const useRemote=window.confirm('È disponibile una partita Discord diversa da quella locale. Caricare il salvataggio cloud?');
+          const useRemote=await window.PokexDialogs.confirm({title:'SALVATAGGI DIFFERENTI',message:'È disponibile una partita Discord diversa da quella locale. Vuoi caricare il salvataggio cloud?',accept:'USA CLOUD',cancel:'NO'});
           if(useRemote)checkpoint.save(remote.run);
-          else if(!window.confirm('Sostituire esplicitamente il salvataggio cloud con quello locale?'))cloudEnabled=false;
+          else if(!await window.PokexDialogs.confirm({title:'SALVATAGGIO CLOUD',message:'Vuoi sostituire il salvataggio cloud con quello locale? Annullando la sincronizzazione verrà sospesa.',accept:'USA LOCALE',cancel:'NON SINCRONIZZARE'}))cloudEnabled=false;
         }
       }
       game.updateContinueButton();

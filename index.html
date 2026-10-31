@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pokéxplorer Beta</title>
+  <title>Pokéxplorer Beta 1.8</title>
   <meta name="theme-color" content="#fc4235">
   <meta name="description" content="Pokéxplorer — un’avventura Pokémon roguelike in beta.">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -42,6 +42,19 @@
   </div>
 </section>
 
+<!-- A single in-game confirmation panel replaces native browser alert/confirm. -->
+<section id="pokex-confirm-overlay" class="hidden pokex-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="pokex-confirm-title" aria-describedby="pokex-confirm-message">
+  <div class="pokex-confirm-card">
+    <span class="pokex-confirm-eyebrow">POKÉXPLORER · CONFERMA</span>
+    <h2 id="pokex-confirm-title">SEI SICURO?</h2>
+    <p id="pokex-confirm-message">Tutti i progressi non salvati andranno persi.</p>
+    <div class="pokex-confirm-actions">
+      <button id="pokex-confirm-cancel" type="button">ANNULLA</button>
+      <button id="pokex-confirm-accept" type="button">CONFERMA</button>
+    </div>
+  </div>
+</section>
+
 <!-- DEV MODE is unlocked locally with a 4-digit code; no URL parameter required. -->
 <div id="game-quick-settings" aria-label="Impostazioni rapide">
   <button id="quick-settings-toggle" type="button" aria-label="Apri opzioni" aria-expanded="false" aria-controls="quick-settings-panel" title="Opzioni">
@@ -50,11 +63,11 @@
   <div id="quick-settings-panel" class="hidden" role="group" aria-label="Opzioni del gioco">
     <div class="quick-settings-heading">OPZIONI</div>
     <div class="quick-settings-label">EXTRA</div>
+    <button id="save-game-quick" type="button" class="hidden">💾 SALVA PARTITA</button>
+    <p id="save-game-quick-status" class="quick-save-status hidden" role="status" aria-live="polite"></p>
+    <button id="return-main-menu-quick" type="button" class="hidden">TORNA AL MENU PRINCIPALE</button>
     <button id="logout-discord-btn" type="button" class="hidden">ESCI DA DISCORD</button>
-    <div class="dev-shortcuts-row" role="group" aria-label="Scorciatoie test">
-      <button id="dev-mode-trigger" type="button" aria-pressed="false" aria-haspopup="dialog" aria-controls="dev-code-overlay">DEV MODE</button>
-      <button id="floor-jump-trigger" type="button" aria-haspopup="dialog" aria-controls="floor-jump-overlay" title="Vai al piano scelto (1–80) con codice 2103">VAI AL PIANO</button>
-    </div>
+    <button id="dev-mode-trigger" type="button" aria-pressed="false" aria-haspopup="dialog" aria-controls="dev-code-overlay">DEV MODE</button>
       <section id="developer-panel" class="developer-panel hidden" aria-label="Strumenti sviluppatore">
         <h3>DEV MODE · ATTIVA</h3>
         <p class="dev-status-text">999 Caramelle Rare e 999 Caramelle d’Oro nello zaino. Livelli fino a 100 senza limite medaglie.</p>
@@ -90,13 +103,11 @@
     <button type="button" id="ability-capsule-cancel">ANNULLA</button>
   </div>
 </section>
-<!-- Scorciatoia test separata dalla DEV MODE: qualsiasi piano da 1 a 80, con PIN 2103. -->
+<!-- Teletrasporto disponibile esclusivamente dopo lo sblocco della DEV MODE. -->
 <section id="floor-jump-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="floor-jump-title" aria-describedby="floor-jump-description">
   <form id="floor-jump-form" class="dev-code-card" autocomplete="off">
     <h2 id="floor-jump-title">TELETRASPORTO · PIANI 1–80</h2>
-    <p id="floor-jump-description">Scegli il piano da 1 a 80 e inserisci il codice 2103. Devi aver già scelto uno starter.</p>
-    <label for="floor-jump-code">CODICE</label>
-    <input id="floor-jump-code" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required aria-describedby="floor-jump-error">
+    <p id="floor-jump-description">Con DEV MODE attiva puoi raggiungere qualsiasi piano da 1 a 80. Avvia prima una run e scegli uno starter.</p>
     <label for="floor-jump-level">PIANO DI DESTINAZIONE (1–80)</label>
     <input id="floor-jump-level" type="number" inputmode="numeric" min="1" max="80" step="1" value="75" required aria-describedby="floor-jump-error">
     <p id="floor-jump-error" class="dev-code-error" role="status" aria-live="polite"></p>
@@ -104,7 +115,7 @@
       <button id="floor-jump-cancel" type="button">ANNULLA</button>
       <button id="floor-jump-confirm" type="submit">TELETRASPORTA</button>
     </div>
-    <p class="dev-code-note">Solo test: mantiene squadra e inventario, rigenera il piano scelto. Il piano 75 ricrea l'incontro con Oak.</p>
+    <p class="dev-code-note">Solo test in DEV MODE: mantiene squadra e inventario, rigenera il piano scelto. Il piano 75 ricrea l'incontro con Oak.</p>
   </form>
 </section>
 
@@ -233,7 +244,7 @@
         <div id="main-menu-overlay">
           <div style="margin-top:10px;">
             <div class="logo-title">POKÉXPLORER</div>
-            <div class="beta-version-label">Beta</div>
+            <div class="beta-version-label">Beta 1.8</div>
             <div style="font-size:7px; color:#5eead4; margin-top:6px;">UN’AVVENTURA POKÉMON ROGUELIKE</div>
             <!-- Version metadata remains in CHANGELOG, not on the main menu. -->
           </div>
@@ -691,7 +702,7 @@
 
 </div>
 
-<footer class="poke-site-footer" aria-label="Informazioni Pokéxplorer">
+<footer class="poke-site-footer" aria-label="Controlli di gioco">
   <button id="speed-toggle" type="button" aria-pressed="false" title="Velocità gioco">VELOCITÀ ×1</button>
   <div class="music-controls" role="group" aria-label="Volume musica di sottofondo">
     <label for="music-volume">♫ MUSICA</label>
@@ -699,6 +710,11 @@
     <output id="music-volume-value" for="music-volume">10%</output>
     <span id="music-status" class="sr-only" role="status" aria-live="polite"></span>
   </div>
+  <button id="floor-jump-trigger" class="hidden" type="button" aria-haspopup="dialog" aria-controls="floor-jump-overlay" title="Teletrasportati a un piano sbloccato con Dev Mode">VAI AL PIANO</button>
+</footer>
+<footer class="poke-credits-footer" aria-label="Crediti e community di Pokéxplorer">
+  <span><strong>POKÉXPLORER BETA</strong> · Creato e sviluppato da <strong>17nico</strong></span>
+  <a href="https://discord.gg/qNGscTEYHM" target="_blank" rel="noopener noreferrer" aria-label="Unisciti al server Discord ufficiale di Pokéxplorer">DISCORD · UNISCITI ALLA COMMUNITY ↗</a>
 </footer>
 
 <!-- Verify boot resources rather than showing an unstyled Game Over when ZIP is opened directly. -->
