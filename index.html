@@ -60,13 +60,14 @@
         <p class="dev-status-text">999 Caramelle Rare e 999 Caramelle d’Oro nello zaino. Livelli fino a 100 senza limite medaglie.</p>
         <button type="button" id="dev-radar">RADAR ∞</button>
         <button type="button" id="dev-capture">CATTURA 100% ✓</button>
+        <button type="button" id="dev-skip-encounter">SALTA RAID / TRAINER DUNGEON</button>
       </section>
   </div>
 </div>
 <section id="dev-code-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="dev-code-title">
   <form id="dev-code-form" class="dev-code-card" autocomplete="off">
     <h2 id="dev-code-title">DEV MODE</h2>
-    <p id="dev-code-description">Inserisci il codice di accesso.</p>
+    <p id="dev-code-description">Inserisci il codice di accesso a 4 cifre.</p>
     <label for="dev-access-code">CODICE</label>
     <input id="dev-access-code" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4"
            autocomplete="off" spellcheck="false" required aria-describedby="dev-code-error">
@@ -75,7 +76,7 @@
       <button id="dev-code-cancel" type="button">ANNULLA</button>
       <button id="dev-code-confirm" type="submit">SBLOCCA</button>
     </div>
-    <p class="dev-code-note">Sblocco per la sessione corrente.</p>
+    <p class="dev-code-note">Sblocco per la sessione corrente. Oggetti DEV nello Zaino → Rimedi.</p>
   </form>
 </section>
 
@@ -93,7 +94,7 @@
 <section id="floor-jump-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="floor-jump-title" aria-describedby="floor-jump-description">
   <form id="floor-jump-form" class="dev-code-card" autocomplete="off">
     <h2 id="floor-jump-title">TELETRASPORTO · PIANI 1–80</h2>
-    <p id="floor-jump-description">Scegli il piano da 1 a 80 e inserisci il codice. Devi aver già scelto uno starter.</p>
+    <p id="floor-jump-description">Scegli il piano da 1 a 80 e inserisci il codice 2103. Devi aver già scelto uno starter.</p>
     <label for="floor-jump-code">CODICE</label>
     <input id="floor-jump-code" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required aria-describedby="floor-jump-error">
     <label for="floor-jump-level">PIANO DI DESTINAZIONE (1–80)</label>
@@ -125,7 +126,6 @@
       <button id="btn-open-pokedex" class="badge-case-trigger dex-sidebar-trigger" type="button" aria-haspopup="dialog" aria-controls="pokedex-overlay">
         <span>POKÉDEX · KANTO</span><span id="dex-sidebar-count" class="badge-case-sidebar-count">0 / 151</span>
       </button>
-      <button type="button" id="btn-oak-lab" class="badge-case-trigger hidden" aria-controls="oak-laboratory">LABORATORIO OAK</button>
       <button id="btn-badge-case" class="badge-case-trigger" type="button" aria-haspopup="dialog" aria-controls="badge-case-overlay">
         <span>PORTAMEDAGLIE</span><span id="badges-container" class="badge-case-sidebar-count">0 / 8 MEDAGLIE</span>
       </button>
@@ -199,11 +199,11 @@
         <!-- Oak laboratory: forced deposit when returning with seven Pokémon. -->
         <section id="oak-laboratory" class="hidden celestial-expedition" role="dialog" aria-modal="true" aria-labelledby="oak-lab-title">
           <div class="celestial-expedition-card">
-            <header><span>LABORATORIO DEL PROFESSOR OAK</span><h2 id="oak-lab-title">DEPOSITO POKÉMON</h2></header>
+            <header><span>LABORATORIO DEL PROFESSOR OAK</span><h2 id="oak-lab-title">SCELTA DEFINITIVA</h2></header>
             <p id="oak-lab-message"></p>
             <p id="oak-lab-count" class="celestial-roster-count"></p>
             <div id="oak-lab-options" class="celestial-roster-list"></div>
-            <footer class="celestial-roster-footer"><button type="button" id="oak-lab-close" class="btn-nav">CHIUDI LABORATORIO</button></footer>
+            <footer class="celestial-roster-footer"><button type="button" id="oak-lab-close" class="btn-nav hidden" disabled>CHIUDI LABORATORIO</button></footer>
           </div>
         </section>
         <!-- AUTH: activated only when a real Supabase URL and public key are configured. -->
@@ -242,7 +242,7 @@
             <button class="btn-nav" id="btn-start-game">NUOVA AVVENTURA</button>
             <button class="btn-nav" id="btn-continue-game" disabled title="Nessun checkpoint valido">CONTINUA AVVENTURA</button>
             <button class="btn-nav" id="btn-menu-pokedex" type="button">POKÉDEX</button>
-            <button class="btn-nav" id="btn-view-progress">GUARDA PROGRESSI</button>
+            <button class="btn-nav" id="btn-view-progress">OBIETTIVI</button>
             <button class="btn-nav" id="btn-contact-support">CONTATTA ASSISTENZA</button>
           </div>
           <section id="menu-message" class="hidden menu-subdialog" role="dialog" aria-label="Informazioni menu">
@@ -253,6 +253,16 @@
             </div>
           </section>
         </div>
+
+        <section id="objectives-overlay" class="hidden" role="dialog" aria-modal="true" aria-labelledby="objectives-heading">
+          <div class="objectives-card">
+            <header class="objectives-header"><h2 id="objectives-heading">🏆 OBIETTIVI</h2><button type="button" id="objectives-close" aria-label="Chiudi obiettivi">✕</button></header>
+            <div class="objectives-counters"><div><small>N° RUN SVOLTE</small><strong id="objectives-runs">0</strong></div><div><small>N° POKÉMON CATTURATI</small><strong id="objectives-catches">0</strong></div><div><small>N° RUN COMPLETATE</small><strong id="objectives-wins">0</strong></div></div>
+            <p id="objectives-cloud" role="status" aria-live="polite"></p>
+            <div id="objectives-quests" class="objectives-quests" aria-label="Le 17 missioni"></div>
+            <button type="button" id="objectives-bottom-close" class="btn-nav">CHIUDI OBIETTIVI</button>
+          </div>
+        </section>
 
         <!-- Selettore strumenti: overlay non bloccante, squadra selezionabile a sinistra. -->
         <div id="item-target-prompt" class="hidden" role="status" aria-live="polite">
@@ -359,6 +369,7 @@
             <span>IL TUO PERSONAGGIO</span>
             <button id="choose-male" type="button" class="selected" aria-pressed="true">RAGAZZO</button>
             <button id="choose-female" type="button" aria-pressed="false">RAGAZZA</button>
+            <button id="choose-champion" type="button" aria-pressed="false" disabled title="Sblocca completando una run con un solo Pokémon mentre sei connesso a Discord">CAMPIONE 🔒</button>
           </div>
           <div class="briefcase-container" role="group" aria-label="Valigetta con tre Poké Ball">
             <div class="briefcase-lid"><span class="briefcase-brand">PROFESSOR OAK · POKÉMON INIZIALI</span><span class="briefcase-lid-symbol">POKÉMON</span></div>
@@ -715,6 +726,8 @@ window.addEventListener('load', function () {
 <script src="js/api-client.js"></script>
 <script src="js/game-data.js"></script>
 <script src="js/pokedex-core.js"></script>
+<script src="js/objectives-core.js"></script>
+<script src="js/objectives-ui.js"></script>
 <script src="js/pokemon.js"></script>
 <script src="js/abilities.js"></script>
 <script src="js/engine.js"></script>

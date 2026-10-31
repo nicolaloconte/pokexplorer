@@ -24,6 +24,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     // Must be set before constructing the engine, or it might see another user's saved run.
     window.PokexCheckpoints?.setGuestMode(true);
     window.PokexDex?.setOwner('guest',{guestMode:true});
+    window.PokexObjectives?.setOwner('guest',{guestMode:true});
     if(guest)guest.disabled=true;
     const trainer=bootGame();
     const label=document.getElementById('trainer-discord-name');
@@ -46,6 +47,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   if(!auth?.enabled()){
     // Offline preview only: not a Discord-authenticated release.
     window.PokexDex?.setOwner('local');
+    window.PokexObjectives?.setOwner('local');
     bootGame();
     const label=document.getElementById('trainer-discord-name');
     if(label){label.textContent='ALLENATORE LOCALE';}
@@ -71,12 +73,14 @@ window.addEventListener('DOMContentLoaded', async () => {
     window.PokexCheckpoints?.setGuestMode?.(false);
     window.PokexCheckpoints?.setUser(user.id);
     window.PokexDex?.setOwner(user.id);
+    window.PokexObjectives?.setOwner(user.id);
     const game=bootGame();
     setProfile(auth.profile(user));
     game.updateContinueButton();
     gate.classList.add('hidden');
     // This sync is independent of run checkpoints; cloud schema must be migrated.
     window.PokexDex?.initCloud(auth.client).catch(error=>console.warn('Pokédex cloud unavailable:',error));
+    window.PokexObjectives?.initCloud(auth.client).catch(error=>console.warn('Obiettivi cloud unavailable:',error));
     if(logout){
       logout.classList.remove('hidden');
       logout.onclick=async()=>{
@@ -100,6 +104,7 @@ window.addEventListener('DOMContentLoaded', async () => {
         }
       }
       game.updateContinueButton();
+      window.PokexObjectives?.importCheckpoint?.(checkpoint.load());
     }catch(error){cloudEnabled=false;console.warn('Cloud restore unavailable',error);}
     const sync=async()=>{
       if(!cloudEnabled||busy)return;

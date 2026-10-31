@@ -21,7 +21,7 @@
   function isGuestMode(){return guestMode;}
   const primary=()=>KEY+':'+owner, backup=()=>primary()+':previous';
   function setUser(userId){owner=typeof userId==='string'&&/^[0-9a-f-]{36}$/i.test(userId)?userId:'local';}
-  const gameFields=['floor','money','playerPos','playerGender','playerFacing','playerStep','items','radarCharges','badges','expShareEnabled','expShareClaimed','fishingRodGiftClaimed','adventureCompleted','oakEventDismissed','celestialPhase','caughtLegendarySpecies','completedGymFloors','gridMap','team','activeIndex','laboratoryPokemon'];
+  const gameFields=['floor','money','playerPos','playerGender','playerFacing','playerStep','items','radarCharges','badges','expShareEnabled','expShareClaimed','fishingRodGiftClaimed','adventureCompleted','oakEventDismissed','celestialPhase','caughtLegendarySpecies','completedGymFloors','gridMap','team','activeIndex','laboratoryPokemon','soloRunEligible','soloRunTracked'];
   const monFields=['id','name','level','growthRate','baseExperience','weight','types','type','gender','isShiny','spriteFront','spriteBack','baseStats','ivs','evs','nature','abilityOptions','ability','abilityName','evYield','exp','expToNext','maxHp','attack','defense','spAtk','spDef','speed','currentHp','learnset','moves','movesLoaded'];
   function copy(value){return JSON.parse(JSON.stringify(value));}
   function take(game, now=new Date().toISOString()){
@@ -89,6 +89,10 @@
       else game[key]=copy(data[key]);}
     game.items.abilityCapsule=Number.isSafeInteger(game.items.abilityCapsule)&&game.items.abilityCapsule>=0?game.items.abilityCapsule:0;
     game.team=team;game.laboratoryPokemon=lab;game.activeMon=team[data.activeIndex];game.runId=snapshot.runId;
+    // Old runs never tracked solo eligibility, so never invent a solo completion.
+    game.soloRunEligible=data.soloRunEligible===true&&data.soloRunTracked===true&&team.length===1;
+    game.soloRunTracked=data.soloRunTracked===true;
+    window.PokexObjectives?.importCheckpoint?.(snapshot);
     game.celestialReserve=[];game.celestialRosterSelection=new Set();game.celestialDepositRequired=false;game.celestialExpeditionBusy=false;
     game.$id('celestial-expedition')?.classList.add('hidden');game.$id('oak-laboratory')?.classList.add('hidden');
     game.cancelPokemonCenterHealing?.();

@@ -11,7 +11,7 @@
   const GENDERLESS=new Set([81,82,100,101,120,121,132,137,144,145,146,150,151]);
   const FEMALE_ONLY=new Set([29,30,31,113,115,124]);
   const MALE_ONLY=new Set([32,33,34,106,107,128]);
-  const SHINY_RATE=4096;
+  const SHINY_RATE=2000;
   function rollGender(id,rate,rng=Math.random){
     id=Number(id);
     if(GENDERLESS.has(id)||rate===-1)return 'genderless';

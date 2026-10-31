@@ -3,7 +3,7 @@ class GameEngine {
   constructor() {
     this.gridSize = 10;
     this.playerPos = { x: 0, y: 0 };
-    this.playerGender='male';
+    this.playerGender='male';this.soloRunEligible=true;this.soloRunTracked=false;
     this.walkSequence=0;
     this.walkReadyAt=0;
     this.walkDurationMs=210;
@@ -14,7 +14,7 @@ class GameEngine {
     // Keep references until the frame preloads complete; otherwise browsers
     // can discard orphaned Image elements and cancel their network requests.
     this.walkSpritePreloads=[];
-    if(typeof Image!=='undefined')for(const gender of ['red','girl'])
+    if(typeof Image!=='undefined')for(const gender of ['red','girl','champion'])
       for(const direction of ['up','down','left','right'])
         for(let frame=0;frame<3;frame++){
           const image=new Image();image.src=`assets/sprites/player/${gender}/walk/${direction}-${frame}.png`;
@@ -78,7 +78,7 @@ class GameEngine {
     this.activeDialogNpcCell=null;
     this.oakEventDismissed=false;this.isCelestialCave=false;this.celestialPhase='unvisited';
     this.celestialReturnState=null;this.celestialCutsceneActive=false;this.celestialDeparturePending=false;
-    this.celestialReserve=[];this.celestialRosterSelection=new Set();this.laboratoryPokemon=[];this.celestialDepositRequired=false;this.celestialExpeditionBusy=false;
+    this.celestialReserve=[];this.celestialRosterSelection=new Set();this.laboratoryPokemon=[];this.celestialDepositRequired=false;this.celestialExpeditionBusy=false;this.celestialMewtwoCaptured=false;
     // Direct Nurse Joy interaction outside the building; no separate interior.
     this.pokemonCenterHealTimer=null;
     this.pokemonCenterHealSequence=0;
@@ -179,6 +179,9 @@ class GameEngine {
   finishKantoAdventure(){
     if(this.adventureCompleted || !this.hasCompletedKantoChallenge())return false;
     this.adventureCompleted=true;
+    const solo=this.soloRunTracked===true&&this.soloRunEligible===true&&this.team.length===1&&!this.devMode;
+    window.PokexObjectives?.record('run_win',this.runId,{solo});
+    if(solo)this.showDiscoveryNotice('🏆 PERSONAGGIO CAMPIONE SBLOCCATO!',4500);
     this.isLocked=true;
     this.hideFinaleScreens();
     this.$id('victory-overlay').classList.remove('hidden');
@@ -246,6 +249,7 @@ class GameEngine {
     }
     this.$id('rotom-body')?.classList.remove('battle-active');
     this.$id('main-menu-overlay').classList.remove('hidden');
+    this.updateChampionChoice();
     this.floor=1;this.money=600;this.playerPos={x:0,y:0};
     this.team=[];this.activeMon=null;this.enemyMon=null;
     this.gridMap=[];this.badges=[];this.expShareEnabled=true;this.expShareClaimed=false;this.completedGymFloors.clear();
@@ -257,13 +261,13 @@ class GameEngine {
     this.battleMode=null;this.isLocked=false;this.battleConfirmAction=null;
     this.items={pokeball:5,masterball:0,potion:3,superPotion:0,hyperPotion:0,elixir:1,abilityCapsule:0,fishingRod:false,
       rareCandy:this.devMode?999:0,goldCandy:this.devMode?999:0};
-    this.fishingRodGiftClaimed=false;this.playerGender='male';
+    this.fishingRodGiftClaimed=false;this.playerGender='male';this.soloRunEligible=true;this.soloRunTracked=false;
     this.gymChallengePending=false;this.devGuaranteedCapture=this.devMode;this.pendingTrainerCell=null;
     this.caughtLegendarySpecies=new Set();
     this.activeDialogNpcCell=null;this.oakEventDismissed=false;this.isCelestialCave=false;
     this.cancelPokemonCenterHealing();
     this.celestialPhase='unvisited';this.celestialReturnState=null;this.celestialCutsceneActive=false;this.celestialDeparturePending=false;
-    this.celestialReserve=[];this.celestialRosterSelection.clear();this.laboratoryPokemon=[];this.celestialDepositRequired=false;this.celestialExpeditionBusy=false;
+    this.celestialReserve=[];this.celestialRosterSelection.clear();this.laboratoryPokemon=[];this.celestialDepositRequired=false;this.celestialExpeditionBusy=false;this.celestialMewtwoCaptured=false;
     this.$id('celestial-expedition')?.classList.add('hidden');this.$id('oak-laboratory')?.classList.add('hidden');
     this.$id('celestial-dialog')?.classList.add('hidden');
     this.$id('celestial-cinematic')?.classList.add('hidden');
@@ -273,7 +277,7 @@ class GameEngine {
     window.pokexplorerMusic?.setScene('exploration');
     this.stopContinuousWalk?.();
     // A new game starts with the male avatar selected unless chosen again.
-    for(const [id,active] of [['choose-male',true],['choose-female',false]]){
+    for(const [id,active] of [['choose-male',true],['choose-female',false],['choose-champion',false]]){
       const button=this.$id(id);if(button){button.classList.toggle('selected',active);button.setAttribute('aria-pressed',String(active));}
     }
     this.radarCharges=3;this.playerFacing='down';this.playerStep=0;this.playerFishingFrame=null;clearTimeout(this.playerIdleTimer);
@@ -282,7 +286,7 @@ class GameEngine {
     this.$id('item-target-prompt').classList.add('hidden');
     this.closePartyActions();this.closePokemonInfo();
     const notice=this.$id('discovery-notice');notice?.classList.remove('visible');
-    this.renderBadges();this.renderSidebar();
+    this.renderBadges();this.renderSidebar();this.updateChampionChoice?.();
     this.logMsg('Inizia una nuova avventura!');
   }
 
@@ -415,11 +419,11 @@ class GameEngine {
     safeOnClick('celestial-team-confirm',()=>this.confirmCelestialTeam());
     safeOnClick('celestial-team-cancel',()=>this.cancelCelestialTeam());
     safeOnClick('oak-lab-close',()=>this.closeOakLaboratory());
-    safeOnClick('btn-oak-lab',()=>this.openOakLaboratory());
     // Dedicated keyboard handling prevents overworld walking behind these modals.
     document.addEventListener('keydown',event=>this.handleCelestialModalKey(event),true);
     safeOnClick('choose-male',()=>this.selectPlayerGender('male'));
     safeOnClick('choose-female',()=>this.selectPlayerGender('female'));
+    safeOnClick('choose-champion',()=>this.selectPlayerGender('champion'));
     safeOnClick('btn-start-game', () => {
       const previous=window.PokexCheckpoints?.load();
       if(previous && !window.confirm('Una nuova avventura sostituirà il checkpoint precedente. Confermi?'))return;
@@ -432,7 +436,7 @@ class GameEngine {
 
     safeOnClick('btn-return-main-menu', () => this.returnToMainMenu());
     safeOnClick('btn-contact-support',()=>this.openMenuMessage('support'));
-    safeOnClick('btn-view-progress',()=>this.openMenuMessage('progress'));
+    safeOnClick('btn-view-progress',()=>window.PokexObjectivesUI?.open?.());
     safeOnClick('menu-message-cancel',()=>this.closeMenuMessage());
     safeOnClick('menu-message-confirm',()=>{
       if(this.menuMessageType!=='support')return;
@@ -728,12 +732,20 @@ class GameEngine {
   }
 
   selectPlayerGender(gender){
-    if(!['male','female'].includes(gender)||this.team.length||this.isLocked)return false;
+    if(!['male','female','champion'].includes(gender)||this.team.length||this.isLocked)return false;
+    if(gender==='champion'&&!window.PokexObjectives?.unlockChampion?.())return false;
     this.playerGender=gender;
-    for(const [id,active] of [['choose-male',gender==='male'],['choose-female',gender==='female']]){
+    for(const [id,active] of [['choose-male',gender==='male'],['choose-female',gender==='female'],['choose-champion',gender==='champion']]){
       const b=this.$id(id);if(b){b.classList.toggle('selected',active);b.setAttribute('aria-pressed',String(active));}
     }
     return true;
+  }
+
+  updateChampionChoice(){
+    const b=this.$id('choose-champion');if(!b)return;
+    const unlocked=window.PokexObjectives?.unlockChampion?.()===true;b.disabled=!unlocked;
+    b.textContent=unlocked?'CAMPIONE':'CAMPIONE 🔒';
+    b.title=unlocked?'Personaggio Campione sbloccato':'Completa una run con un solo Pokémon usando Discord';
   }
 
   walkClock(){return typeof performance!=='undefined'?performance.now():Date.now();}
@@ -851,6 +863,9 @@ class GameEngine {
     this.team = [new Pokemon(this.selectedStarterData, 5)];
     this.activeMon = this.team[0];
     window.PokexDex?.record(this.activeMon,'caught',`Starter · Piano ${this.floor}`);
+    this.soloRunEligible=true;this.soloRunTracked=true;
+    window.PokexObjectives?.record('run_start',this.runId);
+    window.PokexObjectives?.record('floor',this.runId,{floor:this.floor});
     document.getElementById('starter-scene-overlay').classList.add('hidden');
     this.generateFloorDungeon();
     this.saveCheckpoint();
@@ -1223,7 +1238,7 @@ generateFloorDungeon() {
   // Stored Pokémon keep their individual identity, moves, ability, gender and
   // shiny state. They are not casualties and can be withdrawn in towns.
   openOakLaboratory(forceDeposit=false){
-    if(!forceDeposit && (this.isCelestialCave||this.isBattleVisible()||!this.isTownFloor()||this.isLocked))return false;
+    if(!forceDeposit || this.team.length!==7 || this.isCelestialCave || this.isBattleVisible() || !this.isTownFloor())return false;
     this.celestialDepositRequired=!!forceDeposit;
     this.isLocked=true;this.stopContinuousWalk();
     this.$id('oak-laboratory')?.classList.remove('hidden');
@@ -1234,8 +1249,7 @@ generateFloorDungeon() {
     list.replaceChildren();
     const forced=this.celestialDepositRequired;
     const message=this.$id('oak-lab-message');
-    message.textContent=forced?'Professor Oak: «Hai sette Pokémon con te! Quale vuoi lasciare al mio laboratorio? Sarà al sicuro e potrai recuperarlo in un altro villaggio.»':
-      'Laboratorio del Professor Oak · Deposita un Pokémon oppure ritiralo quando hai uno spazio libero.';
+    message.textContent='Professor Oak: «Hai sette Pokémon con te. Puoi viaggiare con sei soltanto: quale vuoi affidare definitivamente al mio laboratorio? Non potrai ritirarlo.»';
     const add=(mon,kind,index)=>{
       const button=document.createElement('button');button.type='button';button.className='celestial-roster-choice';
       const img=document.createElement('img');img.src=resolvedSpritePath(mon.spriteFront||'assets/sprites/ui/pokemon-placeholder.svg');img.alt='';
@@ -1245,33 +1259,24 @@ generateFloorDungeon() {
         if(kind==='deposit')this.depositOakPokemon(index);else this.withdrawOakPokemon(index);
       };list.append(button);
     };
-    const canDeposit=forced?this.team.length>6:this.team.length>1;
-    if(canDeposit)this.team.forEach((mon,index)=>add(mon,'deposit',index));
-    if(!forced && this.team.length<6)this.laboratoryPokemon.forEach((mon,index)=>add(mon,'withdraw',index));
+    if(forced&&this.team.length===7)this.team.forEach((mon,index)=>add(mon,'deposit',index));
     if(!list.children.length){const empty=document.createElement('p');empty.textContent='Nessun trasferimento disponibile.';list.append(empty);}
     this.$id('oak-lab-count').textContent=`IN SQUADRA ${this.team.length}/6 · AL LABORATORIO ${this.laboratoryPokemon.length}`;
-    const close=this.$id('oak-lab-close');close.classList.toggle('hidden',forced);
-    if(forced)close.disabled=true;else close.disabled=false;
+    const close=this.$id('oak-lab-close');close.classList.add('hidden');close.disabled=true;
     list.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
   }
   depositOakPokemon(index){
     if(!this.isTownFloor()||this.isCelestialCave||this.isBattleVisible())return false;
     const forced=this.celestialDepositRequired;
-    if(index<0||index>=this.team.length||this.laboratoryPokemon.length>=250||(!forced&&this.team.length<=1)||
-       (forced&&this.team.length!==7))return false;
+    if(!forced || index<0 || index>=this.team.length || this.team.length!==7)return false;
     const [mon]=this.team.splice(index,1);
     this.laboratoryPokemon.push(mon);this.ensureActivePokemon();
     this.renderSidebar();
     if(forced){this.celestialDepositRequired=false;this.closeOakLaboratory();}
-    else this.renderOakLaboratory();
     this.saveCheckpoint();return true;
   }
-  withdrawOakPokemon(index){
-    if(this.celestialDepositRequired||!this.isTownFloor()||this.isCelestialCave||this.isBattleVisible()||
-       this.team.length>=Math.min(6,this.getTeamSlotLimit())||index<0||index>=this.laboratoryPokemon.length)return false;
-    this.team.push(...this.laboratoryPokemon.splice(index,1));this.ensureActivePokemon();
-    this.renderSidebar();this.renderOakLaboratory();this.saveCheckpoint();return true;
-  }
+  // Oak's one-time narrative deposit is irreversible. No public withdraw interface.
+  withdrawOakPokemon(){return false;}
   closeOakLaboratory(){
     if(this.celestialDepositRequired)return false;
     this.$id('oak-laboratory')?.classList.add('hidden');this.isLocked=false;
@@ -1280,7 +1285,7 @@ generateFloorDungeon() {
   finishCelestialExpeditionDefeat(){
     if(!this.isCelestialCave||!this.celestialReturnState)return false;
     const casualties=this.team.length;this.team=[...this.celestialReserve];this.celestialReserve=[];
-    this.celestialPhase='unvisited';this.oakEventDismissed=false;
+    this.celestialPhase='unvisited';this.celestialMewtwoCaptured=false;this.oakEventDismissed=false;
     this.battleToken++;this.battleBusy=false;this.pendingForcedSwitch=false;
     this.battleMode=null;this.battleType=null;this.battleWeather=null;this.pendingItemTarget=null;
     this.enemyMon?.clearBattleConditions?.();this.enemyMon=null;
@@ -1345,7 +1350,7 @@ generateFloorDungeon() {
       'arrival-two':['arrival-three','Davanti a noi c’è Mewtwo. Prima di tentare la cattura dovrai affrontarlo e dimostrare di saper resistere alla sua forza.'],
       'reward-one':['reward-two','Mewtwo ti ha messo alla prova e ora ti riconosce come avversario. Ma non è finita: è ancora lì, in attesa.'],
       'reward-two':['reward-three','Questa Master Ball è il risultato di anni di ricerca. Può riuscire dove ogni altra Poké Ball fallirebbe. Usala con giudizio.'],
-      'farewell-one':['farewell-two','La Grotta Celeste tornerà silenziosa, ma ciò che hai dimostrato qui resterà con te.'],
+      'farewell-one':['farewell-two',this.celestialMewtwoCaptured?'La Grotta Celeste tornerà silenziosa, ma ciò che hai dimostrato qui resterà con te.':'Oak abbassa lo sguardo. «Non tutte le leggende possono essere catturate. Torniamo a casa.»'],
     };
     const next=lines[this.celestialDialogStep];
     if(next){this.showCelestialDialogue(next[1],next[0]);return;}
@@ -1439,7 +1444,8 @@ generateFloorDungeon() {
     this.renderSidebar();
     this.showCelestialDialogue('Hai resistito a un potere che nessuno aveva mai saputo fronteggiare. Oak apre lentamente la valigetta che portava con sé…','reward-one');
   }
-  completeMewtwoEncounter(){
+  completeMewtwoEncounter(captured=true){
+    this.celestialMewtwoCaptured=!!captured;
     this.celestialPhase='complete';
     const mon=this.gridMap?.[4]?.[5];if(mon?.entity==='mewtwo')mon.entity=null;
     this.logMsg('La Grotta Celeste torna silenziosa. Oak ti aspetta prima dell’uscita a sud.');
@@ -1447,7 +1453,7 @@ generateFloorDungeon() {
   leaveCelestialCave(){
     if(!this.isCelestialCave||this.celestialPhase!=='complete'||!this.celestialReturnState||this.celestialDeparturePending)return false;
     this.celestialDeparturePending=true;
-    this.showCelestialDialogue('Ce l’hai fatta. Per un istante, la grotta è rimasta immobile, come se il mondo intero avesse trattenuto il respiro.','farewell-one');
+    this.showCelestialDialogue(this.celestialMewtwoCaptured?'Ce l’hai fatta. Hai catturato Mewtwo: il silenzio della grotta ora sembra diverso.':'Hai affrontato Mewtwo fino alla fine. Dopo il secondo KO è svanito nell’oscurità. Lasciamo la grotta a mani vuote, ma vivi.','farewell-one');
     return true;
   }
   async finishCelestialReturn(){
@@ -1465,7 +1471,8 @@ generateFloorDungeon() {
         this.renderDungeon();this.renderSidebar();
       });
     }finally{this.celestialDeparturePending=false;this.isLocked=false;}
-    this.logMsg('Sei tornato al villaggio. Il ricordo della Grotta Celeste non ti abbandonerà.');
+    this.logMsg(this.celestialMewtwoCaptured?'Sei tornato con Mewtwo dalla Grotta Celeste.':'Sei tornato al villaggio. Mewtwo è scomparso dopo il secondo KO.');
+    window.PokexObjectives?.record('cave',this.runId,{outcome:this.celestialMewtwoCaptured?'caught':'knockout'});
     if(this.team.length>6){this.openOakLaboratory(true);return;}
     this.saveCheckpoint();
   }
@@ -1673,6 +1680,7 @@ generateFloorDungeon() {
           return;
         }
         this.floor++;
+        if([10,50,75].includes(this.floor))window.PokexObjectives?.record('floor',this.runId,{floor:this.floor});
         this.logMsg(`Sei salito al Livello ${this.floor}!`);
         this.generateFloorDungeon();
         this.saveCheckpoint();
@@ -2104,6 +2112,7 @@ generateFloorDungeon() {
           this.activeMon=received;
           npcCell.tradeCompleted=true;
           window.PokexDex?.record(received,'caught',`Scambio NPC · Piano ${this.floor}`);
+          this.soloRunEligible=false;
           this.logMsg(`Scambio effettuato! Ora hai ${received.name}!`);
           this.closeNpcDialog();this.renderSidebar();
         }catch(error){
@@ -2190,7 +2199,7 @@ generateFloorDungeon() {
     if(!board || !Array.isArray(this.gridMap) || !this.gridMap.length)return;
     board.classList.toggle('npc-conversation-active',Boolean(this.activeDialogNpcCell));
     board.classList.toggle('celestial-cave',this.isCelestialCave);
-    const avatarFolder=this.playerGender==='female'?'girl':'red';
+    const avatarFolder=this.playerGender==='champion'?'champion':this.playerGender==='female'?'girl':'red';
     const spriteUrl=this.playerFishingFrame!==null ?
       (avatarFolder==='girl' && this.playerFacing!=='down'
         ? `assets/sprites/player/girl/walk/${this.playerFacing}-${Math.min(this.playerFishingFrame,2)}.png`
@@ -2381,6 +2390,7 @@ generateFloorDungeon() {
       if(!this.completedGymFloors.has(this.floor)) {
         this.completedGymFloors.add(this.floor);
         this.badges.push({id:this.currentGym.badgeId,name:this.gymBadgeName});
+        window.PokexObjectives?.record('badge',this.runId,{badges:this.badgeCount()});
         this.renderBadges();
       }
       this.money+=750;
@@ -2502,7 +2512,7 @@ generateFloorDungeon() {
     }
     // TASK-010: both protagonists use five local throwing frames.
     // Decode them before battle reveal to prevent flicker during the pose swap.
-    const trainerFolder=this.playerGender==='female'?'girl':'red';
+    const trainerFolder=this.playerGender==='champion'?'champion':this.playerGender==='female'?'girl':'red';
     for(let frame=0;frame<5;frame++)sources.add(`assets/sprites/player/${trainerFolder}/throw/${frame}.png`);
     // Retain Image references until decoding completes so browsers cannot
     // garbage-collect orphaned requests while the battle stays hidden.
@@ -2638,7 +2648,7 @@ generateFloorDungeon() {
     previousTrainer.className='poke-sprite-gba enemy-trainer-frame hidden';
     previousTrainer.removeAttribute('style');
     if(!keepPlayerOnField)this.$id('player-sprite').classList.add('hidden');
-    this.$id('player-trainer-sprite').style.backgroundImage=this.playerGender==='female'?"url('assets/sprites/player/girl/throw/0.png')":"url('assets/sprites/player/red/throw/0.png')";
+    this.$id('player-trainer-sprite').style.backgroundImage=this.playerGender==='champion'?"url('assets/sprites/player/champion/throw/0.png')":this.playerGender==='female'?"url('assets/sprites/player/girl/throw/0.png')":"url('assets/sprites/player/red/throw/0.png')";
     this.$id('player-trainer-sprite').classList.toggle('female-trainer',this.playerGender==='female');
     this.$id('player-trainer-sprite').classList.remove('red-sheet-ready');
     this.$id('player-trainer-sprite').classList.add('hidden');
@@ -2670,7 +2680,7 @@ generateFloorDungeon() {
     if(token!==this.battleToken)return;
     if(!continuousRound)this.revealPreparedBattle(token);
     await this.battleText(hostile ? (leader?`Il Capopalestra ${this.currentGym.name} ti sfida!`:'Un allenatore ti sfida!') :
-      (type==='mewtwo'?'Appare MEWTWO!':this.isRaidActive?`RAID ${6-this.raidQueueCount}/5 · Una presenza misteriosa!`:type==='legendary'?'UN POKÉMON LEGGENDARIO APPARE!':'Un Pokémon selvatico appare!'));
+      (type==='mewtwo'?'Appare Mewtwo.':this.isRaidActive?`RAID ${6-this.raidQueueCount}/5 · Una presenza misteriosa!`:type==='legendary'?'UN POKÉMON LEGGENDARIO APPARE!':'Un Pokémon selvatico appare!'));
     if(token!==this.battleToken)return;
     if(hostile){
       const trainer=this.$id('enemy-trainer-sprite');
@@ -2695,7 +2705,7 @@ generateFloorDungeon() {
     await this.battleText(`${this.enemyMon.name} è pronto a combattere!`);
     if(token!==this.battleToken)return;
     if(!keepPlayerOnField){
-      this.$id('player-trainer-sprite').style.backgroundImage=this.playerGender==='female'?"url('assets/sprites/player/girl/throw/0.png')":"url('assets/sprites/player/red/throw/0.png')";
+      this.$id('player-trainer-sprite').style.backgroundImage=this.playerGender==='champion'?"url('assets/sprites/player/champion/throw/0.png')":this.playerGender==='female'?"url('assets/sprites/player/girl/throw/0.png')":"url('assets/sprites/player/red/throw/0.png')";
       this.$id('player-trainer-sprite').classList.toggle('female-trainer',this.playerGender==='female');
       this.$id('player-trainer-sprite').classList.remove('red-sheet-ready');
       this.$id('player-trainer-sprite').classList.remove('hidden');
@@ -2740,7 +2750,7 @@ generateFloorDungeon() {
       transform:`translate3d(${x(t)}px,${y(t)}px,0) rotate(${angle*360*t}deg) scale(${.72+.28*Math.sin(Math.PI*t)})`,
       opacity:i===5?0:1,offset:t}));
     const trainerMotion=side==='player' ? (async()=>{
-      const folder=this.playerGender==='female'?'girl':'red';
+      const folder=this.playerGender==='champion'?'champion':this.playerGender==='female'?'girl':'red';
       for(let i=0;i<5;i++){
         trainer.style.backgroundImage=`url('assets/sprites/player/${folder}/throw/${i}.png')`;
         await this.wait(i===4?195:115);
@@ -3212,6 +3222,8 @@ generateFloorDungeon() {
       if([144,145,146].includes(Number(wild.id)))this.caughtLegendarySpecies.add(Number(wild.id));
       // Record at confirmed capture, even when the player must release it.
       window.PokexDex?.record(wild,'caught',`${this.battleType} · Piano ${this.floor}`);
+      this.soloRunEligible=false;
+      window.PokexObjectives?.record('catch',this.runId,{species:wild.id,shiny:wild.isShiny===true});
       await this.battleText(`Preso! ${wild.name} è stato catturato!`);
       if(this.team.length<this.getTeamSlotLimit()){this.team.push(wild);this.endBattle(`Hai catturato ${wild.name}!`);}
       else this.promptTeamFullChoice(wild);
@@ -3945,8 +3957,12 @@ generateFloorDungeon() {
         this.celestialPhase='rematch';this.endBattle('Hai sconfitto Mewtwo!');
         this.isLocked=true;
         setTimeout(()=>{if(this.isCelestialCave&&this.celestialPhase==='rematch')this.showOakMasterBallReward();},this.gameDelay(550));
-      }else{this.endBattle('Mewtwo si rialza tra le ombre. Per completare la spedizione devi catturarlo!');
-        this.showDiscoveryNotice('MEWTWO È ANCORA NELLA GROTTA · DEVI CATTURARLO',3500);}
+      }else{
+        this.completeMewtwoEncounter(false);
+        this.endBattle('Mewtwo è stato sconfitto una seconda volta. Scompare nelle profondità della grotta!');
+        this.showDiscoveryNotice('MEWTWO È SCOMPARSO · SPEDIZIONE CONCLUSA',3500);
+        setTimeout(()=>{if(this.isCelestialCave&&this.celestialPhase==='complete')this.leaveCelestialCave();},this.gameDelay(650));
+      }
       return;
     }
     if(this.battleType==='gym'&&this.gymQueue.length>0){
@@ -4242,7 +4258,6 @@ generateFloorDungeon() {
   }
   closePokemonInfo(){this.pokemonInfoRequest++;this.partyInfoPokemon=null;this.$id('pokemon-info-overlay')?.classList.add('hidden');}
   renderSidebar() {
-    const oakLab=this.$id('btn-oak-lab');if(oakLab){const visible=this.laboratoryPokemon.length>0;oakLab.classList.toggle('hidden',!visible);oakLab.disabled=!this.isTownFloor()||this.isCelestialCave;}
     // Keep availability and purchase validation tied to the same city milestones.
     // CSS alone is not an access control: locked purchases must also be disabled.
     for(const [itemId,buttonId] of [['superPotion','buy-super-potion-btn'],['hyperPotion','buy-hyper-potion-btn']]){
