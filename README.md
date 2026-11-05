@@ -1,90 +1,94 @@
-# Pokéxplorer Beta
+<div align="center">
 
-## Avvio
+# 🎮 POKÉXPLORER
 
-1. Estrai lo ZIP interamente (non eseguire i file dall'anteprima dello ZIP).
-2. Apri `Pokéxplorer Beta/index.html` in un browser aggiornato.
-3. In locale è disponibile la modalità **UTENTE**, senza salvataggio dei progressi. Per il login Discord occorre la pubblicazione su origine web autorizzata e la configurazione OAuth.
+**Un’avventura Pokémon roguelike ambientata a Kanto**
 
-## Centro Pokémon — modalità classica ripristinata
+*Esplora. Combatti. Cattura. Sopravvivi.*
 
-Nei villaggi e nelle città, **davanti alla porta sul lato sud del Centro Pokémon**, premi **SU**: appare immediatamente il dialogo dell'infermiera Joy. Non si entra in un dungeon interno. Dopo 2 secondi Joy cura tutti i Pokémon della squadra e riproduce il motivetto `pokeheal.mp3` sovrapposto alla musica, con volume controllato dal cursore MUSICA (0% = silenzio). Il giocatore resta nello stesso villaggio/città e sulla stessa casella.
+![Pokéxplorer: evento della Grotta Celeste](readme-assets/gameplay.webp)
 
-## Movimento
+**Versione Beta 1.8** · **Lingua: Italiano** · **Gioco fan-made per browser**
 
-Corretta l'animazione verso **destra** del protagonista maschile: tre frame realmente orientati a destra, specchiati dalla normale camminata verso sinistra. La scena di lancio della Poké Ball, i frame pesca e i movimenti femminili non sono stati modificati.
+[💬 Entra nel server Discord](https://discord.gg/qNGscTEYHM) · [📂 Repository GitHub](https://github.com/nicolaloconte/pokexplorer)
 
-## File principali
+</div>
 
-- `index.html` / `style.css`: schermata di gioco e interfaccia.
-- `js/`: logiche, battaglie, salvataggi e interazioni.
-- `assets/`: grafica, suoni e sprite in uso.
-- `config.js`: configurazione runtime; modificare soltanto se necessario.
-- `docs/`: privacy, attribuzioni e relazione tecnica dei fix.
+---
 
-## Test e note
+## 🌍 Benvenuto a Kanto
 
-Vedi `docs/RIPRISTINO_CENTRO_POKEMON.md`. Non sono stati eseguiti push, deploy o modifiche a Supabase. Le prove automatizzate non sostituiscono un test completo su dispositivo fisico e con login Discord reale.
+In **Pokéxplorer** ogni nuova avventura mette alla prova le tue decisioni: scegli il tuo Pokémon iniziale, attraversa sentieri, villaggi e dungeon, affronta allenatori e Capipalestra e prepara una squadra capace di arrivare fino alla sfida finale.
 
-## Nuovo: Pokédex Hybrid 1.0 (30 ottobre 2026)
+La fortuna conta, ma non basta. Le catture, la gestione degli oggetti e le scelte nei momenti difficili possono cambiare l'esito della run.
 
-Il gioco include ora il Pokédex di Kanto accessibile dal menu principale e dall'ala sinistra del RotomDex: lista 151 specie, ricerca/filtri, schede, varianti maschio/femmina/shiny **completamente segrete fino alla scoperta**, habitat e diario. I Pokémon nuovi mantengono sesso e brillantezza in squadra, battaglia, evoluzione e checkpoint v2. Le scoperte sopravvivono al Game Over e alla creazione di una nuova run.
+## ✨ Cosa ti aspetta
 
-**Le tabelle e le funzioni RPC del Pokédex sono già state installate nel progetto Supabase Pokexplorer il 30 ottobre 2026. Non rieseguire gli script SQL sullo stesso progetto.** Leggere **`docs/POKEDEX_HYBRID_INSTALLAZIONE.md`** prima di pubblicare; contiene ordine di migrazione, requisiti, limitazioni e test. Per il dettaglio delle differenze tra questa e la beta originale: `docs/POKEDEX_HYBRID_MODIFICHE.md`.
+| 🕹️ | Caratteristica |
+| :---: | --- |
+| 🗺️ | **Esplorazione roguelike** attraverso 80 piani, con combattimenti ed eventi. |
+| ⚔️ | **Lotte Pokémon** contro selvatici, allenatori, boss e Capipalestra. |
+| 🎒 | **Gestione della squadra** fino a sei Pokémon, con oggetti, evoluzioni e abilità. |
+| 📖 | **Pokédex di Kanto** con 151 specie e scoperte persistenti tra le avventure. |
+| ✨ | **Pokémon shiny** con probabilità base di 1 su 2.000 per le generazioni casuali. |
+| 🏅 | **Medaglie e 17 obiettivi** da completare nel corso delle tue run. |
+| 🏆 | **Personaggio Campione** da sbloccare vincendo una run con un solo Pokémon, usando un account Discord. |
+| 🌌 | **Grotta Celeste**, una spedizione speciale in cui ogni scelta ha conseguenze. |
 
-Il codice e i test locali sono inclusi. Le tabelle cloud sono state installate e controllate; **non** è stato eseguito in questa versione un test end-to-end Discord da due dispositivi, né un deploy GitHub.
+## 📸 Uno sguardo al gioco
 
-## Nuovo: controlli battaglia e continuità degli incontri — versione 1.1 (30 ottobre 2026)
+### Battaglie e gestione dei Pokémon
 
-- Durante una battaglia usa **WASD** o **frecce** per selezionare i comandi e **Spazio** per attivarli (equivalente al clic sinistro). **Esc** torna indietro quando consentito.
-- Menu principale 2×2: **LOTTA**, **BORSA**, **POKÉMON**, **FUGA**. Se FUGA è vietata, il cursore la salta.
-- Da BORSA ci si sposta nell'ala destra, si sceglie la categoria con WASD/Spazio, si scorre la lista, si usa l'oggetto e, se necessario, si seleziona il destinatario dalla squadra. **CHIUDI ZAINO** compare solo nella modalità borsa della battaglia.
-- Da POKÉMON ci si sposta nell'ala sinistra; WASD/Spazio navigano la squadra e il menu di azione del Pokémon. **CHIUDI SQUADRA** compare solo quando il menu squadra è stato aperto dai comandi battaglia e la sostituzione non è obbligatoria.
-- Per tornare dal sotto-menu delle mosse usa **Esc** o la freccia di ritorno selezionabile con WASD e Spazio.
-- Raid consecutivi e allenatori/capopalestra mantengono la stessa arena tra gli avversari; la scena non viene nascosta/rivelata a ogni round.
-- Pulizia prudente: rimosse nove immagini HD obsolete del vecchio selettore `data-scene` (circa 20 MB) e un fondale inutilizzato. I fondali attivi `neutral-bg`, le palette palestra, le piattaforme e i fallback sono mantenuti.
+![Interfaccia di combattimento di Pokéxplorer](readme-assets/battaglia.webp)
 
-**Test:** `node tests/pokedex.test.cjs` e `python tests/battle-keyboard.browser.py` (Playwright Python con Chromium). Vedi `docs/BATTLE_KEYBOARD_RILASCIO_1_1.md`.
+### Pokédex e scoperte
 
-### Novità Beta 1.2 (Capsula Abilità)
-- Capsula Abilità acquistabile nei PokéMarket per 3.000 Pokécoins; si usa fuori dal combattimento dalla Borsa → Rimedi.
-- Abilità normali verificate per specie mediante PokéAPI, senza opzioni nascoste; cambio permanente nel checkpoint.
-- Ampliati gli effetti passivi per entrambi i combattenti. Test: `node --test tests/*.test.cjs`.
-- Dettagli e limitazioni in `docs/ABILITA_PASSIVE_CAPSULA_1_2.md`.
+![Pokédex di Kanto in Pokéxplorer](readme-assets/pokedex.webp)
 
-## Novità Beta 1.3 — Zaino, PokéMarket, NPC e asset ordinati
+*Le immagini mostrano schermate di sviluppo: l'interfaccia può cambiare con gli aggiornamenti.*
 
-- Gli oggetti consumabili e le Poké Ball a quantità zero sono nascosti, inclusi i menu di battaglia; gli Oggetti Chiave restano visibili.
-- Superpozione in vendita dalla **seconda città (piano 10)**, Iperpozione dalla **quinta città (piano 25)**. I ritrovamenti a terra non cambiano.
-- Ritratti di Pescatore e Gentiluomo/Anziano associati ai rispettivi NPC, con fallback per le risorse online mancanti.
-- 43 sprite scelti dall'utente più 12 SVG legacy inutilizzati rimossi. Tutti gli sprite conservati si trovano ora sotto `assets/sprites/`.
-- I percorsi storici dei checkpoint rimangono supportati. La pesca femminile in direzioni diverse dal basso usa temporaneamente le pose di camminata per compensare i 12 fotogrammi rimossi.
-- Test: `node --test tests/*.test.cjs`, `python tests/battle-keyboard.browser.py`, `python tests/release13.browser.py`, `python tests/verify-assets.py`.
+## 🎯 Come si gioca
 
-Dettagli, differenze e limiti: [`docs/CHANGELOG_1_3_PULIZIA_E_FIX.md`](docs/CHANGELOG_1_3_PULIZIA_E_FIX.md). Nessun push/deploy effettuato.
+1. Avvia una **Nuova Avventura** e scegli il protagonista e il compagno iniziale.
+2. Esplora la mappa, affronta gli incontri e cerca nuovi Pokémon.
+3. Usa **Poké Ball**, rimedi e abilità per far crescere la squadra.
+4. Ottieni le medaglie e supera le sfide dei dungeon.
+5. Prova a concludere la run e a completare gli **Obiettivi**.
 
-## Beta 1.4.1 — Correzione overworld/ritratti (31 ottobre 2026)
+**Comandi:** durante le battaglie puoi usare **WASD** o le **frecce** per spostare la selezione, **Spazio** per confermare ed **Esc** per tornare indietro quando possibile. I pulsanti sono utilizzabili anche con il mouse.
 
-Gli sprite OW approvati sono **ritratti di dialogo**, non modelli da posizionare sulla mappa. La mappa usa nuovamente i spritesheet overworld originali FireRed/LeafGreen; i vecchi checkpoint che referenziano gli adattamenti 16×32 della Beta 1.4 vengono corretti a runtime. Gli spritesheet di mappa sono online e richiedono connettività. Leggi `docs/FIX_1_4_1_OVERWORLD_E_RITRATTI.md`.
+## 💾 Salvataggi e progressi
 
-### Aggiornamento Beta 1.5 — Grotta Celeste
+La Beta 1.8 include **checkpoint automatici** e un comando **Salva partita** per i momenti sicuri dell'avventura. Il Pokédex e gli Obiettivi dispongono di progressi associati all'account.
 
-Prima dell'ingresso, il Professor Oak fa scegliere al massimo due Pokémon da portare nella Grotta Celeste; gli altri restano al villaggio. Una sconfitta completa comporta la perdita definitiva dei Pokémon selezionati. In caso di cattura di Mewtwo, al ritorno Oak fa depositare uno dei sette Pokémon quando necessario. I Pokémon depositati restano conservati e possono essere ritirati dal laboratorio disponibile nei villaggi. Vedi `docs/FIX_1_5_GROTTA_CELESTE_LABORATORIO_OAK.md` per test e limitazioni.
+Per i salvataggi persistenti è necessario effettuare l'accesso con **Discord**. La modalità **UTENTE**, senza accesso, è pensata per provare il gioco e **non conserva permanentemente la partita**.
 
+> Il salvataggio manuale non è disponibile durante battaglie, dialoghi ed eventi speciali della Grotta Celeste.
 
-## Novità Beta 1.7 — Dev Mode, controlli e crediti (31 ottobre 2026)
+## 💬 Community
 
-- Menu Opzioni in alto a destra: durante una run presenta **TORNA AL MENU PRINCIPALE**. Richiede conferma; salva soltanto quando è possibile creare un checkpoint sicuro. Se sei in battaglia o nella Grotta Celeste, il vecchio checkpoint resta invariato: i progressi non ancora salvati andranno persi. In modalità UTENTE nessun salvataggio è garantito.
-- **DEV MODE** mantiene l'accesso mediante PIN originale nel menu Opzioni. Una volta attivata, sblocca il teletrasporto verso **tutti i piani 1–80**, senza secondo PIN, rendendo visibile **VAI AL PIANO** nella barra inferiore, accanto a velocità e musica. Senza Dev Mode il pulsante non è visibile, e la funzione è bloccata anche dal motore.
-- Nuovo footer distinto per i crediti Pokéxplorer e link Discord: https://discord.gg/qNGscTEYHM. Il link apre una scheda separata.
-- Test: `node --test tests/*.test.cjs`, `python tests/release17.browser.py`, `python tests/release16.browser.py`.
+Novità, segnalazioni di bug, proposte e confronti tra giocatori si trovano nel server ufficiale:
 
-Dettagli: `docs/CHANGELOG_1_7_TASK_16_18.md`. Nessun push o deploy eseguito.
+**👉 [Unisciti al Discord di Pokéxplorer](https://discord.gg/qNGscTEYHM)**
 
+## 👨‍💻 Crediti
 
-### Beta 1.8 — salvataggio manuale e conferme nel gioco
-- Nel menu rapido durante una run compare **SALVA PARTITA**: solo in momenti sicuri, fuori da battaglie, dialoghi e Grotta Celeste.
-- Il ritorno al menu usa un pannello personalizzato. Non salva automaticamente quando si esce: conserva l’ultimo checkpoint, anche se la run era stata avviata in precedenza.
-- Il salvataggio automatico di fine dungeon resta attivo. Il salvataggio manuale avvia la sincronizzazione cloud come ogni checkpoint, se configurata e disponibile.
-- La modalità UTENTE senza Discord resta volontariamente non persistente: per salvare bisogna accedere; nessun checkpoint anonimo può sovrascrivere quello di un account Discord.
-- Le richieste di conferma in browser sono state sostituite da pannelli di Pokéxplorer.
+**Creato e sviluppato da 17nico.**
+
+Pokéxplorer è un progetto indipendente e fan-made, realizzato per passione verso il mondo Pokémon e i videogiochi roguelike.
+
+## ⚖️ Avvertenze e diritti
+
+**Pokéxplorer è un progetto fan-made non ufficiale.** Non è affiliato, sponsorizzato né approvato da Nintendo, GAME FREAK o The Pokémon Company. Pokémon e i relativi nomi, personaggi e materiali appartengono ai rispettivi titolari.
+
+La disponibilità del repository e del sito **non costituisce di per sé una licenza di riutilizzo o redistribuzione** del codice originale e dei materiali del progetto. Per gli asset di terze parti valgono le rispettive condizioni e i diritti dei titolari. Prima della redistribuzione occorre verificare licenze e autorizzazioni applicabili.
+
+---
+
+<div align="center">
+
+**🌟 Ogni run è una storia diversa. La prossima sarà la tua?**
+
+[💬 Discord ufficiale](https://discord.gg/qNGscTEYHM)
+
+</div>
