@@ -10,7 +10,7 @@
 
 **Versione Beta 1.8** · **Lingua: Italiano** · **Gioco fan-made per browser**
 
-[💬 Entra nel server Discord](https://discord.gg/qNGscTEYHM) · [📂 Repository GitHub](https://github.com/nicolaloconte/pokexplorer)
+[🎮 Gioca a Pokéxplorer](https://nicolcnt.github.io/pokexplorer/) · [💬 Entra nel server Discord](https://discord.gg/qNGscTEYHM) · [📂 Repository GitHub](https://github.com/nicolcnt/pokexplorer)
 
 </div>
 
@@ -62,6 +62,8 @@ La fortuna conta, ma non basta. Le catture, la gestione degli oggetti e le scelt
 La Beta 1.8 include **checkpoint automatici** e un comando **Salva partita** per i momenti sicuri dell'avventura. Il Pokédex e gli Obiettivi dispongono di progressi associati all'account.
 
 Per i salvataggi persistenti è necessario effettuare l'accesso con **Discord**. La modalità **UTENTE**, senza accesso, è pensata per provare il gioco e **non conserva permanentemente la partita**.
+
+Se giocavi prima del cambio di indirizzo, accedi con lo stesso account Discord e attendi il recupero del checkpoint prima di scegliere **Continua avventura**. Se manca una partita che ti aspetti di ritrovare, conserva i dati del browser e il profilo usato sul vecchio sito. I progressi salvati soltanto su quel dominio possono richiedere un recupero separato.
 
 > Il salvataggio manuale non è disponibile durante battaglie, dialoghi ed eventi speciali della Grotta Celeste.
 

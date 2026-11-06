@@ -14,7 +14,8 @@
    if(!loc || !((loc.protocol==='https:') || (loc.protocol==='http:' && /^(localhost|127\.0\.0\.1)$/.test(loc.hostname)))){
      throw Error('Discord login requires HTTPS or localhost; file:// is not supported');
    }
-   return `${loc.origin}${loc.pathname}`;
+   // Pages serves the same game at the directory URL and at index.html.
+   return loc.origin + loc.pathname.replace(/\/index\.html$/, '/');
  }
  function profile(user){
    const md=user?.user_metadata||{};
